@@ -1,116 +1,18482 @@
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%                         BBBB   L       OOO   BBBB                           %
-%                         B   B  L      O   O  B   B                          %
-%                         BBBB   L      O   O  BBBB                           %
-%                         B   B  L      O   O  B   B                          %
-%                         BBBB   LLLLL   OOO   BBBB                           %
-%                                                                             %
-%                                                                             %
-%                     MagickCore Binary Large OBjectS Methods                 %
-%                                                                             %
-%                              Software Design                                %
-%                                   Cristy                                    %
-%                                 July 1999                                   %
-%                                                                             %
-%                                                                             %
-%  Copyright @ 1999 ImageMagick Studio LLC, a non-profit organization         %
-%  dedicated to making software imaging solutions freely available.           %
-%                                                                             %
-%  You may not use this file except in compliance with the License.  You may  %
-%  obtain a copy of the License at                                            %
-%                                                                             %
-%    https://imagemagick.org/script/license.php                               %
-%                                                                             %
-%  Unless required by applicable law or agreed to in writing, software        %
-%  distributed under the License is distributed on an "AS IS" BASIS,          %
-%  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.   %
-%  See the License for the specific language governing permissions and        %
-%  limitations under the License.                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%
-%
-*/
-
-/*
-  Include declarations.
-*/
-#ifdef __VMS
-#include  <types.h>
-#include  <mman.h>
-#endif
-#include "MagickCore/studio.h"
-#include "MagickCore/blob.h"
-#include "MagickCore/blob-private.h"
-#include "MagickCore/cache.h"
-#include "MagickCore/client.h"
-#include "MagickCore/constitute.h"
-#include "MagickCore/delegate.h"
-#include "MagickCore/exception.h"
-#include "MagickCore/exception-private.h"
-#include "MagickCore/geometry.h"
-#include "MagickCore/image-private.h"
-#include "MagickCore/list.h"
-#include "MagickCore/locale_.h"
-#include "MagickCore/log.h"
-#include "MagickCore/magick.h"
-#include "MagickCore/memory_.h"
-#include "MagickCore/memory-private.h"
-#include "MagickCore/nt-base-private.h"
-#include "MagickCore/option.h"
-#include "MagickCore/policy.h"
-#include "MagickCore/resource_.h"
-#include "MagickCore/semaphore.h"
-#include "MagickCore/string_.h"
-#include "MagickCore/string-private.h"
-#include "MagickCore/timer-private.h"
-#include "MagickCore/token.h"
-#include "MagickCore/utility.h"
-#include "MagickCore/utility-private.h"
-#if defined(MAGICKCORE_ZLIB_DELEGATE)
-#include "zlib.h"
-#endif
-#if defined(MAGICKCORE_BZLIB_DELEGATE)
-#include "bzlib.h"
-#endif
-
-/*
-  Define declarations.
-*/
-#define MagickMaxBlobExtent  (8*8192)
-#if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
-# define MAP_ANONYMOUS  MAP_ANON
-#endif
-#if !defined(MAP_FAILED)
-#define MAP_FAILED  ((void *) -1)
-#endif
-#if defined(__OS2__)
-#include <io.h>
-#define _O_BINARY O_BINARY
-#endif
-
-/*
-  Typedef declarations.
-*/
+# 0 "MagickCore/blob.c"
+# 0 "<built-in>"
+# 0 "<command-line>"
+# 1 "/usr/include/stdc-predef.h" 1 3 4
+# 0 "<command-line>" 2
+# 1 "MagickCore/blob.c"
+# 47 "MagickCore/blob.c"
+# 1 "./MagickCore/studio.h" 1
+# 35 "./MagickCore/studio.h"
+# 1 "./MagickCore/magick-config.h" 1
+# 25 "./MagickCore/magick-config.h"
+# 1 "./MagickCore/magick-baseconfig.h" 1
+# 26 "./MagickCore/magick-config.h" 2
+# 36 "./MagickCore/studio.h" 2
+# 63 "./MagickCore/studio.h"
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h" 1 3 4
+# 40 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h" 3 4
+
+# 40 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h" 3 4
+typedef __builtin_va_list __gnuc_va_list;
+# 103 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h" 3 4
+typedef __gnuc_va_list va_list;
+# 64 "./MagickCore/studio.h" 2
+# 1 "/usr/include/stdio.h" 1 3 4
+# 27 "/usr/include/stdio.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/libc-header-start.h" 1 3 4
+# 33 "/usr/include/x86_64-linux-gnu/bits/libc-header-start.h" 3 4
+# 1 "/usr/include/features.h" 1 3 4
+# 394 "/usr/include/features.h" 3 4
+# 1 "/usr/include/features-time64.h" 1 3 4
+# 20 "/usr/include/features-time64.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/wordsize.h" 1 3 4
+# 21 "/usr/include/features-time64.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/timesize.h" 1 3 4
+# 19 "/usr/include/x86_64-linux-gnu/bits/timesize.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/wordsize.h" 1 3 4
+# 20 "/usr/include/x86_64-linux-gnu/bits/timesize.h" 2 3 4
+# 22 "/usr/include/features-time64.h" 2 3 4
+# 395 "/usr/include/features.h" 2 3 4
+# 502 "/usr/include/features.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/sys/cdefs.h" 1 3 4
+# 576 "/usr/include/x86_64-linux-gnu/sys/cdefs.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/wordsize.h" 1 3 4
+# 577 "/usr/include/x86_64-linux-gnu/sys/cdefs.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/long-double.h" 1 3 4
+# 578 "/usr/include/x86_64-linux-gnu/sys/cdefs.h" 2 3 4
+# 503 "/usr/include/features.h" 2 3 4
+# 526 "/usr/include/features.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/gnu/stubs.h" 1 3 4
+# 10 "/usr/include/x86_64-linux-gnu/gnu/stubs.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/gnu/stubs-64.h" 1 3 4
+# 11 "/usr/include/x86_64-linux-gnu/gnu/stubs.h" 2 3 4
+# 527 "/usr/include/features.h" 2 3 4
+# 34 "/usr/include/x86_64-linux-gnu/bits/libc-header-start.h" 2 3 4
+# 28 "/usr/include/stdio.h" 2 3 4
+
+
+
+
+
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 214 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 3 4
+typedef long unsigned int size_t;
+# 34 "/usr/include/stdio.h" 2 3 4
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types.h" 1 3 4
+# 27 "/usr/include/x86_64-linux-gnu/bits/types.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/wordsize.h" 1 3 4
+# 28 "/usr/include/x86_64-linux-gnu/bits/types.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/timesize.h" 1 3 4
+# 19 "/usr/include/x86_64-linux-gnu/bits/timesize.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/wordsize.h" 1 3 4
+# 20 "/usr/include/x86_64-linux-gnu/bits/timesize.h" 2 3 4
+# 29 "/usr/include/x86_64-linux-gnu/bits/types.h" 2 3 4
+
+
+typedef unsigned char __u_char;
+typedef unsigned short int __u_short;
+typedef unsigned int __u_int;
+typedef unsigned long int __u_long;
+
+
+typedef signed char __int8_t;
+typedef unsigned char __uint8_t;
+typedef signed short int __int16_t;
+typedef unsigned short int __uint16_t;
+typedef signed int __int32_t;
+typedef unsigned int __uint32_t;
+
+typedef signed long int __int64_t;
+typedef unsigned long int __uint64_t;
+
+
+
+
+
+
+typedef __int8_t __int_least8_t;
+typedef __uint8_t __uint_least8_t;
+typedef __int16_t __int_least16_t;
+typedef __uint16_t __uint_least16_t;
+typedef __int32_t __int_least32_t;
+typedef __uint32_t __uint_least32_t;
+typedef __int64_t __int_least64_t;
+typedef __uint64_t __uint_least64_t;
+
+
+
+typedef long int __quad_t;
+typedef unsigned long int __u_quad_t;
+
+
+
+
+
+
+
+typedef long int __intmax_t;
+typedef unsigned long int __uintmax_t;
+# 141 "/usr/include/x86_64-linux-gnu/bits/types.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/typesizes.h" 1 3 4
+# 142 "/usr/include/x86_64-linux-gnu/bits/types.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/time64.h" 1 3 4
+# 143 "/usr/include/x86_64-linux-gnu/bits/types.h" 2 3 4
+
+
+typedef unsigned long int __dev_t;
+typedef unsigned int __uid_t;
+typedef unsigned int __gid_t;
+typedef unsigned long int __ino_t;
+typedef unsigned long int __ino64_t;
+typedef unsigned int __mode_t;
+typedef unsigned long int __nlink_t;
+typedef long int __off_t;
+typedef long int __off64_t;
+typedef int __pid_t;
+typedef struct { int __val[2]; } __fsid_t;
+typedef long int __clock_t;
+typedef unsigned long int __rlim_t;
+typedef unsigned long int __rlim64_t;
+typedef unsigned int __id_t;
+typedef long int __time_t;
+typedef unsigned int __useconds_t;
+typedef long int __suseconds_t;
+typedef long int __suseconds64_t;
+
+typedef int __daddr_t;
+typedef int __key_t;
+
+
+typedef int __clockid_t;
+
+
+typedef void * __timer_t;
+
+
+typedef long int __blksize_t;
+
+
+
+
+typedef long int __blkcnt_t;
+typedef long int __blkcnt64_t;
+
+
+typedef unsigned long int __fsblkcnt_t;
+typedef unsigned long int __fsblkcnt64_t;
+
+
+typedef unsigned long int __fsfilcnt_t;
+typedef unsigned long int __fsfilcnt64_t;
+
+
+typedef long int __fsword_t;
+
+typedef long int __ssize_t;
+
+
+typedef long int __syscall_slong_t;
+
+typedef unsigned long int __syscall_ulong_t;
+
+
+
+typedef __off64_t __loff_t;
+typedef char *__caddr_t;
+
+
+typedef long int __intptr_t;
+
+
+typedef unsigned int __socklen_t;
+
+
+
+
+typedef int __sig_atomic_t;
+# 39 "/usr/include/stdio.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h" 1 3 4
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h" 1 3 4
+# 13 "/usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h" 3 4
+typedef struct
+{
+  int __count;
+  union
+  {
+    unsigned int __wch;
+    char __wchb[4];
+  } __value;
+} __mbstate_t;
+# 6 "/usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h" 2 3 4
+
+
+
+
+typedef struct _G_fpos_t
+{
+  __off_t __pos;
+  __mbstate_t __state;
+} __fpos_t;
+# 40 "/usr/include/stdio.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h" 1 3 4
+# 10 "/usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h" 3 4
+typedef struct _G_fpos64_t
+{
+  __off64_t __pos;
+  __mbstate_t __state;
+} __fpos64_t;
+# 41 "/usr/include/stdio.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/__FILE.h" 1 3 4
+
+
+
+struct _IO_FILE;
+typedef struct _IO_FILE __FILE;
+# 42 "/usr/include/stdio.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/FILE.h" 1 3 4
+
+
+
+struct _IO_FILE;
+
+
+typedef struct _IO_FILE FILE;
+# 43 "/usr/include/stdio.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h" 1 3 4
+# 35 "/usr/include/x86_64-linux-gnu/bits/types/struct_FILE.h" 3 4
+struct _IO_FILE;
+struct _IO_marker;
+struct _IO_codecvt;
+struct _IO_wide_data;
+
+
+
+
+typedef void _IO_lock_t;
+
+
+
+
+
+struct _IO_FILE
+{
+  int _flags;
+
+
+  char *_IO_read_ptr;
+  char *_IO_read_end;
+  char *_IO_read_base;
+  char *_IO_write_base;
+  char *_IO_write_ptr;
+  char *_IO_write_end;
+  char *_IO_buf_base;
+  char *_IO_buf_end;
+
+
+  char *_IO_save_base;
+  char *_IO_backup_base;
+  char *_IO_save_end;
+
+  struct _IO_marker *_markers;
+
+  struct _IO_FILE *_chain;
+
+  int _fileno;
+  int _flags2;
+  __off_t _old_offset;
+
+
+  unsigned short _cur_column;
+  signed char _vtable_offset;
+  char _shortbuf[1];
+
+  _IO_lock_t *_lock;
+
+
+
+
+
+
+
+  __off64_t _offset;
+
+  struct _IO_codecvt *_codecvt;
+  struct _IO_wide_data *_wide_data;
+  struct _IO_FILE *_freeres_list;
+  void *_freeres_buf;
+  size_t __pad5;
+  int _mode;
+
+  char _unused2[15 * sizeof (int) - 4 * sizeof (void *) - sizeof (size_t)];
+};
+# 44 "/usr/include/stdio.h" 2 3 4
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h" 1 3 4
+# 27 "/usr/include/x86_64-linux-gnu/bits/types/cookie_io_functions_t.h" 3 4
+typedef __ssize_t cookie_read_function_t (void *__cookie, char *__buf,
+                                          size_t __nbytes);
+
+
+
+
+
+
+
+typedef __ssize_t cookie_write_function_t (void *__cookie, const char *__buf,
+                                           size_t __nbytes);
+
+
+
+
+
+
+
+typedef int cookie_seek_function_t (void *__cookie, __off64_t *__pos, int __w);
+
+
+typedef int cookie_close_function_t (void *__cookie);
+
+
+
+
+
+
+typedef struct _IO_cookie_io_functions_t
+{
+  cookie_read_function_t *read;
+  cookie_write_function_t *write;
+  cookie_seek_function_t *seek;
+  cookie_close_function_t *close;
+} cookie_io_functions_t;
+# 47 "/usr/include/stdio.h" 2 3 4
+# 63 "/usr/include/stdio.h" 3 4
+typedef __off_t off_t;
+
+
+
+
+
+
+typedef __off64_t off64_t;
+
+
+
+
+
+
+typedef __ssize_t ssize_t;
+
+
+
+
+
+
+typedef __fpos_t fpos_t;
+
+
+
+
+typedef __fpos64_t fpos64_t;
+# 128 "/usr/include/stdio.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/stdio_lim.h" 1 3 4
+# 129 "/usr/include/stdio.h" 2 3 4
+# 148 "/usr/include/stdio.h" 3 4
+extern FILE *stdin;
+extern FILE *stdout;
+extern FILE *stderr;
+
+
+
+
+
+
+extern int remove (const char *__filename) __attribute__ ((__nothrow__ , __leaf__));
+
+extern int rename (const char *__old, const char *__new) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int renameat (int __oldfd, const char *__old, int __newfd,
+       const char *__new) __attribute__ ((__nothrow__ , __leaf__));
+# 175 "/usr/include/stdio.h" 3 4
+extern int renameat2 (int __oldfd, const char *__old, int __newfd,
+        const char *__new, unsigned int __flags) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern int fclose (FILE *__stream) __attribute__ ((__nonnull__ (1)));
+# 193 "/usr/include/stdio.h" 3 4
+extern FILE *tmpfile (void)
+  __attribute__ ((__malloc__)) __attribute__ ((__malloc__ (fclose, 1))) ;
+# 205 "/usr/include/stdio.h" 3 4
+extern FILE *tmpfile64 (void)
+   __attribute__ ((__malloc__)) __attribute__ ((__malloc__ (fclose, 1))) ;
+
+
+
+extern char *tmpnam (char[20]) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+extern char *tmpnam_r (char __s[20]) __attribute__ ((__nothrow__ , __leaf__)) ;
+# 227 "/usr/include/stdio.h" 3 4
+extern char *tempnam (const char *__dir, const char *__pfx)
+   __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__malloc__)) __attribute__ ((__malloc__ (__builtin_free, 1)));
+
+
+
+
+
+
+extern int fflush (FILE *__stream);
+# 244 "/usr/include/stdio.h" 3 4
+extern int fflush_unlocked (FILE *__stream);
+# 254 "/usr/include/stdio.h" 3 4
+extern int fcloseall (void);
+# 263 "/usr/include/stdio.h" 3 4
+extern FILE *fopen (const char *__restrict __filename,
+      const char *__restrict __modes)
+  __attribute__ ((__malloc__)) __attribute__ ((__malloc__ (fclose, 1))) ;
+
+
+
+
+extern FILE *freopen (const char *__restrict __filename,
+        const char *__restrict __modes,
+        FILE *__restrict __stream) __attribute__ ((__nonnull__ (3)));
+# 288 "/usr/include/stdio.h" 3 4
+extern FILE *fopen64 (const char *__restrict __filename,
+        const char *__restrict __modes)
+  __attribute__ ((__malloc__)) __attribute__ ((__malloc__ (fclose, 1))) ;
+extern FILE *freopen64 (const char *__restrict __filename,
+   const char *__restrict __modes,
+   FILE *__restrict __stream) __attribute__ ((__nonnull__ (3)));
+
+
+
+
+extern FILE *fdopen (int __fd, const char *__modes) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__malloc__)) __attribute__ ((__malloc__ (fclose, 1))) ;
+
+
+
+
+
+extern FILE *fopencookie (void *__restrict __magic_cookie,
+     const char *__restrict __modes,
+     cookie_io_functions_t __io_funcs) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__malloc__)) __attribute__ ((__malloc__ (fclose, 1))) ;
+
+
+
+
+extern FILE *fmemopen (void *__s, size_t __len, const char *__modes)
+  __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__malloc__)) __attribute__ ((__malloc__ (fclose, 1))) ;
+
+
+
+
+extern FILE *open_memstream (char **__bufloc, size_t *__sizeloc) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__malloc__)) __attribute__ ((__malloc__ (fclose, 1))) ;
+# 333 "/usr/include/stdio.h" 3 4
+extern void setbuf (FILE *__restrict __stream, char *__restrict __buf) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int setvbuf (FILE *__restrict __stream, char *__restrict __buf,
+      int __modes, size_t __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern void setbuffer (FILE *__restrict __stream, char *__restrict __buf,
+         size_t __size) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern void setlinebuf (FILE *__stream) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+extern int fprintf (FILE *__restrict __stream,
+      const char *__restrict __format, ...);
+
+
+
+
+extern int printf (const char *__restrict __format, ...);
+
+extern int sprintf (char *__restrict __s,
+      const char *__restrict __format, ...) __attribute__ ((__nothrow__));
+
+
+
+
+
+extern int vfprintf (FILE *__restrict __s, const char *__restrict __format,
+       __gnuc_va_list __arg);
+
+
+
+
+extern int vprintf (const char *__restrict __format, __gnuc_va_list __arg);
+
+extern int vsprintf (char *__restrict __s, const char *__restrict __format,
+       __gnuc_va_list __arg) __attribute__ ((__nothrow__));
+
+
+
+extern int snprintf (char *__restrict __s, size_t __maxlen,
+       const char *__restrict __format, ...)
+     __attribute__ ((__nothrow__)) __attribute__ ((__format__ (__printf__, 3, 4)));
+
+extern int vsnprintf (char *__restrict __s, size_t __maxlen,
+        const char *__restrict __format, __gnuc_va_list __arg)
+     __attribute__ ((__nothrow__)) __attribute__ ((__format__ (__printf__, 3, 0)));
+
+
+
+
+
+extern int vasprintf (char **__restrict __ptr, const char *__restrict __f,
+        __gnuc_va_list __arg)
+     __attribute__ ((__nothrow__)) __attribute__ ((__format__ (__printf__, 2, 0))) ;
+extern int __asprintf (char **__restrict __ptr,
+         const char *__restrict __fmt, ...)
+     __attribute__ ((__nothrow__)) __attribute__ ((__format__ (__printf__, 2, 3))) ;
+extern int asprintf (char **__restrict __ptr,
+       const char *__restrict __fmt, ...)
+     __attribute__ ((__nothrow__)) __attribute__ ((__format__ (__printf__, 2, 3))) ;
+
+
+
+
+extern int vdprintf (int __fd, const char *__restrict __fmt,
+       __gnuc_va_list __arg)
+     __attribute__ ((__format__ (__printf__, 2, 0)));
+extern int dprintf (int __fd, const char *__restrict __fmt, ...)
+     __attribute__ ((__format__ (__printf__, 2, 3)));
+
+
+
+
+
+
+
+extern int fscanf (FILE *__restrict __stream,
+     const char *__restrict __format, ...) ;
+
+
+
+
+extern int scanf (const char *__restrict __format, ...) ;
+
+extern int sscanf (const char *__restrict __s,
+     const char *__restrict __format, ...) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/floatn.h" 1 3 4
+# 120 "/usr/include/x86_64-linux-gnu/bits/floatn.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/floatn-common.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/floatn-common.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/long-double.h" 1 3 4
+# 25 "/usr/include/x86_64-linux-gnu/bits/floatn-common.h" 2 3 4
+# 121 "/usr/include/x86_64-linux-gnu/bits/floatn.h" 2 3 4
+# 436 "/usr/include/stdio.h" 2 3 4
+
+
+
+
+extern int fscanf (FILE *__restrict __stream, const char *__restrict __format, ...) __asm__ ("" "__isoc23_fscanf")
+
+                               ;
+extern int scanf (const char *__restrict __format, ...) __asm__ ("" "__isoc23_scanf")
+                              ;
+extern int sscanf (const char *__restrict __s, const char *__restrict __format, ...) __asm__ ("" "__isoc23_sscanf") __attribute__ ((__nothrow__ , __leaf__))
+
+                      ;
+# 486 "/usr/include/stdio.h" 3 4
+extern int vfscanf (FILE *__restrict __s, const char *__restrict __format,
+      __gnuc_va_list __arg)
+     __attribute__ ((__format__ (__scanf__, 2, 0))) ;
+
+
+
+
+
+extern int vscanf (const char *__restrict __format, __gnuc_va_list __arg)
+     __attribute__ ((__format__ (__scanf__, 1, 0))) ;
+
+
+extern int vsscanf (const char *__restrict __s,
+      const char *__restrict __format, __gnuc_va_list __arg)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__format__ (__scanf__, 2, 0)));
+
+
+
+
+
+
+extern int vfscanf (FILE *__restrict __s, const char *__restrict __format, __gnuc_va_list __arg) __asm__ ("" "__isoc23_vfscanf")
+
+
+
+     __attribute__ ((__format__ (__scanf__, 2, 0))) ;
+extern int vscanf (const char *__restrict __format, __gnuc_va_list __arg) __asm__ ("" "__isoc23_vscanf")
+
+     __attribute__ ((__format__ (__scanf__, 1, 0))) ;
+extern int vsscanf (const char *__restrict __s, const char *__restrict __format, __gnuc_va_list __arg) __asm__ ("" "__isoc23_vsscanf") __attribute__ ((__nothrow__ , __leaf__))
+
+
+
+     __attribute__ ((__format__ (__scanf__, 2, 0)));
+# 571 "/usr/include/stdio.h" 3 4
+extern int fgetc (FILE *__stream);
+extern int getc (FILE *__stream);
+
+
+
+
+
+extern int getchar (void);
+
+
+
+
+
+
+extern int getc_unlocked (FILE *__stream);
+extern int getchar_unlocked (void);
+# 596 "/usr/include/stdio.h" 3 4
+extern int fgetc_unlocked (FILE *__stream);
+# 607 "/usr/include/stdio.h" 3 4
+extern int fputc (int __c, FILE *__stream);
+extern int putc (int __c, FILE *__stream);
+
+
+
+
+
+extern int putchar (int __c);
+# 623 "/usr/include/stdio.h" 3 4
+extern int fputc_unlocked (int __c, FILE *__stream);
+
+
+
+
+
+
+
+extern int putc_unlocked (int __c, FILE *__stream);
+extern int putchar_unlocked (int __c);
+
+
+
+
+
+
+extern int getw (FILE *__stream);
+
+
+extern int putw (int __w, FILE *__stream);
+
+
+
+
+
+
+
+extern char *fgets (char *__restrict __s, int __n, FILE *__restrict __stream)
+     __attribute__ ((__access__ (__write_only__, 1, 2)));
+# 673 "/usr/include/stdio.h" 3 4
+extern char *fgets_unlocked (char *__restrict __s, int __n,
+        FILE *__restrict __stream)
+    __attribute__ ((__access__ (__write_only__, 1, 2)));
+# 690 "/usr/include/stdio.h" 3 4
+extern __ssize_t __getdelim (char **__restrict __lineptr,
+                             size_t *__restrict __n, int __delimiter,
+                             FILE *__restrict __stream) ;
+extern __ssize_t getdelim (char **__restrict __lineptr,
+                           size_t *__restrict __n, int __delimiter,
+                           FILE *__restrict __stream) ;
+
+
+
+
+
+
+
+extern __ssize_t getline (char **__restrict __lineptr,
+                          size_t *__restrict __n,
+                          FILE *__restrict __stream) ;
+
+
+
+
+
+
+
+extern int fputs (const char *__restrict __s, FILE *__restrict __stream);
+
+
+
+
+
+extern int puts (const char *__s);
+
+
+
+
+
+
+extern int ungetc (int __c, FILE *__stream);
+
+
+
+
+
+
+extern size_t fread (void *__restrict __ptr, size_t __size,
+       size_t __n, FILE *__restrict __stream) ;
+
+
+
+
+extern size_t fwrite (const void *__restrict __ptr, size_t __size,
+        size_t __n, FILE *__restrict __s);
+# 749 "/usr/include/stdio.h" 3 4
+extern int fputs_unlocked (const char *__restrict __s,
+      FILE *__restrict __stream);
+# 760 "/usr/include/stdio.h" 3 4
+extern size_t fread_unlocked (void *__restrict __ptr, size_t __size,
+         size_t __n, FILE *__restrict __stream) ;
+extern size_t fwrite_unlocked (const void *__restrict __ptr, size_t __size,
+          size_t __n, FILE *__restrict __stream);
+
+
+
+
+
+
+
+extern int fseek (FILE *__stream, long int __off, int __whence);
+
+
+
+
+extern long int ftell (FILE *__stream) ;
+
+
+
+
+extern void rewind (FILE *__stream);
+# 794 "/usr/include/stdio.h" 3 4
+extern int fseeko (FILE *__stream, __off_t __off, int __whence);
+
+
+
+
+extern __off_t ftello (FILE *__stream) ;
+# 818 "/usr/include/stdio.h" 3 4
+extern int fgetpos (FILE *__restrict __stream, fpos_t *__restrict __pos);
+
+
+
+
+extern int fsetpos (FILE *__stream, const fpos_t *__pos);
+# 837 "/usr/include/stdio.h" 3 4
+extern int fseeko64 (FILE *__stream, __off64_t __off, int __whence);
+extern __off64_t ftello64 (FILE *__stream) ;
+extern int fgetpos64 (FILE *__restrict __stream, fpos64_t *__restrict __pos);
+extern int fsetpos64 (FILE *__stream, const fpos64_t *__pos);
+
+
+
+extern void clearerr (FILE *__stream) __attribute__ ((__nothrow__ , __leaf__));
+
+extern int feof (FILE *__stream) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+extern int ferror (FILE *__stream) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+extern void clearerr_unlocked (FILE *__stream) __attribute__ ((__nothrow__ , __leaf__));
+extern int feof_unlocked (FILE *__stream) __attribute__ ((__nothrow__ , __leaf__)) ;
+extern int ferror_unlocked (FILE *__stream) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+
+
+
+extern void perror (const char *__s) __attribute__ ((__cold__));
+
+
+
+
+extern int fileno (FILE *__stream) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+extern int fileno_unlocked (FILE *__stream) __attribute__ ((__nothrow__ , __leaf__)) ;
+# 881 "/usr/include/stdio.h" 3 4
+extern int pclose (FILE *__stream);
+
+
+
+
+
+extern FILE *popen (const char *__command, const char *__modes)
+  __attribute__ ((__malloc__)) __attribute__ ((__malloc__ (pclose, 1))) ;
+
+
+
+
+
+
+extern char *ctermid (char *__s) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__access__ (__write_only__, 1)));
+
+
+
+
+
+extern char *cuserid (char *__s)
+  __attribute__ ((__access__ (__write_only__, 1)));
+
+
+
+
+struct obstack;
+
+
+extern int obstack_printf (struct obstack *__restrict __obstack,
+      const char *__restrict __format, ...)
+     __attribute__ ((__nothrow__)) __attribute__ ((__format__ (__printf__, 2, 3)));
+extern int obstack_vprintf (struct obstack *__restrict __obstack,
+       const char *__restrict __format,
+       __gnuc_va_list __args)
+     __attribute__ ((__nothrow__)) __attribute__ ((__format__ (__printf__, 2, 0)));
+
+
+
+
+
+
+
+extern void flockfile (FILE *__stream) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int ftrylockfile (FILE *__stream) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+extern void funlockfile (FILE *__stream) __attribute__ ((__nothrow__ , __leaf__));
+# 943 "/usr/include/stdio.h" 3 4
+extern int __uflow (FILE *);
+extern int __overflow (FILE *, int);
+# 967 "/usr/include/stdio.h" 3 4
+
+# 65 "./MagickCore/studio.h" 2
+
+# 1 "/usr/include/x86_64-linux-gnu/sys/stat.h" 1 3 4
+# 30 "/usr/include/x86_64-linux-gnu/sys/stat.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h" 1 3 4
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/endian.h" 1 3 4
+# 35 "/usr/include/x86_64-linux-gnu/bits/endian.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/endianness.h" 1 3 4
+# 36 "/usr/include/x86_64-linux-gnu/bits/endian.h" 2 3 4
+# 7 "/usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/time_t.h" 1 3 4
+# 10 "/usr/include/x86_64-linux-gnu/bits/types/time_t.h" 3 4
+typedef __time_t time_t;
+# 8 "/usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h" 2 3 4
+
+
+
+struct timespec
+{
+
+
+
+  __time_t tv_sec;
+
+
+
+
+  __syscall_slong_t tv_nsec;
+# 31 "/usr/include/x86_64-linux-gnu/bits/types/struct_timespec.h" 3 4
+};
+# 31 "/usr/include/x86_64-linux-gnu/sys/stat.h" 2 3 4
+# 40 "/usr/include/x86_64-linux-gnu/sys/stat.h" 3 4
+typedef __dev_t dev_t;
+
+
+
+
+typedef __gid_t gid_t;
+
+
+
+
+
+typedef __ino_t ino_t;
+
+
+
+
+
+
+
+typedef __mode_t mode_t;
+
+
+
+
+typedef __nlink_t nlink_t;
+# 78 "/usr/include/x86_64-linux-gnu/sys/stat.h" 3 4
+typedef __uid_t uid_t;
+
+
+
+
+
+
+
+typedef __blkcnt_t blkcnt_t;
+
+
+
+
+
+
+
+typedef __blksize_t blksize_t;
+
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/stat.h" 1 3 4
+# 25 "/usr/include/x86_64-linux-gnu/bits/stat.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/struct_stat.h" 1 3 4
+# 26 "/usr/include/x86_64-linux-gnu/bits/struct_stat.h" 3 4
+struct stat
+  {
+
+
+
+    __dev_t st_dev;
+
+
+
+
+    __ino_t st_ino;
+
+
+
+
+
+
+
+    __nlink_t st_nlink;
+    __mode_t st_mode;
+
+    __uid_t st_uid;
+    __gid_t st_gid;
+
+    int __pad0;
+
+    __dev_t st_rdev;
+
+
+
+
+    __off_t st_size;
+
+
+
+    __blksize_t st_blksize;
+
+    __blkcnt_t st_blocks;
+# 74 "/usr/include/x86_64-linux-gnu/bits/struct_stat.h" 3 4
+    struct timespec st_atim;
+    struct timespec st_mtim;
+    struct timespec st_ctim;
+# 89 "/usr/include/x86_64-linux-gnu/bits/struct_stat.h" 3 4
+    __syscall_slong_t __glibc_reserved[3];
+# 99 "/usr/include/x86_64-linux-gnu/bits/struct_stat.h" 3 4
+  };
+
+
+
+struct stat64
+  {
+
+
+
+    __dev_t st_dev;
+
+    __ino64_t st_ino;
+    __nlink_t st_nlink;
+    __mode_t st_mode;
+
+
+
+
+
+
+    __uid_t st_uid;
+    __gid_t st_gid;
+
+    int __pad0;
+    __dev_t st_rdev;
+    __off_t st_size;
+
+
+
+
+
+    __blksize_t st_blksize;
+    __blkcnt64_t st_blocks;
+
+
+
+
+
+
+
+    struct timespec st_atim;
+    struct timespec st_mtim;
+    struct timespec st_ctim;
+# 151 "/usr/include/x86_64-linux-gnu/bits/struct_stat.h" 3 4
+    __syscall_slong_t __glibc_reserved[3];
+
+
+
+
+  };
+# 26 "/usr/include/x86_64-linux-gnu/bits/stat.h" 2 3 4
+# 102 "/usr/include/x86_64-linux-gnu/sys/stat.h" 2 3 4
+# 205 "/usr/include/x86_64-linux-gnu/sys/stat.h" 3 4
+extern int stat (const char *__restrict __file,
+   struct stat *__restrict __buf) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+extern int fstat (int __fd, struct stat *__buf) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+# 240 "/usr/include/x86_64-linux-gnu/sys/stat.h" 3 4
+extern int stat64 (const char *__restrict __file,
+     struct stat64 *__restrict __buf) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+extern int fstat64 (int __fd, struct stat64 *__buf) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+# 264 "/usr/include/x86_64-linux-gnu/sys/stat.h" 3 4
+extern int fstatat (int __fd, const char *__restrict __file,
+      struct stat *__restrict __buf, int __flag)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2, 3)));
+# 291 "/usr/include/x86_64-linux-gnu/sys/stat.h" 3 4
+extern int fstatat64 (int __fd, const char *__restrict __file,
+        struct stat64 *__restrict __buf, int __flag)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2, 3)));
+# 313 "/usr/include/x86_64-linux-gnu/sys/stat.h" 3 4
+extern int lstat (const char *__restrict __file,
+    struct stat *__restrict __buf) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+# 338 "/usr/include/x86_64-linux-gnu/sys/stat.h" 3 4
+extern int lstat64 (const char *__restrict __file,
+      struct stat64 *__restrict __buf)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+# 352 "/usr/include/x86_64-linux-gnu/sys/stat.h" 3 4
+extern int chmod (const char *__file, __mode_t __mode)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+extern int lchmod (const char *__file, __mode_t __mode)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+extern int fchmod (int __fd, __mode_t __mode) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+extern int fchmodat (int __fd, const char *__file, __mode_t __mode,
+       int __flag)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2))) ;
+
+
+
+
+
+
+extern __mode_t umask (__mode_t __mask) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern __mode_t getumask (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int mkdir (const char *__path, __mode_t __mode)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+extern int mkdirat (int __fd, const char *__path, __mode_t __mode)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+
+
+
+extern int mknod (const char *__path, __mode_t __mode, __dev_t __dev)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+extern int mknodat (int __fd, const char *__path, __mode_t __mode,
+      __dev_t __dev) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+
+
+extern int mkfifo (const char *__path, __mode_t __mode)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+extern int mkfifoat (int __fd, const char *__path, __mode_t __mode)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+
+
+
+extern int utimensat (int __fd, const char *__path,
+        const struct timespec __times[2],
+        int __flags)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+# 452 "/usr/include/x86_64-linux-gnu/sys/stat.h" 3 4
+extern int futimens (int __fd, const struct timespec __times[2]) __attribute__ ((__nothrow__ , __leaf__));
+# 465 "/usr/include/x86_64-linux-gnu/sys/stat.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/statx.h" 1 3 4
+# 31 "/usr/include/x86_64-linux-gnu/bits/statx.h" 3 4
+# 1 "/usr/include/linux/stat.h" 1 3 4
+
+
+
+
+# 1 "/usr/include/linux/types.h" 1 3 4
+
+
+
+
+# 1 "/usr/lib/linux/uapi/x86/asm/types.h" 1 3 4
+# 1 "/usr/include/asm-generic/types.h" 1 3 4
+
+
+
+
+
+
+# 1 "/usr/include/asm-generic/int-ll64.h" 1 3 4
+# 12 "/usr/include/asm-generic/int-ll64.h" 3 4
+# 1 "/usr/lib/linux/uapi/x86/asm/bitsperlong.h" 1 3 4
+# 11 "/usr/lib/linux/uapi/x86/asm/bitsperlong.h" 3 4
+# 1 "/usr/include/asm-generic/bitsperlong.h" 1 3 4
+# 12 "/usr/lib/linux/uapi/x86/asm/bitsperlong.h" 2 3 4
+# 13 "/usr/include/asm-generic/int-ll64.h" 2 3 4
+
+
+
+
+
+
+
+typedef __signed__ char __s8;
+typedef unsigned char __u8;
+
+typedef __signed__ short __s16;
+typedef unsigned short __u16;
+
+typedef __signed__ int __s32;
+typedef unsigned int __u32;
+
+
+__extension__ typedef __signed__ long long __s64;
+__extension__ typedef unsigned long long __u64;
+# 8 "/usr/include/asm-generic/types.h" 2 3 4
+# 2 "/usr/lib/linux/uapi/x86/asm/types.h" 2 3 4
+# 6 "/usr/include/linux/types.h" 2 3 4
+
+
+
+# 1 "/usr/include/linux/posix_types.h" 1 3 4
+
+
+
+
+# 1 "/usr/include/linux/stddef.h" 1 3 4
+# 6 "/usr/include/linux/posix_types.h" 2 3 4
+# 25 "/usr/include/linux/posix_types.h" 3 4
+typedef struct {
+ unsigned long fds_bits[1024 / (8 * sizeof(long))];
+} __kernel_fd_set;
+
+
+typedef void (*__kernel_sighandler_t)(int);
+
+
+typedef int __kernel_key_t;
+typedef int __kernel_mqd_t;
+
+# 1 "/usr/lib/linux/uapi/x86/asm/posix_types.h" 1 3 4
+
+
+
+
+
+
+# 1 "/usr/lib/linux/uapi/x86/asm/posix_types_64.h" 1 3 4
+# 11 "/usr/lib/linux/uapi/x86/asm/posix_types_64.h" 3 4
+typedef unsigned short __kernel_old_uid_t;
+typedef unsigned short __kernel_old_gid_t;
+
+
+typedef unsigned long __kernel_old_dev_t;
+
+
+# 1 "/usr/include/asm-generic/posix_types.h" 1 3 4
+# 15 "/usr/include/asm-generic/posix_types.h" 3 4
+typedef long __kernel_long_t;
+typedef unsigned long __kernel_ulong_t;
+
+
+
+typedef __kernel_ulong_t __kernel_ino_t;
+
+
+
+typedef unsigned int __kernel_mode_t;
+
+
+
+typedef int __kernel_pid_t;
+
+
+
+typedef int __kernel_ipc_pid_t;
+
+
+
+typedef unsigned int __kernel_uid_t;
+typedef unsigned int __kernel_gid_t;
+
+
+
+typedef __kernel_long_t __kernel_suseconds_t;
+
+
+
+typedef int __kernel_daddr_t;
+
+
+
+typedef unsigned int __kernel_uid32_t;
+typedef unsigned int __kernel_gid32_t;
+# 72 "/usr/include/asm-generic/posix_types.h" 3 4
+typedef __kernel_ulong_t __kernel_size_t;
+typedef __kernel_long_t __kernel_ssize_t;
+typedef __kernel_long_t __kernel_ptrdiff_t;
+
+
+
+
+typedef struct {
+ int val[2];
+} __kernel_fsid_t;
+
+
+
+
+
+typedef __kernel_long_t __kernel_off_t;
+typedef long long __kernel_loff_t;
+typedef __kernel_long_t __kernel_old_time_t;
+typedef __kernel_long_t __kernel_time_t;
+typedef long long __kernel_time64_t;
+typedef __kernel_long_t __kernel_clock_t;
+typedef int __kernel_timer_t;
+typedef int __kernel_clockid_t;
+typedef char * __kernel_caddr_t;
+typedef unsigned short __kernel_uid16_t;
+typedef unsigned short __kernel_gid16_t;
+# 19 "/usr/lib/linux/uapi/x86/asm/posix_types_64.h" 2 3 4
+# 8 "/usr/lib/linux/uapi/x86/asm/posix_types.h" 2 3 4
+# 37 "/usr/include/linux/posix_types.h" 2 3 4
+# 10 "/usr/include/linux/types.h" 2 3 4
+
+
+typedef __signed__ __int128 __s128 __attribute__((aligned(16)));
+typedef unsigned __int128 __u128 __attribute__((aligned(16)));
+# 31 "/usr/include/linux/types.h" 3 4
+typedef __u16 __le16;
+typedef __u16 __be16;
+typedef __u32 __le32;
+typedef __u32 __be32;
+typedef __u64 __le64;
+typedef __u64 __be64;
+
+typedef __u16 __sum16;
+typedef __u32 __wsum;
+# 54 "/usr/include/linux/types.h" 3 4
+typedef unsigned __poll_t;
+# 6 "/usr/include/linux/stat.h" 2 3 4
+# 56 "/usr/include/linux/stat.h" 3 4
+struct statx_timestamp {
+ __s64 tv_sec;
+ __u32 tv_nsec;
+ __s32 __reserved;
+};
+# 99 "/usr/include/linux/stat.h" 3 4
+struct statx {
+
+ __u32 stx_mask;
+ __u32 stx_blksize;
+ __u64 stx_attributes;
+
+ __u32 stx_nlink;
+ __u32 stx_uid;
+ __u32 stx_gid;
+ __u16 stx_mode;
+ __u16 __spare0[1];
+
+ __u64 stx_ino;
+ __u64 stx_size;
+ __u64 stx_blocks;
+ __u64 stx_attributes_mask;
+
+ struct statx_timestamp stx_atime;
+ struct statx_timestamp stx_btime;
+ struct statx_timestamp stx_ctime;
+ struct statx_timestamp stx_mtime;
+
+ __u32 stx_rdev_major;
+ __u32 stx_rdev_minor;
+ __u32 stx_dev_major;
+ __u32 stx_dev_minor;
+
+ __u64 stx_mnt_id;
+ __u32 stx_dio_mem_align;
+ __u32 stx_dio_offset_align;
+
+ __u64 __spare3[12];
+
+};
+# 32 "/usr/include/x86_64-linux-gnu/bits/statx.h" 2 3 4
+
+
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/statx-generic.h" 1 3 4
+# 25 "/usr/include/x86_64-linux-gnu/bits/statx-generic.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/struct_statx_timestamp.h" 1 3 4
+# 26 "/usr/include/x86_64-linux-gnu/bits/statx-generic.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/struct_statx.h" 1 3 4
+# 27 "/usr/include/x86_64-linux-gnu/bits/statx-generic.h" 2 3 4
+# 58 "/usr/include/x86_64-linux-gnu/bits/statx-generic.h" 3 4
+
+
+
+int statx (int __dirfd, const char *__restrict __path, int __flags,
+           unsigned int __mask, struct statx *__restrict __buf)
+  __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2, 5)));
+
+
+# 40 "/usr/include/x86_64-linux-gnu/bits/statx.h" 2 3 4
+# 466 "/usr/include/x86_64-linux-gnu/sys/stat.h" 2 3 4
+
+
+
+# 67 "./MagickCore/studio.h" 2
+
+
+# 1 "/usr/include/stdlib.h" 1 3 4
+# 26 "/usr/include/stdlib.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/libc-header-start.h" 1 3 4
+# 27 "/usr/include/stdlib.h" 2 3 4
+
+
+
+
+
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 329 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 3 4
+typedef int wchar_t;
+# 33 "/usr/include/stdlib.h" 2 3 4
+
+
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/waitflags.h" 1 3 4
+# 41 "/usr/include/stdlib.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/waitstatus.h" 1 3 4
+# 42 "/usr/include/stdlib.h" 2 3 4
+# 59 "/usr/include/stdlib.h" 3 4
+typedef struct
+  {
+    int quot;
+    int rem;
+  } div_t;
+
+
+
+typedef struct
+  {
+    long int quot;
+    long int rem;
+  } ldiv_t;
+
+
+
+
+
+__extension__ typedef struct
+  {
+    long long int quot;
+    long long int rem;
+  } lldiv_t;
+# 98 "/usr/include/stdlib.h" 3 4
+extern size_t __ctype_get_mb_cur_max (void) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+extern double atof (const char *__nptr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1))) ;
+
+extern int atoi (const char *__nptr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1))) ;
+
+extern long int atol (const char *__nptr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1))) ;
+
+
+
+__extension__ extern long long int atoll (const char *__nptr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1))) ;
+
+
+
+extern double strtod (const char *__restrict __nptr,
+        char **__restrict __endptr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern float strtof (const char *__restrict __nptr,
+       char **__restrict __endptr) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+extern long double strtold (const char *__restrict __nptr,
+       char **__restrict __endptr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+# 141 "/usr/include/stdlib.h" 3 4
+extern _Float32 strtof32 (const char *__restrict __nptr,
+     char **__restrict __endptr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern _Float64 strtof64 (const char *__restrict __nptr,
+     char **__restrict __endptr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern _Float128 strtof128 (const char *__restrict __nptr,
+       char **__restrict __endptr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern _Float32x strtof32x (const char *__restrict __nptr,
+       char **__restrict __endptr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern _Float64x strtof64x (const char *__restrict __nptr,
+       char **__restrict __endptr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+# 177 "/usr/include/stdlib.h" 3 4
+extern long int strtol (const char *__restrict __nptr,
+   char **__restrict __endptr, int __base)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+extern unsigned long int strtoul (const char *__restrict __nptr,
+      char **__restrict __endptr, int __base)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+__extension__
+extern long long int strtoq (const char *__restrict __nptr,
+        char **__restrict __endptr, int __base)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+__extension__
+extern unsigned long long int strtouq (const char *__restrict __nptr,
+           char **__restrict __endptr, int __base)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+__extension__
+extern long long int strtoll (const char *__restrict __nptr,
+         char **__restrict __endptr, int __base)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+__extension__
+extern unsigned long long int strtoull (const char *__restrict __nptr,
+     char **__restrict __endptr, int __base)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+
+extern long int strtol (const char *__restrict __nptr, char **__restrict __endptr, int __base) __asm__ ("" "__isoc23_strtol") __attribute__ ((__nothrow__ , __leaf__))
+
+
+     __attribute__ ((__nonnull__ (1)));
+extern unsigned long int strtoul (const char *__restrict __nptr, char **__restrict __endptr, int __base) __asm__ ("" "__isoc23_strtoul") __attribute__ ((__nothrow__ , __leaf__))
+
+
+
+     __attribute__ ((__nonnull__ (1)));
+
+__extension__
+extern long long int strtoq (const char *__restrict __nptr, char **__restrict __endptr, int __base) __asm__ ("" "__isoc23_strtoll") __attribute__ ((__nothrow__ , __leaf__))
+
+
+     __attribute__ ((__nonnull__ (1)));
+__extension__
+extern unsigned long long int strtouq (const char *__restrict __nptr, char **__restrict __endptr, int __base) __asm__ ("" "__isoc23_strtoull") __attribute__ ((__nothrow__ , __leaf__))
+
+
+
+     __attribute__ ((__nonnull__ (1)));
+
+__extension__
+extern long long int strtoll (const char *__restrict __nptr, char **__restrict __endptr, int __base) __asm__ ("" "__isoc23_strtoll") __attribute__ ((__nothrow__ , __leaf__))
+
+
+     __attribute__ ((__nonnull__ (1)));
+__extension__
+extern unsigned long long int strtoull (const char *__restrict __nptr, char **__restrict __endptr, int __base) __asm__ ("" "__isoc23_strtoull") __attribute__ ((__nothrow__ , __leaf__))
+
+
+
+     __attribute__ ((__nonnull__ (1)));
+# 278 "/usr/include/stdlib.h" 3 4
+extern int strfromd (char *__dest, size_t __size, const char *__format,
+       double __f)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3)));
+
+extern int strfromf (char *__dest, size_t __size, const char *__format,
+       float __f)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3)));
+
+extern int strfroml (char *__dest, size_t __size, const char *__format,
+       long double __f)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3)));
+# 298 "/usr/include/stdlib.h" 3 4
+extern int strfromf32 (char *__dest, size_t __size, const char * __format,
+         _Float32 __f)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3)));
+
+
+
+extern int strfromf64 (char *__dest, size_t __size, const char * __format,
+         _Float64 __f)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3)));
+
+
+
+extern int strfromf128 (char *__dest, size_t __size, const char * __format,
+   _Float128 __f)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3)));
+
+
+
+extern int strfromf32x (char *__dest, size_t __size, const char * __format,
+   _Float32x __f)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3)));
+
+
+
+extern int strfromf64x (char *__dest, size_t __size, const char * __format,
+   _Float64x __f)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3)));
+# 338 "/usr/include/stdlib.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/locale_t.h" 1 3 4
+# 22 "/usr/include/x86_64-linux-gnu/bits/types/locale_t.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/__locale_t.h" 1 3 4
+# 27 "/usr/include/x86_64-linux-gnu/bits/types/__locale_t.h" 3 4
+struct __locale_struct
+{
+
+  struct __locale_data *__locales[13];
+
+
+  const unsigned short int *__ctype_b;
+  const int *__ctype_tolower;
+  const int *__ctype_toupper;
+
+
+  const char *__names[13];
+};
+
+typedef struct __locale_struct *__locale_t;
+# 23 "/usr/include/x86_64-linux-gnu/bits/types/locale_t.h" 2 3 4
+
+typedef __locale_t locale_t;
+# 339 "/usr/include/stdlib.h" 2 3 4
+
+extern long int strtol_l (const char *__restrict __nptr,
+     char **__restrict __endptr, int __base,
+     locale_t __loc) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 4)));
+
+extern unsigned long int strtoul_l (const char *__restrict __nptr,
+        char **__restrict __endptr,
+        int __base, locale_t __loc)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 4)));
+
+__extension__
+extern long long int strtoll_l (const char *__restrict __nptr,
+    char **__restrict __endptr, int __base,
+    locale_t __loc)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 4)));
+
+__extension__
+extern unsigned long long int strtoull_l (const char *__restrict __nptr,
+       char **__restrict __endptr,
+       int __base, locale_t __loc)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 4)));
+
+
+
+
+
+extern long int strtol_l (const char *__restrict __nptr, char **__restrict __endptr, int __base, locale_t __loc) __asm__ ("" "__isoc23_strtol_l") __attribute__ ((__nothrow__ , __leaf__))
+
+
+
+     __attribute__ ((__nonnull__ (1, 4)));
+extern unsigned long int strtoul_l (const char *__restrict __nptr, char **__restrict __endptr, int __base, locale_t __loc) __asm__ ("" "__isoc23_strtoul_l") __attribute__ ((__nothrow__ , __leaf__))
+
+
+
+
+     __attribute__ ((__nonnull__ (1, 4)));
+__extension__
+extern long long int strtoll_l (const char *__restrict __nptr, char **__restrict __endptr, int __base, locale_t __loc) __asm__ ("" "__isoc23_strtoll_l") __attribute__ ((__nothrow__ , __leaf__))
+
+
+
+
+     __attribute__ ((__nonnull__ (1, 4)));
+__extension__
+extern unsigned long long int strtoull_l (const char *__restrict __nptr, char **__restrict __endptr, int __base, locale_t __loc) __asm__ ("" "__isoc23_strtoull_l") __attribute__ ((__nothrow__ , __leaf__))
+
+
+
+
+     __attribute__ ((__nonnull__ (1, 4)));
+# 415 "/usr/include/stdlib.h" 3 4
+extern double strtod_l (const char *__restrict __nptr,
+   char **__restrict __endptr, locale_t __loc)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 3)));
+
+extern float strtof_l (const char *__restrict __nptr,
+         char **__restrict __endptr, locale_t __loc)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 3)));
+
+extern long double strtold_l (const char *__restrict __nptr,
+         char **__restrict __endptr,
+         locale_t __loc)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 3)));
+# 436 "/usr/include/stdlib.h" 3 4
+extern _Float32 strtof32_l (const char *__restrict __nptr,
+       char **__restrict __endptr,
+       locale_t __loc)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 3)));
+
+
+
+extern _Float64 strtof64_l (const char *__restrict __nptr,
+       char **__restrict __endptr,
+       locale_t __loc)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 3)));
+
+
+
+extern _Float128 strtof128_l (const char *__restrict __nptr,
+         char **__restrict __endptr,
+         locale_t __loc)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 3)));
+
+
+
+extern _Float32x strtof32x_l (const char *__restrict __nptr,
+         char **__restrict __endptr,
+         locale_t __loc)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 3)));
+
+
+
+extern _Float64x strtof64x_l (const char *__restrict __nptr,
+         char **__restrict __endptr,
+         locale_t __loc)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 3)));
+# 505 "/usr/include/stdlib.h" 3 4
+extern char *l64a (long int __n) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+extern long int a64l (const char *__s)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1))) ;
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/sys/types.h" 1 3 4
+# 27 "/usr/include/x86_64-linux-gnu/sys/types.h" 3 4
+
+
+
+
+
+
+typedef __u_char u_char;
+typedef __u_short u_short;
+typedef __u_int u_int;
+typedef __u_long u_long;
+typedef __quad_t quad_t;
+typedef __u_quad_t u_quad_t;
+typedef __fsid_t fsid_t;
+
+
+typedef __loff_t loff_t;
+# 54 "/usr/include/x86_64-linux-gnu/sys/types.h" 3 4
+typedef __ino64_t ino64_t;
+# 97 "/usr/include/x86_64-linux-gnu/sys/types.h" 3 4
+typedef __pid_t pid_t;
+
+
+
+
+
+typedef __id_t id_t;
+# 114 "/usr/include/x86_64-linux-gnu/sys/types.h" 3 4
+typedef __daddr_t daddr_t;
+typedef __caddr_t caddr_t;
+
+
+
+
+
+typedef __key_t key_t;
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/clock_t.h" 1 3 4
+
+
+
+
+
+
+typedef __clock_t clock_t;
+# 127 "/usr/include/x86_64-linux-gnu/sys/types.h" 2 3 4
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/clockid_t.h" 1 3 4
+
+
+
+
+
+
+typedef __clockid_t clockid_t;
+# 129 "/usr/include/x86_64-linux-gnu/sys/types.h" 2 3 4
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/timer_t.h" 1 3 4
+
+
+
+
+
+
+typedef __timer_t timer_t;
+# 131 "/usr/include/x86_64-linux-gnu/sys/types.h" 2 3 4
+
+
+
+typedef __useconds_t useconds_t;
+
+
+
+typedef __suseconds_t suseconds_t;
+
+
+
+
+
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 145 "/usr/include/x86_64-linux-gnu/sys/types.h" 2 3 4
+
+
+
+typedef unsigned long int ulong;
+typedef unsigned short int ushort;
+typedef unsigned int uint;
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/stdint-intn.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/stdint-intn.h" 3 4
+typedef __int8_t int8_t;
+typedef __int16_t int16_t;
+typedef __int32_t int32_t;
+typedef __int64_t int64_t;
+# 156 "/usr/include/x86_64-linux-gnu/sys/types.h" 2 3 4
+
+
+typedef __uint8_t u_int8_t;
+typedef __uint16_t u_int16_t;
+typedef __uint32_t u_int32_t;
+typedef __uint64_t u_int64_t;
+
+
+typedef int register_t __attribute__ ((__mode__ (__word__)));
+# 176 "/usr/include/x86_64-linux-gnu/sys/types.h" 3 4
+# 1 "/usr/include/endian.h" 1 3 4
+# 35 "/usr/include/endian.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/byteswap.h" 1 3 4
+# 33 "/usr/include/x86_64-linux-gnu/bits/byteswap.h" 3 4
+static __inline __uint16_t
+__bswap_16 (__uint16_t __bsx)
+{
+
+  return __builtin_bswap16 (__bsx);
+
+
+
+}
+
+
+
+
+
+
+static __inline __uint32_t
+__bswap_32 (__uint32_t __bsx)
+{
+
+  return __builtin_bswap32 (__bsx);
+
+
+
+}
+# 69 "/usr/include/x86_64-linux-gnu/bits/byteswap.h" 3 4
+__extension__ static __inline __uint64_t
+__bswap_64 (__uint64_t __bsx)
+{
+
+  return __builtin_bswap64 (__bsx);
+
+
+
+}
+# 36 "/usr/include/endian.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/uintn-identity.h" 1 3 4
+# 32 "/usr/include/x86_64-linux-gnu/bits/uintn-identity.h" 3 4
+static __inline __uint16_t
+__uint16_identity (__uint16_t __x)
+{
+  return __x;
+}
+
+static __inline __uint32_t
+__uint32_identity (__uint32_t __x)
+{
+  return __x;
+}
+
+static __inline __uint64_t
+__uint64_identity (__uint64_t __x)
+{
+  return __x;
+}
+# 37 "/usr/include/endian.h" 2 3 4
+# 177 "/usr/include/x86_64-linux-gnu/sys/types.h" 2 3 4
+
+
+# 1 "/usr/include/x86_64-linux-gnu/sys/select.h" 1 3 4
+# 30 "/usr/include/x86_64-linux-gnu/sys/select.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/select.h" 1 3 4
+# 31 "/usr/include/x86_64-linux-gnu/sys/select.h" 2 3 4
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/sigset_t.h" 1 3 4
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/__sigset_t.h" 1 3 4
+
+
+
+
+typedef struct
+{
+  unsigned long int __val[(1024 / (8 * sizeof (unsigned long int)))];
+} __sigset_t;
+# 5 "/usr/include/x86_64-linux-gnu/bits/types/sigset_t.h" 2 3 4
+
+
+typedef __sigset_t sigset_t;
+# 34 "/usr/include/x86_64-linux-gnu/sys/select.h" 2 3 4
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/struct_timeval.h" 1 3 4
+
+
+
+
+
+
+
+struct timeval
+{
+
+
+
+
+  __time_t tv_sec;
+  __suseconds_t tv_usec;
+
+};
+# 38 "/usr/include/x86_64-linux-gnu/sys/select.h" 2 3 4
+# 49 "/usr/include/x86_64-linux-gnu/sys/select.h" 3 4
+typedef long int __fd_mask;
+# 59 "/usr/include/x86_64-linux-gnu/sys/select.h" 3 4
+typedef struct
+  {
+
+
+
+    __fd_mask fds_bits[1024 / (8 * (int) sizeof (__fd_mask))];
+
+
+
+
+
+  } fd_set;
+
+
+
+
+
+
+typedef __fd_mask fd_mask;
+# 91 "/usr/include/x86_64-linux-gnu/sys/select.h" 3 4
+
+# 102 "/usr/include/x86_64-linux-gnu/sys/select.h" 3 4
+extern int select (int __nfds, fd_set *__restrict __readfds,
+     fd_set *__restrict __writefds,
+     fd_set *__restrict __exceptfds,
+     struct timeval *__restrict __timeout);
+# 127 "/usr/include/x86_64-linux-gnu/sys/select.h" 3 4
+extern int pselect (int __nfds, fd_set *__restrict __readfds,
+      fd_set *__restrict __writefds,
+      fd_set *__restrict __exceptfds,
+      const struct timespec *__restrict __timeout,
+      const __sigset_t *__restrict __sigmask);
+# 153 "/usr/include/x86_64-linux-gnu/sys/select.h" 3 4
+
+# 180 "/usr/include/x86_64-linux-gnu/sys/types.h" 2 3 4
+# 196 "/usr/include/x86_64-linux-gnu/sys/types.h" 3 4
+typedef __fsblkcnt_t fsblkcnt_t;
+
+
+
+typedef __fsfilcnt_t fsfilcnt_t;
+# 219 "/usr/include/x86_64-linux-gnu/sys/types.h" 3 4
+typedef __blkcnt64_t blkcnt64_t;
+typedef __fsblkcnt64_t fsblkcnt64_t;
+typedef __fsfilcnt64_t fsfilcnt64_t;
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h" 1 3 4
+# 23 "/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h" 1 3 4
+# 44 "/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h" 1 3 4
+# 21 "/usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/wordsize.h" 1 3 4
+# 22 "/usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h" 2 3 4
+# 45 "/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h" 2 3 4
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h" 1 3 4
+# 25 "/usr/include/x86_64-linux-gnu/bits/atomic_wide_counter.h" 3 4
+typedef union
+{
+  __extension__ unsigned long long int __value64;
+  struct
+  {
+    unsigned int __low;
+    unsigned int __high;
+  } __value32;
+} __atomic_wide_counter;
+# 47 "/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h" 2 3 4
+
+
+
+
+typedef struct __pthread_internal_list
+{
+  struct __pthread_internal_list *__prev;
+  struct __pthread_internal_list *__next;
+} __pthread_list_t;
+
+typedef struct __pthread_internal_slist
+{
+  struct __pthread_internal_slist *__next;
+} __pthread_slist_t;
+# 76 "/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/struct_mutex.h" 1 3 4
+# 22 "/usr/include/x86_64-linux-gnu/bits/struct_mutex.h" 3 4
+struct __pthread_mutex_s
+{
+  int __lock;
+  unsigned int __count;
+  int __owner;
+
+  unsigned int __nusers;
+
+
+
+  int __kind;
+
+  short __spins;
+  short __elision;
+  __pthread_list_t __list;
+# 53 "/usr/include/x86_64-linux-gnu/bits/struct_mutex.h" 3 4
+};
+# 77 "/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h" 2 3 4
+# 89 "/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/struct_rwlock.h" 1 3 4
+# 23 "/usr/include/x86_64-linux-gnu/bits/struct_rwlock.h" 3 4
+struct __pthread_rwlock_arch_t
+{
+  unsigned int __readers;
+  unsigned int __writers;
+  unsigned int __wrphase_futex;
+  unsigned int __writers_futex;
+  unsigned int __pad3;
+  unsigned int __pad4;
+
+  int __cur_writer;
+  int __shared;
+  signed char __rwelision;
+
+
+
+
+  unsigned char __pad1[7];
+
+
+  unsigned long int __pad2;
+
+
+  unsigned int __flags;
+# 55 "/usr/include/x86_64-linux-gnu/bits/struct_rwlock.h" 3 4
+};
+# 90 "/usr/include/x86_64-linux-gnu/bits/thread-shared-types.h" 2 3 4
+
+
+
+
+struct __pthread_cond_s
+{
+  __atomic_wide_counter __wseq;
+  __atomic_wide_counter __g1_start;
+  unsigned int __g_refs[2] ;
+  unsigned int __g_size[2];
+  unsigned int __g1_orig_size;
+  unsigned int __wrefs;
+  unsigned int __g_signals[2];
+};
+
+typedef unsigned int __tss_t;
+typedef unsigned long int __thrd_t;
+
+typedef struct
+{
+  int __data ;
+} __once_flag;
+# 24 "/usr/include/x86_64-linux-gnu/bits/pthreadtypes.h" 2 3 4
+
+
+
+typedef unsigned long int pthread_t;
+
+
+
+
+typedef union
+{
+  char __size[4];
+  int __align;
+} pthread_mutexattr_t;
+
+
+
+
+typedef union
+{
+  char __size[4];
+  int __align;
+} pthread_condattr_t;
+
+
+
+typedef unsigned int pthread_key_t;
+
+
+
+typedef int pthread_once_t;
+
+
+union pthread_attr_t
+{
+  char __size[56];
+  long int __align;
+};
+
+typedef union pthread_attr_t pthread_attr_t;
+
+
+
+
+typedef union
+{
+  struct __pthread_mutex_s __data;
+  char __size[40];
+  long int __align;
+} pthread_mutex_t;
+
+
+typedef union
+{
+  struct __pthread_cond_s __data;
+  char __size[48];
+  __extension__ long long int __align;
+} pthread_cond_t;
+
+
+
+
+
+typedef union
+{
+  struct __pthread_rwlock_arch_t __data;
+  char __size[56];
+  long int __align;
+} pthread_rwlock_t;
+
+typedef union
+{
+  char __size[8];
+  long int __align;
+} pthread_rwlockattr_t;
+
+
+
+
+
+typedef volatile int pthread_spinlock_t;
+
+
+
+
+typedef union
+{
+  char __size[32];
+  long int __align;
+} pthread_barrier_t;
+
+typedef union
+{
+  char __size[4];
+  int __align;
+} pthread_barrierattr_t;
+# 228 "/usr/include/x86_64-linux-gnu/sys/types.h" 2 3 4
+
+
+
+# 515 "/usr/include/stdlib.h" 2 3 4
+
+
+
+
+
+
+extern long int random (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern void srandom (unsigned int __seed) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+extern char *initstate (unsigned int __seed, char *__statebuf,
+   size_t __statelen) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+extern char *setstate (char *__statebuf) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+
+
+struct random_data
+  {
+    int32_t *fptr;
+    int32_t *rptr;
+    int32_t *state;
+    int rand_type;
+    int rand_deg;
+    int rand_sep;
+    int32_t *end_ptr;
+  };
+
+extern int random_r (struct random_data *__restrict __buf,
+       int32_t *__restrict __result) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+extern int srandom_r (unsigned int __seed, struct random_data *__buf)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+extern int initstate_r (unsigned int __seed, char *__restrict __statebuf,
+   size_t __statelen,
+   struct random_data *__restrict __buf)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2, 4)));
+
+extern int setstate_r (char *__restrict __statebuf,
+         struct random_data *__restrict __buf)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+
+extern int rand (void) __attribute__ ((__nothrow__ , __leaf__));
+
+extern void srand (unsigned int __seed) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int rand_r (unsigned int *__seed) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+extern double drand48 (void) __attribute__ ((__nothrow__ , __leaf__));
+extern double erand48 (unsigned short int __xsubi[3]) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern long int lrand48 (void) __attribute__ ((__nothrow__ , __leaf__));
+extern long int nrand48 (unsigned short int __xsubi[3])
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern long int mrand48 (void) __attribute__ ((__nothrow__ , __leaf__));
+extern long int jrand48 (unsigned short int __xsubi[3])
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern void srand48 (long int __seedval) __attribute__ ((__nothrow__ , __leaf__));
+extern unsigned short int *seed48 (unsigned short int __seed16v[3])
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+extern void lcong48 (unsigned short int __param[7]) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+struct drand48_data
+  {
+    unsigned short int __x[3];
+    unsigned short int __old_x[3];
+    unsigned short int __c;
+    unsigned short int __init;
+    __extension__ unsigned long long int __a;
+
+  };
+
+
+extern int drand48_r (struct drand48_data *__restrict __buffer,
+        double *__restrict __result) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+extern int erand48_r (unsigned short int __xsubi[3],
+        struct drand48_data *__restrict __buffer,
+        double *__restrict __result) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int lrand48_r (struct drand48_data *__restrict __buffer,
+        long int *__restrict __result)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+extern int nrand48_r (unsigned short int __xsubi[3],
+        struct drand48_data *__restrict __buffer,
+        long int *__restrict __result)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int mrand48_r (struct drand48_data *__restrict __buffer,
+        long int *__restrict __result)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+extern int jrand48_r (unsigned short int __xsubi[3],
+        struct drand48_data *__restrict __buffer,
+        long int *__restrict __result)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int srand48_r (long int __seedval, struct drand48_data *__buffer)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+extern int seed48_r (unsigned short int __seed16v[3],
+       struct drand48_data *__buffer) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+extern int lcong48_r (unsigned short int __param[7],
+        struct drand48_data *__buffer)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern __uint32_t arc4random (void)
+     __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+extern void arc4random_buf (void *__buf, size_t __size)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern __uint32_t arc4random_uniform (__uint32_t __upper_bound)
+     __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+extern void *malloc (size_t __size) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__malloc__))
+     __attribute__ ((__alloc_size__ (1))) ;
+
+extern void *calloc (size_t __nmemb, size_t __size)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__malloc__)) __attribute__ ((__alloc_size__ (1, 2))) ;
+
+
+
+
+
+
+extern void *realloc (void *__ptr, size_t __size)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__warn_unused_result__)) __attribute__ ((__alloc_size__ (2)));
+
+
+extern void free (void *__ptr) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+extern void *reallocarray (void *__ptr, size_t __nmemb, size_t __size)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__warn_unused_result__))
+     __attribute__ ((__alloc_size__ (2, 3)))
+    __attribute__ ((__malloc__ (__builtin_free, 1)));
+
+
+extern void *reallocarray (void *__ptr, size_t __nmemb, size_t __size)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__malloc__ (reallocarray, 1)));
+
+
+
+# 1 "/usr/include/alloca.h" 1 3 4
+# 24 "/usr/include/alloca.h" 3 4
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 25 "/usr/include/alloca.h" 2 3 4
+
+
+
+
+
+
+
+extern void *alloca (size_t __size) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+# 707 "/usr/include/stdlib.h" 2 3 4
+
+
+
+
+
+extern void *valloc (size_t __size) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__malloc__))
+     __attribute__ ((__alloc_size__ (1))) ;
+
+
+
+
+extern int posix_memalign (void **__memptr, size_t __alignment, size_t __size)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) ;
+
+
+
+
+extern void *aligned_alloc (size_t __alignment, size_t __size)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__malloc__)) __attribute__ ((__alloc_align__ (1)))
+     __attribute__ ((__alloc_size__ (2))) ;
+
+
+
+extern void abort (void) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__noreturn__));
+
+
+
+extern int atexit (void (*__func) (void)) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+
+
+extern int at_quick_exit (void (*__func) (void)) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+
+extern int on_exit (void (*__func) (int __status, void *__arg), void *__arg)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+extern void exit (int __status) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__noreturn__));
+
+
+
+
+
+extern void quick_exit (int __status) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__noreturn__));
+
+
+
+
+
+extern void _Exit (int __status) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__noreturn__));
+
+
+
+
+extern char *getenv (const char *__name) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) ;
+
+
+
+
+extern char *secure_getenv (const char *__name)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) ;
+
+
+
+
+
+
+extern int putenv (char *__string) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+extern int setenv (const char *__name, const char *__value, int __replace)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+extern int unsetenv (const char *__name) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+
+extern int clearenv (void) __attribute__ ((__nothrow__ , __leaf__));
+# 814 "/usr/include/stdlib.h" 3 4
+extern char *mktemp (char *__template) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+# 827 "/usr/include/stdlib.h" 3 4
+extern int mkstemp (char *__template) __attribute__ ((__nonnull__ (1))) ;
+# 837 "/usr/include/stdlib.h" 3 4
+extern int mkstemp64 (char *__template) __attribute__ ((__nonnull__ (1))) ;
+# 849 "/usr/include/stdlib.h" 3 4
+extern int mkstemps (char *__template, int __suffixlen) __attribute__ ((__nonnull__ (1))) ;
+# 859 "/usr/include/stdlib.h" 3 4
+extern int mkstemps64 (char *__template, int __suffixlen)
+     __attribute__ ((__nonnull__ (1))) ;
+# 870 "/usr/include/stdlib.h" 3 4
+extern char *mkdtemp (char *__template) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) ;
+# 881 "/usr/include/stdlib.h" 3 4
+extern int mkostemp (char *__template, int __flags) __attribute__ ((__nonnull__ (1))) ;
+# 891 "/usr/include/stdlib.h" 3 4
+extern int mkostemp64 (char *__template, int __flags) __attribute__ ((__nonnull__ (1))) ;
+# 901 "/usr/include/stdlib.h" 3 4
+extern int mkostemps (char *__template, int __suffixlen, int __flags)
+     __attribute__ ((__nonnull__ (1))) ;
+# 913 "/usr/include/stdlib.h" 3 4
+extern int mkostemps64 (char *__template, int __suffixlen, int __flags)
+     __attribute__ ((__nonnull__ (1))) ;
+# 923 "/usr/include/stdlib.h" 3 4
+extern int system (const char *__command) ;
+
+
+
+
+
+extern char *canonicalize_file_name (const char *__name)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) __attribute__ ((__malloc__))
+     __attribute__ ((__malloc__ (__builtin_free, 1))) ;
+# 940 "/usr/include/stdlib.h" 3 4
+extern char *realpath (const char *__restrict __name,
+         char *__restrict __resolved) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+
+
+typedef int (*__compar_fn_t) (const void *, const void *);
+
+
+typedef __compar_fn_t comparison_fn_t;
+
+
+
+typedef int (*__compar_d_fn_t) (const void *, const void *, void *);
+
+
+
+
+extern void *bsearch (const void *__key, const void *__base,
+        size_t __nmemb, size_t __size, __compar_fn_t __compar)
+     __attribute__ ((__nonnull__ (1, 2, 5))) ;
+
+
+
+
+
+
+
+extern void qsort (void *__base, size_t __nmemb, size_t __size,
+     __compar_fn_t __compar) __attribute__ ((__nonnull__ (1, 4)));
+
+extern void qsort_r (void *__base, size_t __nmemb, size_t __size,
+       __compar_d_fn_t __compar, void *__arg)
+  __attribute__ ((__nonnull__ (1, 4)));
+
+
+
+
+extern int abs (int __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)) ;
+extern long int labs (long int __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)) ;
+
+
+__extension__ extern long long int llabs (long long int __x)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)) ;
+
+
+
+
+
+
+extern div_t div (int __numer, int __denom)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)) ;
+extern ldiv_t ldiv (long int __numer, long int __denom)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)) ;
+
+
+__extension__ extern lldiv_t lldiv (long long int __numer,
+        long long int __denom)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)) ;
+# 1012 "/usr/include/stdlib.h" 3 4
+extern char *ecvt (double __value, int __ndigit, int *__restrict __decpt,
+     int *__restrict __sign) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3, 4))) ;
+
+
+
+
+extern char *fcvt (double __value, int __ndigit, int *__restrict __decpt,
+     int *__restrict __sign) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3, 4))) ;
+
+
+
+
+extern char *gcvt (double __value, int __ndigit, char *__buf)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3))) ;
+
+
+
+
+extern char *qecvt (long double __value, int __ndigit,
+      int *__restrict __decpt, int *__restrict __sign)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3, 4))) ;
+extern char *qfcvt (long double __value, int __ndigit,
+      int *__restrict __decpt, int *__restrict __sign)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3, 4))) ;
+extern char *qgcvt (long double __value, int __ndigit, char *__buf)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3))) ;
+
+
+
+
+extern int ecvt_r (double __value, int __ndigit, int *__restrict __decpt,
+     int *__restrict __sign, char *__restrict __buf,
+     size_t __len) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3, 4, 5)));
+extern int fcvt_r (double __value, int __ndigit, int *__restrict __decpt,
+     int *__restrict __sign, char *__restrict __buf,
+     size_t __len) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3, 4, 5)));
+
+extern int qecvt_r (long double __value, int __ndigit,
+      int *__restrict __decpt, int *__restrict __sign,
+      char *__restrict __buf, size_t __len)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3, 4, 5)));
+extern int qfcvt_r (long double __value, int __ndigit,
+      int *__restrict __decpt, int *__restrict __sign,
+      char *__restrict __buf, size_t __len)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3, 4, 5)));
+
+
+
+
+
+extern int mblen (const char *__s, size_t __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int mbtowc (wchar_t *__restrict __pwc,
+     const char *__restrict __s, size_t __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int wctomb (char *__s, wchar_t __wchar) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern size_t mbstowcs (wchar_t *__restrict __pwcs,
+   const char *__restrict __s, size_t __n) __attribute__ ((__nothrow__ , __leaf__))
+    __attribute__ ((__access__ (__read_only__, 2)));
+
+extern size_t wcstombs (char *__restrict __s,
+   const wchar_t *__restrict __pwcs, size_t __n)
+     __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__access__ (__write_only__, 1, 3)))
+  __attribute__ ((__access__ (__read_only__, 2)));
+
+
+
+
+
+
+extern int rpmatch (const char *__response) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) ;
+# 1099 "/usr/include/stdlib.h" 3 4
+extern int getsubopt (char **__restrict __optionp,
+        char *const *__restrict __tokens,
+        char **__restrict __valuep)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2, 3))) ;
+
+
+
+
+
+
+
+extern int posix_openpt (int __oflag) ;
+
+
+
+
+
+
+
+extern int grantpt (int __fd) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int unlockpt (int __fd) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern char *ptsname (int __fd) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+
+
+extern int ptsname_r (int __fd, char *__buf, size_t __buflen)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2))) __attribute__ ((__access__ (__write_only__, 2, 3)));
+
+
+extern int getpt (void);
+
+
+
+
+
+
+extern int getloadavg (double __loadavg[], int __nelem)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+# 1155 "/usr/include/stdlib.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/stdlib-float.h" 1 3 4
+# 1156 "/usr/include/stdlib.h" 2 3 4
+# 1167 "/usr/include/stdlib.h" 3 4
+
+# 70 "./MagickCore/studio.h" 2
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 145 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 3 4
+typedef long int ptrdiff_t;
+# 425 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 3 4
+typedef struct {
+  long long __max_align_ll __attribute__((__aligned__(__alignof__(long long))));
+  long double __max_align_ld __attribute__((__aligned__(__alignof__(long double))));
+# 436 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 3 4
+} max_align_t;
+# 71 "./MagickCore/studio.h" 2
+# 87 "./MagickCore/studio.h"
+# 1 "/usr/include/string.h" 1 3 4
+# 26 "/usr/include/string.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/libc-header-start.h" 1 3 4
+# 27 "/usr/include/string.h" 2 3 4
+
+
+
+
+
+
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 34 "/usr/include/string.h" 2 3 4
+# 43 "/usr/include/string.h" 3 4
+extern void *memcpy (void *__restrict __dest, const void *__restrict __src,
+       size_t __n) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern void *memmove (void *__dest, const void *__src, size_t __n)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+
+extern void *memccpy (void *__restrict __dest, const void *__restrict __src,
+        int __c, size_t __n)
+    __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2))) __attribute__ ((__access__ (__write_only__, 1, 4)));
+
+
+
+
+extern void *memset (void *__s, int __c, size_t __n) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int memcmp (const void *__s1, const void *__s2, size_t __n)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+# 80 "/usr/include/string.h" 3 4
+extern int __memcmpeq (const void *__s1, const void *__s2, size_t __n)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+# 107 "/usr/include/string.h" 3 4
+extern void *memchr (const void *__s, int __c, size_t __n)
+      __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1)));
+# 120 "/usr/include/string.h" 3 4
+extern void *rawmemchr (const void *__s, int __c)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1)));
+# 133 "/usr/include/string.h" 3 4
+extern void *memrchr (const void *__s, int __c, size_t __n)
+      __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1)))
+      __attribute__ ((__access__ (__read_only__, 1, 3)));
+
+
+
+
+
+extern char *strcpy (char *__restrict __dest, const char *__restrict __src)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+extern char *strncpy (char *__restrict __dest,
+        const char *__restrict __src, size_t __n)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern char *strcat (char *__restrict __dest, const char *__restrict __src)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+extern char *strncat (char *__restrict __dest, const char *__restrict __src,
+        size_t __n) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int strcmp (const char *__s1, const char *__s2)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+
+extern int strncmp (const char *__s1, const char *__s2, size_t __n)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int strcoll (const char *__s1, const char *__s2)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+
+extern size_t strxfrm (char *__restrict __dest,
+         const char *__restrict __src, size_t __n)
+    __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2))) __attribute__ ((__access__ (__write_only__, 1, 3)));
+
+
+
+
+
+
+extern int strcoll_l (const char *__s1, const char *__s2, locale_t __l)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2, 3)));
+
+
+extern size_t strxfrm_l (char *__dest, const char *__src, size_t __n,
+    locale_t __l) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2, 4)))
+     __attribute__ ((__access__ (__write_only__, 1, 3)));
+
+
+
+
+
+extern char *strdup (const char *__s)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__malloc__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+
+extern char *strndup (const char *__string, size_t __n)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__malloc__)) __attribute__ ((__nonnull__ (1)));
+# 246 "/usr/include/string.h" 3 4
+extern char *strchr (const char *__s, int __c)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1)));
+# 273 "/usr/include/string.h" 3 4
+extern char *strrchr (const char *__s, int __c)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1)));
+# 286 "/usr/include/string.h" 3 4
+extern char *strchrnul (const char *__s, int __c)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+extern size_t strcspn (const char *__s, const char *__reject)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern size_t strspn (const char *__s, const char *__accept)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+# 323 "/usr/include/string.h" 3 4
+extern char *strpbrk (const char *__s, const char *__accept)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+# 350 "/usr/include/string.h" 3 4
+extern char *strstr (const char *__haystack, const char *__needle)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+extern char *strtok (char *__restrict __s, const char *__restrict __delim)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+extern char *__strtok_r (char *__restrict __s,
+    const char *__restrict __delim,
+    char **__restrict __save_ptr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2, 3)));
+
+extern char *strtok_r (char *__restrict __s, const char *__restrict __delim,
+         char **__restrict __save_ptr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2, 3)));
+# 380 "/usr/include/string.h" 3 4
+extern char *strcasestr (const char *__haystack, const char *__needle)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+
+
+
+extern void *memmem (const void *__haystack, size_t __haystacklen,
+       const void *__needle, size_t __needlelen)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 3)))
+    __attribute__ ((__access__ (__read_only__, 1, 2)))
+    __attribute__ ((__access__ (__read_only__, 3, 4)));
+
+
+
+extern void *__mempcpy (void *__restrict __dest,
+   const void *__restrict __src, size_t __n)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+extern void *mempcpy (void *__restrict __dest,
+        const void *__restrict __src, size_t __n)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+extern size_t strlen (const char *__s)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+extern size_t strnlen (const char *__string, size_t __maxlen)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+extern char *strerror (int __errnum) __attribute__ ((__nothrow__ , __leaf__));
+# 444 "/usr/include/string.h" 3 4
+extern char *strerror_r (int __errnum, char *__buf, size_t __buflen)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2))) __attribute__ ((__access__ (__write_only__, 2, 3)));
+
+
+
+
+extern const char *strerrordesc_np (int __err) __attribute__ ((__nothrow__ , __leaf__));
+
+extern const char *strerrorname_np (int __err) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+extern char *strerror_l (int __errnum, locale_t __l) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+# 1 "/usr/include/strings.h" 1 3 4
+# 23 "/usr/include/strings.h" 3 4
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 24 "/usr/include/strings.h" 2 3 4
+
+
+
+
+
+
+
+
+
+
+extern int bcmp (const void *__s1, const void *__s2, size_t __n)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern void bcopy (const void *__src, void *__dest, size_t __n)
+  __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern void bzero (void *__s, size_t __n) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+# 68 "/usr/include/strings.h" 3 4
+extern char *index (const char *__s, int __c)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1)));
+# 96 "/usr/include/strings.h" 3 4
+extern char *rindex (const char *__s, int __c)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+
+extern int ffs (int __i) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+
+extern int ffsl (long int __l) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+__extension__ extern int ffsll (long long int __ll)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern int strcasecmp (const char *__s1, const char *__s2)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int strncasecmp (const char *__s1, const char *__s2, size_t __n)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+
+
+extern int strcasecmp_l (const char *__s1, const char *__s2, locale_t __loc)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2, 3)));
+
+
+
+extern int strncasecmp_l (const char *__s1, const char *__s2,
+     size_t __n, locale_t __loc)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2, 4)));
+
+
+
+# 463 "/usr/include/string.h" 2 3 4
+
+
+
+extern void explicit_bzero (void *__s, size_t __n) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)))
+    __attribute__ ((__access__ (__write_only__, 1, 2)));
+
+
+
+extern char *strsep (char **__restrict __stringp,
+       const char *__restrict __delim)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+extern char *strsignal (int __sig) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern const char *sigabbrev_np (int __sig) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern const char *sigdescr_np (int __sig) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern char *__stpcpy (char *__restrict __dest, const char *__restrict __src)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+extern char *stpcpy (char *__restrict __dest, const char *__restrict __src)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+extern char *__stpncpy (char *__restrict __dest,
+   const char *__restrict __src, size_t __n)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+extern char *stpncpy (char *__restrict __dest,
+        const char *__restrict __src, size_t __n)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+extern size_t strlcpy (char *__restrict __dest,
+         const char *__restrict __src, size_t __n)
+  __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2))) __attribute__ ((__access__ (__write_only__, 1, 3)));
+
+
+
+extern size_t strlcat (char *__restrict __dest,
+         const char *__restrict __src, size_t __n)
+  __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2))) __attribute__ ((__access__ (__read_write__, 1, 3)));
+
+
+
+
+extern int strverscmp (const char *__s1, const char *__s2)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern char *strfry (char *__string) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern void *memfrob (void *__s, size_t __n) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)))
+    __attribute__ ((__access__ (__read_write__, 1, 2)));
+# 540 "/usr/include/string.h" 3 4
+extern char *basename (const char *__filename) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+# 552 "/usr/include/string.h" 3 4
+
+# 88 "./MagickCore/studio.h" 2
+
+
+
+
+
+# 1 "/usr/include/inttypes.h" 1 3 4
+# 27 "/usr/include/inttypes.h" 3 4
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h" 1 3 4
+# 9 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h" 3 4
+# 1 "/usr/include/stdint.h" 1 3 4
+# 26 "/usr/include/stdint.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/libc-header-start.h" 1 3 4
+# 27 "/usr/include/stdint.h" 2 3 4
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/wchar.h" 1 3 4
+# 29 "/usr/include/stdint.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/wordsize.h" 1 3 4
+# 30 "/usr/include/stdint.h" 2 3 4
+
+
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/stdint-uintn.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/stdint-uintn.h" 3 4
+typedef __uint8_t uint8_t;
+typedef __uint16_t uint16_t;
+typedef __uint32_t uint32_t;
+typedef __uint64_t uint64_t;
+# 38 "/usr/include/stdint.h" 2 3 4
+
+
+
+
+
+typedef __int_least8_t int_least8_t;
+typedef __int_least16_t int_least16_t;
+typedef __int_least32_t int_least32_t;
+typedef __int_least64_t int_least64_t;
+
+
+typedef __uint_least8_t uint_least8_t;
+typedef __uint_least16_t uint_least16_t;
+typedef __uint_least32_t uint_least32_t;
+typedef __uint_least64_t uint_least64_t;
+
+
+
+
+
+typedef signed char int_fast8_t;
+
+typedef long int int_fast16_t;
+typedef long int int_fast32_t;
+typedef long int int_fast64_t;
+# 71 "/usr/include/stdint.h" 3 4
+typedef unsigned char uint_fast8_t;
+
+typedef unsigned long int uint_fast16_t;
+typedef unsigned long int uint_fast32_t;
+typedef unsigned long int uint_fast64_t;
+# 87 "/usr/include/stdint.h" 3 4
+typedef long int intptr_t;
+
+
+typedef unsigned long int uintptr_t;
+# 101 "/usr/include/stdint.h" 3 4
+typedef __intmax_t intmax_t;
+typedef __uintmax_t uintmax_t;
+# 10 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h" 2 3 4
+# 28 "/usr/include/inttypes.h" 2 3 4
+
+
+
+
+
+
+typedef int __gwchar_t;
+# 327 "/usr/include/inttypes.h" 3 4
+
+
+
+
+
+typedef struct
+  {
+    long int quot;
+    long int rem;
+  } imaxdiv_t;
+# 351 "/usr/include/inttypes.h" 3 4
+extern intmax_t imaxabs (intmax_t __n) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern imaxdiv_t imaxdiv (intmax_t __numer, intmax_t __denom)
+      __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern intmax_t strtoimax (const char *__restrict __nptr,
+      char **__restrict __endptr, int __base) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern uintmax_t strtoumax (const char *__restrict __nptr,
+       char ** __restrict __endptr, int __base) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern intmax_t wcstoimax (const __gwchar_t *__restrict __nptr,
+      __gwchar_t **__restrict __endptr, int __base)
+     __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern uintmax_t wcstoumax (const __gwchar_t *__restrict __nptr,
+       __gwchar_t ** __restrict __endptr, int __base)
+     __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+extern intmax_t strtoimax (const char *__restrict __nptr, char **__restrict __endptr, int __base) __asm__ ("" "__isoc23_strtoimax") __attribute__ ((__nothrow__ , __leaf__))
+
+                                         ;
+extern uintmax_t strtoumax (const char *__restrict __nptr, char **__restrict __endptr, int __base) __asm__ ("" "__isoc23_strtoumax") __attribute__ ((__nothrow__ , __leaf__))
+
+                                          ;
+extern intmax_t wcstoimax (const __gwchar_t *__restrict __nptr, __gwchar_t **__restrict __endptr, int __base) __asm__ ("" "__isoc23_wcstoimax") __attribute__ ((__nothrow__ , __leaf__))
+
+
+                       ;
+extern uintmax_t wcstoumax (const __gwchar_t *__restrict __nptr, __gwchar_t **__restrict __endptr, int __base) __asm__ ("" "__isoc23_wcstoumax") __attribute__ ((__nothrow__ , __leaf__))
+
+
+                        ;
+# 415 "/usr/include/inttypes.h" 3 4
+
+# 94 "./MagickCore/studio.h" 2
+
+
+
+
+
+# 1 "/usr/include/unistd.h" 1 3 4
+# 27 "/usr/include/unistd.h" 3 4
+
+# 202 "/usr/include/unistd.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/posix_opt.h" 1 3 4
+# 203 "/usr/include/unistd.h" 2 3 4
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/environments.h" 1 3 4
+# 22 "/usr/include/x86_64-linux-gnu/bits/environments.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/wordsize.h" 1 3 4
+# 23 "/usr/include/x86_64-linux-gnu/bits/environments.h" 2 3 4
+# 207 "/usr/include/unistd.h" 2 3 4
+# 226 "/usr/include/unistd.h" 3 4
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 227 "/usr/include/unistd.h" 2 3 4
+# 274 "/usr/include/unistd.h" 3 4
+typedef __socklen_t socklen_t;
+# 287 "/usr/include/unistd.h" 3 4
+extern int access (const char *__name, int __type) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+extern int euidaccess (const char *__name, int __type)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int eaccess (const char *__name, int __type)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int execveat (int __fd, const char *__path, char *const __argv[],
+                     char *const __envp[], int __flags)
+    __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2, 3)));
+
+
+
+
+
+
+extern int faccessat (int __fd, const char *__file, int __type, int __flag)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2))) ;
+# 339 "/usr/include/unistd.h" 3 4
+extern __off_t lseek (int __fd, __off_t __offset, int __whence) __attribute__ ((__nothrow__ , __leaf__));
+# 350 "/usr/include/unistd.h" 3 4
+extern __off64_t lseek64 (int __fd, __off64_t __offset, int __whence)
+     __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern int close (int __fd);
+
+
+
+
+extern void closefrom (int __lowfd) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+extern ssize_t read (int __fd, void *__buf, size_t __nbytes)
+    __attribute__ ((__access__ (__write_only__, 2, 3)));
+
+
+
+
+
+extern ssize_t write (int __fd, const void *__buf, size_t __n)
+    __attribute__ ((__access__ (__read_only__, 2, 3)));
+# 389 "/usr/include/unistd.h" 3 4
+extern ssize_t pread (int __fd, void *__buf, size_t __nbytes,
+        __off_t __offset)
+    __attribute__ ((__access__ (__write_only__, 2, 3)));
+
+
+
+
+
+
+extern ssize_t pwrite (int __fd, const void *__buf, size_t __n,
+         __off_t __offset)
+    __attribute__ ((__access__ (__read_only__, 2, 3)));
+# 422 "/usr/include/unistd.h" 3 4
+extern ssize_t pread64 (int __fd, void *__buf, size_t __nbytes,
+   __off64_t __offset)
+    __attribute__ ((__access__ (__write_only__, 2, 3)));
+
+
+extern ssize_t pwrite64 (int __fd, const void *__buf, size_t __n,
+    __off64_t __offset)
+    __attribute__ ((__access__ (__read_only__, 2, 3)));
+
+
+
+
+
+
+
+extern int pipe (int __pipedes[2]) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+extern int pipe2 (int __pipedes[2], int __flags) __attribute__ ((__nothrow__ , __leaf__)) ;
+# 452 "/usr/include/unistd.h" 3 4
+extern unsigned int alarm (unsigned int __seconds) __attribute__ ((__nothrow__ , __leaf__));
+# 464 "/usr/include/unistd.h" 3 4
+extern unsigned int sleep (unsigned int __seconds);
+
+
+
+
+
+
+
+extern __useconds_t ualarm (__useconds_t __value, __useconds_t __interval)
+     __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern int usleep (__useconds_t __useconds);
+# 489 "/usr/include/unistd.h" 3 4
+extern int pause (void);
+
+
+
+extern int chown (const char *__file, __uid_t __owner, __gid_t __group)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) ;
+
+
+
+extern int fchown (int __fd, __uid_t __owner, __gid_t __group) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+extern int lchown (const char *__file, __uid_t __owner, __gid_t __group)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) ;
+
+
+
+
+
+
+extern int fchownat (int __fd, const char *__file, __uid_t __owner,
+       __gid_t __group, int __flag)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2))) ;
+
+
+
+extern int chdir (const char *__path) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) ;
+
+
+
+extern int fchdir (int __fd) __attribute__ ((__nothrow__ , __leaf__)) ;
+# 531 "/usr/include/unistd.h" 3 4
+extern char *getcwd (char *__buf, size_t __size) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+
+extern char *get_current_dir_name (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+extern char *getwd (char *__buf)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) __attribute__ ((__deprecated__))
+    __attribute__ ((__access__ (__write_only__, 1)));
+
+
+
+
+extern int dup (int __fd) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+extern int dup2 (int __fd, int __fd2) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern int dup3 (int __fd, int __fd2, int __flags) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern char **__environ;
+
+extern char **environ;
+
+
+
+
+
+extern int execve (const char *__path, char *const __argv[],
+     char *const __envp[]) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+extern int fexecve (int __fd, char *const __argv[], char *const __envp[])
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+
+extern int execv (const char *__path, char *const __argv[])
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+extern int execle (const char *__path, const char *__arg, ...)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+extern int execl (const char *__path, const char *__arg, ...)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+extern int execvp (const char *__file, char *const __argv[])
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+extern int execlp (const char *__file, const char *__arg, ...)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+extern int execvpe (const char *__file, char *const __argv[],
+      char *const __envp[])
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+
+extern int nice (int __inc) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+extern void _exit (int __status) __attribute__ ((__noreturn__));
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/confname.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/confname.h" 3 4
+enum
+  {
+    _PC_LINK_MAX,
+
+    _PC_MAX_CANON,
+
+    _PC_MAX_INPUT,
+
+    _PC_NAME_MAX,
+
+    _PC_PATH_MAX,
+
+    _PC_PIPE_BUF,
+
+    _PC_CHOWN_RESTRICTED,
+
+    _PC_NO_TRUNC,
+
+    _PC_VDISABLE,
+
+    _PC_SYNC_IO,
+
+    _PC_ASYNC_IO,
+
+    _PC_PRIO_IO,
+
+    _PC_SOCK_MAXBUF,
+
+    _PC_FILESIZEBITS,
+
+    _PC_REC_INCR_XFER_SIZE,
+
+    _PC_REC_MAX_XFER_SIZE,
+
+    _PC_REC_MIN_XFER_SIZE,
+
+    _PC_REC_XFER_ALIGN,
+
+    _PC_ALLOC_SIZE_MIN,
+
+    _PC_SYMLINK_MAX,
+
+    _PC_2_SYMLINKS
+
+  };
+
+
+enum
+  {
+    _SC_ARG_MAX,
+
+    _SC_CHILD_MAX,
+
+    _SC_CLK_TCK,
+
+    _SC_NGROUPS_MAX,
+
+    _SC_OPEN_MAX,
+
+    _SC_STREAM_MAX,
+
+    _SC_TZNAME_MAX,
+
+    _SC_JOB_CONTROL,
+
+    _SC_SAVED_IDS,
+
+    _SC_REALTIME_SIGNALS,
+
+    _SC_PRIORITY_SCHEDULING,
+
+    _SC_TIMERS,
+
+    _SC_ASYNCHRONOUS_IO,
+
+    _SC_PRIORITIZED_IO,
+
+    _SC_SYNCHRONIZED_IO,
+
+    _SC_FSYNC,
+
+    _SC_MAPPED_FILES,
+
+    _SC_MEMLOCK,
+
+    _SC_MEMLOCK_RANGE,
+
+    _SC_MEMORY_PROTECTION,
+
+    _SC_MESSAGE_PASSING,
+
+    _SC_SEMAPHORES,
+
+    _SC_SHARED_MEMORY_OBJECTS,
+
+    _SC_AIO_LISTIO_MAX,
+
+    _SC_AIO_MAX,
+
+    _SC_AIO_PRIO_DELTA_MAX,
+
+    _SC_DELAYTIMER_MAX,
+
+    _SC_MQ_OPEN_MAX,
+
+    _SC_MQ_PRIO_MAX,
+
+    _SC_VERSION,
+
+    _SC_PAGESIZE,
+
+
+    _SC_RTSIG_MAX,
+
+    _SC_SEM_NSEMS_MAX,
+
+    _SC_SEM_VALUE_MAX,
+
+    _SC_SIGQUEUE_MAX,
+
+    _SC_TIMER_MAX,
+
+
+
+
+    _SC_BC_BASE_MAX,
+
+    _SC_BC_DIM_MAX,
+
+    _SC_BC_SCALE_MAX,
+
+    _SC_BC_STRING_MAX,
+
+    _SC_COLL_WEIGHTS_MAX,
+
+    _SC_EQUIV_CLASS_MAX,
+
+    _SC_EXPR_NEST_MAX,
+
+    _SC_LINE_MAX,
+
+    _SC_RE_DUP_MAX,
+
+    _SC_CHARCLASS_NAME_MAX,
+
+
+    _SC_2_VERSION,
+
+    _SC_2_C_BIND,
+
+    _SC_2_C_DEV,
+
+    _SC_2_FORT_DEV,
+
+    _SC_2_FORT_RUN,
+
+    _SC_2_SW_DEV,
+
+    _SC_2_LOCALEDEF,
+
+
+    _SC_PII,
+
+    _SC_PII_XTI,
+
+    _SC_PII_SOCKET,
+
+    _SC_PII_INTERNET,
+
+    _SC_PII_OSI,
+
+    _SC_POLL,
+
+    _SC_SELECT,
+
+    _SC_UIO_MAXIOV,
+
+    _SC_IOV_MAX = _SC_UIO_MAXIOV,
+
+    _SC_PII_INTERNET_STREAM,
+
+    _SC_PII_INTERNET_DGRAM,
+
+    _SC_PII_OSI_COTS,
+
+    _SC_PII_OSI_CLTS,
+
+    _SC_PII_OSI_M,
+
+    _SC_T_IOV_MAX,
+
+
+
+    _SC_THREADS,
+
+    _SC_THREAD_SAFE_FUNCTIONS,
+
+    _SC_GETGR_R_SIZE_MAX,
+
+    _SC_GETPW_R_SIZE_MAX,
+
+    _SC_LOGIN_NAME_MAX,
+
+    _SC_TTY_NAME_MAX,
+
+    _SC_THREAD_DESTRUCTOR_ITERATIONS,
+
+    _SC_THREAD_KEYS_MAX,
+
+    _SC_THREAD_STACK_MIN,
+
+    _SC_THREAD_THREADS_MAX,
+
+    _SC_THREAD_ATTR_STACKADDR,
+
+    _SC_THREAD_ATTR_STACKSIZE,
+
+    _SC_THREAD_PRIORITY_SCHEDULING,
+
+    _SC_THREAD_PRIO_INHERIT,
+
+    _SC_THREAD_PRIO_PROTECT,
+
+    _SC_THREAD_PROCESS_SHARED,
+
+
+    _SC_NPROCESSORS_CONF,
+
+    _SC_NPROCESSORS_ONLN,
+
+    _SC_PHYS_PAGES,
+
+    _SC_AVPHYS_PAGES,
+
+    _SC_ATEXIT_MAX,
+
+    _SC_PASS_MAX,
+
+
+    _SC_XOPEN_VERSION,
+
+    _SC_XOPEN_XCU_VERSION,
+
+    _SC_XOPEN_UNIX,
+
+    _SC_XOPEN_CRYPT,
+
+    _SC_XOPEN_ENH_I18N,
+
+    _SC_XOPEN_SHM,
+
+
+    _SC_2_CHAR_TERM,
+
+    _SC_2_C_VERSION,
+
+    _SC_2_UPE,
+
+
+    _SC_XOPEN_XPG2,
+
+    _SC_XOPEN_XPG3,
+
+    _SC_XOPEN_XPG4,
+
+
+    _SC_CHAR_BIT,
+
+    _SC_CHAR_MAX,
+
+    _SC_CHAR_MIN,
+
+    _SC_INT_MAX,
+
+    _SC_INT_MIN,
+
+    _SC_LONG_BIT,
+
+    _SC_WORD_BIT,
+
+    _SC_MB_LEN_MAX,
+
+    _SC_NZERO,
+
+    _SC_SSIZE_MAX,
+
+    _SC_SCHAR_MAX,
+
+    _SC_SCHAR_MIN,
+
+    _SC_SHRT_MAX,
+
+    _SC_SHRT_MIN,
+
+    _SC_UCHAR_MAX,
+
+    _SC_UINT_MAX,
+
+    _SC_ULONG_MAX,
+
+    _SC_USHRT_MAX,
+
+
+    _SC_NL_ARGMAX,
+
+    _SC_NL_LANGMAX,
+
+    _SC_NL_MSGMAX,
+
+    _SC_NL_NMAX,
+
+    _SC_NL_SETMAX,
+
+    _SC_NL_TEXTMAX,
+
+
+    _SC_XBS5_ILP32_OFF32,
+
+    _SC_XBS5_ILP32_OFFBIG,
+
+    _SC_XBS5_LP64_OFF64,
+
+    _SC_XBS5_LPBIG_OFFBIG,
+
+
+    _SC_XOPEN_LEGACY,
+
+    _SC_XOPEN_REALTIME,
+
+    _SC_XOPEN_REALTIME_THREADS,
+
+
+    _SC_ADVISORY_INFO,
+
+    _SC_BARRIERS,
+
+    _SC_BASE,
+
+    _SC_C_LANG_SUPPORT,
+
+    _SC_C_LANG_SUPPORT_R,
+
+    _SC_CLOCK_SELECTION,
+
+    _SC_CPUTIME,
+
+    _SC_THREAD_CPUTIME,
+
+    _SC_DEVICE_IO,
+
+    _SC_DEVICE_SPECIFIC,
+
+    _SC_DEVICE_SPECIFIC_R,
+
+    _SC_FD_MGMT,
+
+    _SC_FIFO,
+
+    _SC_PIPE,
+
+    _SC_FILE_ATTRIBUTES,
+
+    _SC_FILE_LOCKING,
+
+    _SC_FILE_SYSTEM,
+
+    _SC_MONOTONIC_CLOCK,
+
+    _SC_MULTI_PROCESS,
+
+    _SC_SINGLE_PROCESS,
+
+    _SC_NETWORKING,
+
+    _SC_READER_WRITER_LOCKS,
+
+    _SC_SPIN_LOCKS,
+
+    _SC_REGEXP,
+
+    _SC_REGEX_VERSION,
+
+    _SC_SHELL,
+
+    _SC_SIGNALS,
+
+    _SC_SPAWN,
+
+    _SC_SPORADIC_SERVER,
+
+    _SC_THREAD_SPORADIC_SERVER,
+
+    _SC_SYSTEM_DATABASE,
+
+    _SC_SYSTEM_DATABASE_R,
+
+    _SC_TIMEOUTS,
+
+    _SC_TYPED_MEMORY_OBJECTS,
+
+    _SC_USER_GROUPS,
+
+    _SC_USER_GROUPS_R,
+
+    _SC_2_PBS,
+
+    _SC_2_PBS_ACCOUNTING,
+
+    _SC_2_PBS_LOCATE,
+
+    _SC_2_PBS_MESSAGE,
+
+    _SC_2_PBS_TRACK,
+
+    _SC_SYMLOOP_MAX,
+
+    _SC_STREAMS,
+
+    _SC_2_PBS_CHECKPOINT,
+
+
+    _SC_V6_ILP32_OFF32,
+
+    _SC_V6_ILP32_OFFBIG,
+
+    _SC_V6_LP64_OFF64,
+
+    _SC_V6_LPBIG_OFFBIG,
+
+
+    _SC_HOST_NAME_MAX,
+
+    _SC_TRACE,
+
+    _SC_TRACE_EVENT_FILTER,
+
+    _SC_TRACE_INHERIT,
+
+    _SC_TRACE_LOG,
+
+
+    _SC_LEVEL1_ICACHE_SIZE,
+
+    _SC_LEVEL1_ICACHE_ASSOC,
+
+    _SC_LEVEL1_ICACHE_LINESIZE,
+
+    _SC_LEVEL1_DCACHE_SIZE,
+
+    _SC_LEVEL1_DCACHE_ASSOC,
+
+    _SC_LEVEL1_DCACHE_LINESIZE,
+
+    _SC_LEVEL2_CACHE_SIZE,
+
+    _SC_LEVEL2_CACHE_ASSOC,
+
+    _SC_LEVEL2_CACHE_LINESIZE,
+
+    _SC_LEVEL3_CACHE_SIZE,
+
+    _SC_LEVEL3_CACHE_ASSOC,
+
+    _SC_LEVEL3_CACHE_LINESIZE,
+
+    _SC_LEVEL4_CACHE_SIZE,
+
+    _SC_LEVEL4_CACHE_ASSOC,
+
+    _SC_LEVEL4_CACHE_LINESIZE,
+
+
+
+    _SC_IPV6 = _SC_LEVEL1_ICACHE_SIZE + 50,
+
+    _SC_RAW_SOCKETS,
+
+
+    _SC_V7_ILP32_OFF32,
+
+    _SC_V7_ILP32_OFFBIG,
+
+    _SC_V7_LP64_OFF64,
+
+    _SC_V7_LPBIG_OFFBIG,
+
+
+    _SC_SS_REPL_MAX,
+
+
+    _SC_TRACE_EVENT_NAME_MAX,
+
+    _SC_TRACE_NAME_MAX,
+
+    _SC_TRACE_SYS_MAX,
+
+    _SC_TRACE_USER_EVENT_MAX,
+
+
+    _SC_XOPEN_STREAMS,
+
+
+    _SC_THREAD_ROBUST_PRIO_INHERIT,
+
+    _SC_THREAD_ROBUST_PRIO_PROTECT,
+
+
+    _SC_MINSIGSTKSZ,
+
+
+    _SC_SIGSTKSZ
+
+  };
+
+
+enum
+  {
+    _CS_PATH,
+
+
+    _CS_V6_WIDTH_RESTRICTED_ENVS,
+
+
+
+    _CS_GNU_LIBC_VERSION,
+
+    _CS_GNU_LIBPTHREAD_VERSION,
+
+
+    _CS_V5_WIDTH_RESTRICTED_ENVS,
+
+
+
+    _CS_V7_WIDTH_RESTRICTED_ENVS,
+
+
+
+    _CS_LFS_CFLAGS = 1000,
+
+    _CS_LFS_LDFLAGS,
+
+    _CS_LFS_LIBS,
+
+    _CS_LFS_LINTFLAGS,
+
+    _CS_LFS64_CFLAGS,
+
+    _CS_LFS64_LDFLAGS,
+
+    _CS_LFS64_LIBS,
+
+    _CS_LFS64_LINTFLAGS,
+
+
+    _CS_XBS5_ILP32_OFF32_CFLAGS = 1100,
+
+    _CS_XBS5_ILP32_OFF32_LDFLAGS,
+
+    _CS_XBS5_ILP32_OFF32_LIBS,
+
+    _CS_XBS5_ILP32_OFF32_LINTFLAGS,
+
+    _CS_XBS5_ILP32_OFFBIG_CFLAGS,
+
+    _CS_XBS5_ILP32_OFFBIG_LDFLAGS,
+
+    _CS_XBS5_ILP32_OFFBIG_LIBS,
+
+    _CS_XBS5_ILP32_OFFBIG_LINTFLAGS,
+
+    _CS_XBS5_LP64_OFF64_CFLAGS,
+
+    _CS_XBS5_LP64_OFF64_LDFLAGS,
+
+    _CS_XBS5_LP64_OFF64_LIBS,
+
+    _CS_XBS5_LP64_OFF64_LINTFLAGS,
+
+    _CS_XBS5_LPBIG_OFFBIG_CFLAGS,
+
+    _CS_XBS5_LPBIG_OFFBIG_LDFLAGS,
+
+    _CS_XBS5_LPBIG_OFFBIG_LIBS,
+
+    _CS_XBS5_LPBIG_OFFBIG_LINTFLAGS,
+
+
+    _CS_POSIX_V6_ILP32_OFF32_CFLAGS,
+
+    _CS_POSIX_V6_ILP32_OFF32_LDFLAGS,
+
+    _CS_POSIX_V6_ILP32_OFF32_LIBS,
+
+    _CS_POSIX_V6_ILP32_OFF32_LINTFLAGS,
+
+    _CS_POSIX_V6_ILP32_OFFBIG_CFLAGS,
+
+    _CS_POSIX_V6_ILP32_OFFBIG_LDFLAGS,
+
+    _CS_POSIX_V6_ILP32_OFFBIG_LIBS,
+
+    _CS_POSIX_V6_ILP32_OFFBIG_LINTFLAGS,
+
+    _CS_POSIX_V6_LP64_OFF64_CFLAGS,
+
+    _CS_POSIX_V6_LP64_OFF64_LDFLAGS,
+
+    _CS_POSIX_V6_LP64_OFF64_LIBS,
+
+    _CS_POSIX_V6_LP64_OFF64_LINTFLAGS,
+
+    _CS_POSIX_V6_LPBIG_OFFBIG_CFLAGS,
+
+    _CS_POSIX_V6_LPBIG_OFFBIG_LDFLAGS,
+
+    _CS_POSIX_V6_LPBIG_OFFBIG_LIBS,
+
+    _CS_POSIX_V6_LPBIG_OFFBIG_LINTFLAGS,
+
+
+    _CS_POSIX_V7_ILP32_OFF32_CFLAGS,
+
+    _CS_POSIX_V7_ILP32_OFF32_LDFLAGS,
+
+    _CS_POSIX_V7_ILP32_OFF32_LIBS,
+
+    _CS_POSIX_V7_ILP32_OFF32_LINTFLAGS,
+
+    _CS_POSIX_V7_ILP32_OFFBIG_CFLAGS,
+
+    _CS_POSIX_V7_ILP32_OFFBIG_LDFLAGS,
+
+    _CS_POSIX_V7_ILP32_OFFBIG_LIBS,
+
+    _CS_POSIX_V7_ILP32_OFFBIG_LINTFLAGS,
+
+    _CS_POSIX_V7_LP64_OFF64_CFLAGS,
+
+    _CS_POSIX_V7_LP64_OFF64_LDFLAGS,
+
+    _CS_POSIX_V7_LP64_OFF64_LIBS,
+
+    _CS_POSIX_V7_LP64_OFF64_LINTFLAGS,
+
+    _CS_POSIX_V7_LPBIG_OFFBIG_CFLAGS,
+
+    _CS_POSIX_V7_LPBIG_OFFBIG_LDFLAGS,
+
+    _CS_POSIX_V7_LPBIG_OFFBIG_LIBS,
+
+    _CS_POSIX_V7_LPBIG_OFFBIG_LINTFLAGS,
+
+
+    _CS_V6_ENV,
+
+    _CS_V7_ENV
+
+  };
+# 631 "/usr/include/unistd.h" 2 3 4
+
+
+extern long int pathconf (const char *__path, int __name)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern long int fpathconf (int __fd, int __name) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern long int sysconf (int __name) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern size_t confstr (int __name, char *__buf, size_t __len) __attribute__ ((__nothrow__ , __leaf__))
+    __attribute__ ((__access__ (__write_only__, 2, 3)));
+
+
+
+
+extern __pid_t getpid (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern __pid_t getppid (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern __pid_t getpgrp (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern __pid_t __getpgid (__pid_t __pid) __attribute__ ((__nothrow__ , __leaf__));
+
+extern __pid_t getpgid (__pid_t __pid) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern int setpgid (__pid_t __pid, __pid_t __pgid) __attribute__ ((__nothrow__ , __leaf__));
+# 682 "/usr/include/unistd.h" 3 4
+extern int setpgrp (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern __pid_t setsid (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern __pid_t getsid (__pid_t __pid) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern __uid_t getuid (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern __uid_t geteuid (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern __gid_t getgid (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern __gid_t getegid (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern int getgroups (int __size, __gid_t __list[]) __attribute__ ((__nothrow__ , __leaf__))
+    __attribute__ ((__access__ (__write_only__, 2, 1)));
+
+
+extern int group_member (__gid_t __gid) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern int setuid (__uid_t __uid) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+extern int setreuid (__uid_t __ruid, __uid_t __euid) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+extern int seteuid (__uid_t __uid) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+
+
+extern int setgid (__gid_t __gid) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+extern int setregid (__gid_t __rgid, __gid_t __egid) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+extern int setegid (__gid_t __gid) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+
+extern int getresuid (__uid_t *__ruid, __uid_t *__euid, __uid_t *__suid)
+     __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int getresgid (__gid_t *__rgid, __gid_t *__egid, __gid_t *__sgid)
+     __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int setresuid (__uid_t __ruid, __uid_t __euid, __uid_t __suid)
+     __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+extern int setresgid (__gid_t __rgid, __gid_t __egid, __gid_t __sgid)
+     __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+
+
+extern __pid_t fork (void) __attribute__ ((__nothrow__));
+
+
+
+
+
+
+
+extern __pid_t vfork (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern __pid_t _Fork (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+extern char *ttyname (int __fd) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int ttyname_r (int __fd, char *__buf, size_t __buflen)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)))
+     __attribute__ ((__access__ (__write_only__, 2, 3)));
+
+
+
+extern int isatty (int __fd) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern int ttyslot (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern int link (const char *__from, const char *__to)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2))) ;
+
+
+
+
+extern int linkat (int __fromfd, const char *__from, int __tofd,
+     const char *__to, int __flags)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2, 4))) ;
+
+
+
+
+extern int symlink (const char *__from, const char *__to)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2))) ;
+
+
+
+
+extern ssize_t readlink (const char *__restrict __path,
+    char *__restrict __buf, size_t __len)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)))
+     __attribute__ ((__access__ (__write_only__, 2, 3)));
+
+
+
+
+
+extern int symlinkat (const char *__from, int __tofd,
+        const char *__to) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 3))) ;
+
+
+extern ssize_t readlinkat (int __fd, const char *__restrict __path,
+      char *__restrict __buf, size_t __len)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2, 3)))
+     __attribute__ ((__access__ (__write_only__, 3, 4)));
+
+
+
+extern int unlink (const char *__name) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern int unlinkat (int __fd, const char *__name, int __flag)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+extern int rmdir (const char *__path) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern __pid_t tcgetpgrp (int __fd) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int tcsetpgrp (int __fd, __pid_t __pgrp_id) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern char *getlogin (void);
+
+
+
+
+
+
+
+extern int getlogin_r (char *__name, size_t __name_len) __attribute__ ((__nonnull__ (1)))
+    __attribute__ ((__access__ (__write_only__, 1, 2)));
+
+
+
+
+extern int setlogin (const char *__name) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/getopt_posix.h" 1 3 4
+# 27 "/usr/include/x86_64-linux-gnu/bits/getopt_posix.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/getopt_core.h" 1 3 4
+# 28 "/usr/include/x86_64-linux-gnu/bits/getopt_core.h" 3 4
+
+
+
+
+
+
+
+
+extern char *optarg;
+# 50 "/usr/include/x86_64-linux-gnu/bits/getopt_core.h" 3 4
+extern int optind;
+
+
+
+
+extern int opterr;
+
+
+
+extern int optopt;
+# 91 "/usr/include/x86_64-linux-gnu/bits/getopt_core.h" 3 4
+extern int getopt (int ___argc, char *const *___argv, const char *__shortopts)
+       __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2, 3)));
+
+
+# 28 "/usr/include/x86_64-linux-gnu/bits/getopt_posix.h" 2 3 4
+
+
+# 49 "/usr/include/x86_64-linux-gnu/bits/getopt_posix.h" 3 4
+
+# 904 "/usr/include/unistd.h" 2 3 4
+
+
+
+
+
+
+
+extern int gethostname (char *__name, size_t __len) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)))
+    __attribute__ ((__access__ (__write_only__, 1, 2)));
+
+
+
+
+
+
+extern int sethostname (const char *__name, size_t __len)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) __attribute__ ((__access__ (__read_only__, 1, 2)));
+
+
+
+extern int sethostid (long int __id) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+
+extern int getdomainname (char *__name, size_t __len)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)))
+     __attribute__ ((__access__ (__write_only__, 1, 2)));
+extern int setdomainname (const char *__name, size_t __len)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) __attribute__ ((__access__ (__read_only__, 1, 2)));
+
+
+
+
+extern int vhangup (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int revoke (const char *__file) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) ;
+
+
+
+
+
+
+
+extern int profil (unsigned short int *__sample_buffer, size_t __size,
+     size_t __offset, unsigned int __scale)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+extern int acct (const char *__name) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern char *getusershell (void) __attribute__ ((__nothrow__ , __leaf__));
+extern void endusershell (void) __attribute__ ((__nothrow__ , __leaf__));
+extern void setusershell (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+extern int daemon (int __nochdir, int __noclose) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+
+
+extern int chroot (const char *__path) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) ;
+
+
+
+extern char *getpass (const char *__prompt) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+
+
+extern int fsync (int __fd);
+
+
+
+
+
+extern int syncfs (int __fd) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern long int gethostid (void);
+
+
+extern void sync (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+extern int getpagesize (void) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern int getdtablesize (void) __attribute__ ((__nothrow__ , __leaf__));
+# 1026 "/usr/include/unistd.h" 3 4
+extern int truncate (const char *__file, __off_t __length)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) ;
+# 1038 "/usr/include/unistd.h" 3 4
+extern int truncate64 (const char *__file, __off64_t __length)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) ;
+# 1049 "/usr/include/unistd.h" 3 4
+extern int ftruncate (int __fd, __off_t __length) __attribute__ ((__nothrow__ , __leaf__)) ;
+# 1059 "/usr/include/unistd.h" 3 4
+extern int ftruncate64 (int __fd, __off64_t __length) __attribute__ ((__nothrow__ , __leaf__)) ;
+# 1070 "/usr/include/unistd.h" 3 4
+extern int brk (void *__addr) __attribute__ ((__nothrow__ , __leaf__)) ;
+
+
+
+
+
+extern void *sbrk (intptr_t __delta) __attribute__ ((__nothrow__ , __leaf__));
+# 1091 "/usr/include/unistd.h" 3 4
+extern long int syscall (long int __sysno, ...) __attribute__ ((__nothrow__ , __leaf__));
+# 1114 "/usr/include/unistd.h" 3 4
+extern int lockf (int __fd, int __cmd, __off_t __len) ;
+# 1124 "/usr/include/unistd.h" 3 4
+extern int lockf64 (int __fd, int __cmd, __off64_t __len) ;
+# 1142 "/usr/include/unistd.h" 3 4
+ssize_t copy_file_range (int __infd, __off64_t *__pinoff,
+    int __outfd, __off64_t *__poutoff,
+    size_t __length, unsigned int __flags);
+
+
+
+
+
+extern int fdatasync (int __fildes);
+# 1159 "/usr/include/unistd.h" 3 4
+extern char *crypt (const char *__key, const char *__salt)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+
+
+
+extern void swab (const void *__restrict __from, void *__restrict __to,
+    ssize_t __n) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)))
+    __attribute__ ((__access__ (__read_only__, 1, 3)))
+    __attribute__ ((__access__ (__write_only__, 2, 3)));
+# 1198 "/usr/include/unistd.h" 3 4
+int getentropy (void *__buffer, size_t __length)
+    __attribute__ ((__access__ (__write_only__, 1, 2)));
+# 1208 "/usr/include/unistd.h" 3 4
+extern int close_range (unsigned int __fd, unsigned int __max_fd,
+   int __flags) __attribute__ ((__nothrow__ , __leaf__));
+# 1218 "/usr/include/unistd.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/unistd_ext.h" 1 3 4
+# 34 "/usr/include/x86_64-linux-gnu/bits/unistd_ext.h" 3 4
+extern __pid_t gettid (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+# 1 "/usr/include/linux/close_range.h" 1 3 4
+# 39 "/usr/include/x86_64-linux-gnu/bits/unistd_ext.h" 2 3 4
+# 1219 "/usr/include/unistd.h" 2 3 4
+
+
+# 100 "./MagickCore/studio.h" 2
+# 114 "./MagickCore/studio.h"
+# 1 "/usr/include/ctype.h" 1 3 4
+# 28 "/usr/include/ctype.h" 3 4
+
+# 46 "/usr/include/ctype.h" 3 4
+enum
+{
+  _ISupper = ((0) < 8 ? ((1 << (0)) << 8) : ((1 << (0)) >> 8)),
+  _ISlower = ((1) < 8 ? ((1 << (1)) << 8) : ((1 << (1)) >> 8)),
+  _ISalpha = ((2) < 8 ? ((1 << (2)) << 8) : ((1 << (2)) >> 8)),
+  _ISdigit = ((3) < 8 ? ((1 << (3)) << 8) : ((1 << (3)) >> 8)),
+  _ISxdigit = ((4) < 8 ? ((1 << (4)) << 8) : ((1 << (4)) >> 8)),
+  _ISspace = ((5) < 8 ? ((1 << (5)) << 8) : ((1 << (5)) >> 8)),
+  _ISprint = ((6) < 8 ? ((1 << (6)) << 8) : ((1 << (6)) >> 8)),
+  _ISgraph = ((7) < 8 ? ((1 << (7)) << 8) : ((1 << (7)) >> 8)),
+  _ISblank = ((8) < 8 ? ((1 << (8)) << 8) : ((1 << (8)) >> 8)),
+  _IScntrl = ((9) < 8 ? ((1 << (9)) << 8) : ((1 << (9)) >> 8)),
+  _ISpunct = ((10) < 8 ? ((1 << (10)) << 8) : ((1 << (10)) >> 8)),
+  _ISalnum = ((11) < 8 ? ((1 << (11)) << 8) : ((1 << (11)) >> 8))
+};
+# 79 "/usr/include/ctype.h" 3 4
+extern const unsigned short int **__ctype_b_loc (void)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+extern const __int32_t **__ctype_tolower_loc (void)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+extern const __int32_t **__ctype_toupper_loc (void)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+# 108 "/usr/include/ctype.h" 3 4
+extern int isalnum (int) __attribute__ ((__nothrow__ , __leaf__));
+extern int isalpha (int) __attribute__ ((__nothrow__ , __leaf__));
+extern int iscntrl (int) __attribute__ ((__nothrow__ , __leaf__));
+extern int isdigit (int) __attribute__ ((__nothrow__ , __leaf__));
+extern int islower (int) __attribute__ ((__nothrow__ , __leaf__));
+extern int isgraph (int) __attribute__ ((__nothrow__ , __leaf__));
+extern int isprint (int) __attribute__ ((__nothrow__ , __leaf__));
+extern int ispunct (int) __attribute__ ((__nothrow__ , __leaf__));
+extern int isspace (int) __attribute__ ((__nothrow__ , __leaf__));
+extern int isupper (int) __attribute__ ((__nothrow__ , __leaf__));
+extern int isxdigit (int) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int tolower (int __c) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int toupper (int __c) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern int isblank (int) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern int isctype (int __c, int __mask) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern int isascii (int __c) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int toascii (int __c) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int _toupper (int) __attribute__ ((__nothrow__ , __leaf__));
+extern int _tolower (int) __attribute__ ((__nothrow__ , __leaf__));
+# 251 "/usr/include/ctype.h" 3 4
+extern int isalnum_l (int, locale_t) __attribute__ ((__nothrow__ , __leaf__));
+extern int isalpha_l (int, locale_t) __attribute__ ((__nothrow__ , __leaf__));
+extern int iscntrl_l (int, locale_t) __attribute__ ((__nothrow__ , __leaf__));
+extern int isdigit_l (int, locale_t) __attribute__ ((__nothrow__ , __leaf__));
+extern int islower_l (int, locale_t) __attribute__ ((__nothrow__ , __leaf__));
+extern int isgraph_l (int, locale_t) __attribute__ ((__nothrow__ , __leaf__));
+extern int isprint_l (int, locale_t) __attribute__ ((__nothrow__ , __leaf__));
+extern int ispunct_l (int, locale_t) __attribute__ ((__nothrow__ , __leaf__));
+extern int isspace_l (int, locale_t) __attribute__ ((__nothrow__ , __leaf__));
+extern int isupper_l (int, locale_t) __attribute__ ((__nothrow__ , __leaf__));
+extern int isxdigit_l (int, locale_t) __attribute__ ((__nothrow__ , __leaf__));
+
+extern int isblank_l (int, locale_t) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int __tolower_l (int __c, locale_t __l) __attribute__ ((__nothrow__ , __leaf__));
+extern int tolower_l (int __c, locale_t __l) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int __toupper_l (int __c, locale_t __l) __attribute__ ((__nothrow__ , __leaf__));
+extern int toupper_l (int __c, locale_t __l) __attribute__ ((__nothrow__ , __leaf__));
+# 327 "/usr/include/ctype.h" 3 4
+
+# 115 "./MagickCore/studio.h" 2
+# 1 "/usr/include/locale.h" 1 3 4
+# 28 "/usr/include/locale.h" 3 4
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 29 "/usr/include/locale.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/locale.h" 1 3 4
+# 30 "/usr/include/locale.h" 2 3 4
+
+
+# 51 "/usr/include/locale.h" 3 4
+struct lconv
+{
+
+
+  char *decimal_point;
+  char *thousands_sep;
+
+
+
+
+
+  char *grouping;
+
+
+
+
+
+  char *int_curr_symbol;
+  char *currency_symbol;
+  char *mon_decimal_point;
+  char *mon_thousands_sep;
+  char *mon_grouping;
+  char *positive_sign;
+  char *negative_sign;
+  char int_frac_digits;
+  char frac_digits;
+
+  char p_cs_precedes;
+
+  char p_sep_by_space;
+
+  char n_cs_precedes;
+
+  char n_sep_by_space;
+
+
+
+
+
+
+  char p_sign_posn;
+  char n_sign_posn;
+
+
+  char int_p_cs_precedes;
+
+  char int_p_sep_by_space;
+
+  char int_n_cs_precedes;
+
+  char int_n_sep_by_space;
+
+
+
+
+
+
+  char int_p_sign_posn;
+  char int_n_sign_posn;
+# 118 "/usr/include/locale.h" 3 4
+};
+
+
+
+extern char *setlocale (int __category, const char *__locale) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern struct lconv *localeconv (void) __attribute__ ((__nothrow__ , __leaf__));
+# 141 "/usr/include/locale.h" 3 4
+extern locale_t newlocale (int __category_mask, const char *__locale,
+      locale_t __base) __attribute__ ((__nothrow__ , __leaf__));
+# 176 "/usr/include/locale.h" 3 4
+extern locale_t duplocale (locale_t __dataset) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern void freelocale (locale_t __dataset) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern locale_t uselocale (locale_t __dataset) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+
+# 116 "./MagickCore/studio.h" 2
+# 1 "/usr/include/errno.h" 1 3 4
+# 28 "/usr/include/errno.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/errno.h" 1 3 4
+# 26 "/usr/include/x86_64-linux-gnu/bits/errno.h" 3 4
+# 1 "/usr/include/linux/errno.h" 1 3 4
+# 1 "/usr/lib/linux/uapi/x86/asm/errno.h" 1 3 4
+# 1 "/usr/include/asm-generic/errno.h" 1 3 4
+
+
+
+
+# 1 "/usr/include/asm-generic/errno-base.h" 1 3 4
+# 6 "/usr/include/asm-generic/errno.h" 2 3 4
+# 2 "/usr/lib/linux/uapi/x86/asm/errno.h" 2 3 4
+# 2 "/usr/include/linux/errno.h" 2 3 4
+# 27 "/usr/include/x86_64-linux-gnu/bits/errno.h" 2 3 4
+# 29 "/usr/include/errno.h" 2 3 4
+
+
+
+
+
+
+
+
+extern int *__errno_location (void) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+
+
+
+extern char *program_invocation_name;
+extern char *program_invocation_short_name;
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/error_t.h" 1 3 4
+# 22 "/usr/include/x86_64-linux-gnu/bits/types/error_t.h" 3 4
+typedef int error_t;
+# 49 "/usr/include/errno.h" 2 3 4
+
+
+
+
+# 117 "./MagickCore/studio.h" 2
+# 1 "/usr/include/fcntl.h" 1 3 4
+# 28 "/usr/include/fcntl.h" 3 4
+
+
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/fcntl.h" 1 3 4
+# 35 "/usr/include/x86_64-linux-gnu/bits/fcntl.h" 3 4
+struct flock
+  {
+    short int l_type;
+    short int l_whence;
+
+    __off_t l_start;
+    __off_t l_len;
+
+
+
+
+    __pid_t l_pid;
+  };
+
+
+struct flock64
+  {
+    short int l_type;
+    short int l_whence;
+    __off64_t l_start;
+    __off64_t l_len;
+    __pid_t l_pid;
+  };
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/fcntl-linux.h" 1 3 4
+# 38 "/usr/include/x86_64-linux-gnu/bits/fcntl-linux.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/struct_iovec.h" 1 3 4
+# 23 "/usr/include/x86_64-linux-gnu/bits/types/struct_iovec.h" 3 4
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/types/struct_iovec.h" 2 3 4
+
+
+struct iovec
+  {
+    void *iov_base;
+    size_t iov_len;
+  };
+# 39 "/usr/include/x86_64-linux-gnu/bits/fcntl-linux.h" 2 3 4
+# 265 "/usr/include/x86_64-linux-gnu/bits/fcntl-linux.h" 3 4
+enum __pid_type
+  {
+    F_OWNER_TID = 0,
+    F_OWNER_PID,
+    F_OWNER_PGRP,
+    F_OWNER_GID = F_OWNER_PGRP
+  };
+
+
+struct f_owner_ex
+  {
+    enum __pid_type type;
+    __pid_t pid;
+  };
+# 354 "/usr/include/x86_64-linux-gnu/bits/fcntl-linux.h" 3 4
+# 1 "/usr/include/linux/falloc.h" 1 3 4
+# 355 "/usr/include/x86_64-linux-gnu/bits/fcntl-linux.h" 2 3 4
+
+
+
+struct file_handle
+{
+  unsigned int handle_bytes;
+  int handle_type;
+
+  unsigned char f_handle[0];
+};
+
+
+
+
+
+
+
+
+
+
+extern __ssize_t readahead (int __fd, __off64_t __offset, size_t __count)
+    __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern int sync_file_range (int __fd, __off64_t __offset, __off64_t __count,
+       unsigned int __flags);
+
+
+
+
+
+
+extern __ssize_t vmsplice (int __fdout, const struct iovec *__iov,
+      size_t __count, unsigned int __flags);
+
+
+
+
+
+extern __ssize_t splice (int __fdin, __off64_t *__offin, int __fdout,
+    __off64_t *__offout, size_t __len,
+    unsigned int __flags);
+
+
+
+
+
+extern __ssize_t tee (int __fdin, int __fdout, size_t __len,
+        unsigned int __flags);
+
+
+
+
+
+
+extern int fallocate (int __fd, int __mode, __off_t __offset, __off_t __len);
+# 425 "/usr/include/x86_64-linux-gnu/bits/fcntl-linux.h" 3 4
+extern int fallocate64 (int __fd, int __mode, __off64_t __offset,
+   __off64_t __len);
+
+
+
+
+extern int name_to_handle_at (int __dfd, const char *__name,
+         struct file_handle *__handle, int *__mnt_id,
+         int __flags) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+extern int open_by_handle_at (int __mountdirfd, struct file_handle *__handle,
+         int __flags);
+
+
+
+
+# 62 "/usr/include/x86_64-linux-gnu/bits/fcntl.h" 2 3 4
+# 36 "/usr/include/fcntl.h" 2 3 4
+# 78 "/usr/include/fcntl.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/stat.h" 1 3 4
+# 79 "/usr/include/fcntl.h" 2 3 4
+# 177 "/usr/include/fcntl.h" 3 4
+extern int fcntl (int __fd, int __cmd, ...);
+# 186 "/usr/include/fcntl.h" 3 4
+extern int fcntl64 (int __fd, int __cmd, ...);
+# 209 "/usr/include/fcntl.h" 3 4
+extern int open (const char *__file, int __oflag, ...) __attribute__ ((__nonnull__ (1)));
+# 219 "/usr/include/fcntl.h" 3 4
+extern int open64 (const char *__file, int __oflag, ...) __attribute__ ((__nonnull__ (1)));
+# 233 "/usr/include/fcntl.h" 3 4
+extern int openat (int __fd, const char *__file, int __oflag, ...)
+     __attribute__ ((__nonnull__ (2)));
+# 244 "/usr/include/fcntl.h" 3 4
+extern int openat64 (int __fd, const char *__file, int __oflag, ...)
+     __attribute__ ((__nonnull__ (2)));
+# 255 "/usr/include/fcntl.h" 3 4
+extern int creat (const char *__file, mode_t __mode) __attribute__ ((__nonnull__ (1)));
+# 265 "/usr/include/fcntl.h" 3 4
+extern int creat64 (const char *__file, mode_t __mode) __attribute__ ((__nonnull__ (1)));
+# 301 "/usr/include/fcntl.h" 3 4
+extern int posix_fadvise (int __fd, off_t __offset, off_t __len,
+     int __advise) __attribute__ ((__nothrow__ , __leaf__));
+# 313 "/usr/include/fcntl.h" 3 4
+extern int posix_fadvise64 (int __fd, off64_t __offset, off64_t __len,
+       int __advise) __attribute__ ((__nothrow__ , __leaf__));
+# 323 "/usr/include/fcntl.h" 3 4
+extern int posix_fallocate (int __fd, off_t __offset, off_t __len);
+# 334 "/usr/include/fcntl.h" 3 4
+extern int posix_fallocate64 (int __fd, off64_t __offset, off64_t __len);
+# 345 "/usr/include/fcntl.h" 3 4
+
+# 118 "./MagickCore/studio.h" 2
+# 1 "/usr/include/math.h" 1 3 4
+# 27 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/libc-header-start.h" 1 3 4
+# 28 "/usr/include/math.h" 2 3 4
+
+
+
+
+
+
+
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/math-vector.h" 1 3 4
+# 25 "/usr/include/x86_64-linux-gnu/bits/math-vector.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/libm-simd-decl-stubs.h" 1 3 4
+# 26 "/usr/include/x86_64-linux-gnu/bits/math-vector.h" 2 3 4
+# 41 "/usr/include/math.h" 2 3 4
+# 152 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/flt-eval-method.h" 1 3 4
+# 153 "/usr/include/math.h" 2 3 4
+# 163 "/usr/include/math.h" 3 4
+typedef float float_t;
+typedef double double_t;
+# 204 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/fp-logb.h" 1 3 4
+# 205 "/usr/include/math.h" 2 3 4
+# 247 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/fp-fast.h" 1 3 4
+# 248 "/usr/include/math.h" 2 3 4
+
+
+
+enum
+  {
+    FP_INT_UPWARD =
+
+      0,
+    FP_INT_DOWNWARD =
+
+      1,
+    FP_INT_TOWARDZERO =
+
+      2,
+    FP_INT_TONEARESTFROMZERO =
+
+      3,
+    FP_INT_TONEAREST =
+
+      4,
+  };
+# 312 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h" 1 3 4
+# 20 "/usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h" 3 4
+extern int __fpclassify (double __value) __attribute__ ((__nothrow__ , __leaf__))
+     __attribute__ ((__const__));
+
+
+extern int __signbit (double __value) __attribute__ ((__nothrow__ , __leaf__))
+     __attribute__ ((__const__));
+
+
+
+extern int __isinf (double __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+extern int __finite (double __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+extern int __isnan (double __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+extern int __iseqsig (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int __issignaling (double __value) __attribute__ ((__nothrow__ , __leaf__))
+     __attribute__ ((__const__));
+# 313 "/usr/include/math.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 1 3 4
+# 53 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+ extern double acos (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __acos (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern double asin (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __asin (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern double atan (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __atan (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern double atan2 (double __y, double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __atan2 (double __y, double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern double cos (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __cos (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern double sin (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __sin (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern double tan (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __tan (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern double cosh (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __cosh (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern double sinh (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __sinh (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern double tanh (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __tanh (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+ extern void sincos (double __x, double *__sinx, double *__cosx) __attribute__ ((__nothrow__ , __leaf__)); extern void __sincos (double __x, double *__sinx, double *__cosx) __attribute__ ((__nothrow__ , __leaf__))
+                                                        ;
+
+
+
+
+ extern double acosh (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __acosh (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern double asinh (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __asinh (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern double atanh (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __atanh (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+ extern double exp (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __exp (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern double frexp (double __x, int *__exponent) __attribute__ ((__nothrow__ , __leaf__)); extern double __frexp (double __x, int *__exponent) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern double ldexp (double __x, int __exponent) __attribute__ ((__nothrow__ , __leaf__)); extern double __ldexp (double __x, int __exponent) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern double log (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __log (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern double log10 (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __log10 (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern double modf (double __x, double *__iptr) __attribute__ ((__nothrow__ , __leaf__)); extern double __modf (double __x, double *__iptr) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+ extern double exp10 (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __exp10 (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern double expm1 (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __expm1 (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern double log1p (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __log1p (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern double logb (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __logb (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern double exp2 (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __exp2 (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern double log2 (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __log2 (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+ extern double pow (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)); extern double __pow (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern double sqrt (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __sqrt (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+ extern double hypot (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)); extern double __hypot (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern double cbrt (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __cbrt (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern double ceil (double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __ceil (double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern double fabs (double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __fabs (double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern double floor (double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __floor (double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern double fmod (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)); extern double __fmod (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__));
+# 177 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern int isinf (double __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+
+
+extern int finite (double __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+extern double drem (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)); extern double __drem (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern double significand (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __significand (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern double copysign (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __copysign (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern double nan (const char *__tagb) __attribute__ ((__nothrow__ , __leaf__)); extern double __nan (const char *__tagb) __attribute__ ((__nothrow__ , __leaf__));
+# 213 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern int isnan (double __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+
+
+
+extern double j0 (double) __attribute__ ((__nothrow__ , __leaf__)); extern double __j0 (double) __attribute__ ((__nothrow__ , __leaf__));
+extern double j1 (double) __attribute__ ((__nothrow__ , __leaf__)); extern double __j1 (double) __attribute__ ((__nothrow__ , __leaf__));
+extern double jn (int, double) __attribute__ ((__nothrow__ , __leaf__)); extern double __jn (int, double) __attribute__ ((__nothrow__ , __leaf__));
+extern double y0 (double) __attribute__ ((__nothrow__ , __leaf__)); extern double __y0 (double) __attribute__ ((__nothrow__ , __leaf__));
+extern double y1 (double) __attribute__ ((__nothrow__ , __leaf__)); extern double __y1 (double) __attribute__ ((__nothrow__ , __leaf__));
+extern double yn (int, double) __attribute__ ((__nothrow__ , __leaf__)); extern double __yn (int, double) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+ extern double erf (double) __attribute__ ((__nothrow__ , __leaf__)); extern double __erf (double) __attribute__ ((__nothrow__ , __leaf__));
+ extern double erfc (double) __attribute__ ((__nothrow__ , __leaf__)); extern double __erfc (double) __attribute__ ((__nothrow__ , __leaf__));
+extern double lgamma (double) __attribute__ ((__nothrow__ , __leaf__)); extern double __lgamma (double) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern double tgamma (double) __attribute__ ((__nothrow__ , __leaf__)); extern double __tgamma (double) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+extern double gamma (double) __attribute__ ((__nothrow__ , __leaf__)); extern double __gamma (double) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+extern double lgamma_r (double, int *__signgamp) __attribute__ ((__nothrow__ , __leaf__)); extern double __lgamma_r (double, int *__signgamp) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern double rint (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __rint (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern double nextafter (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)); extern double __nextafter (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+extern double nexttoward (double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)); extern double __nexttoward (double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern double nextdown (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __nextdown (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+extern double nextup (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __nextup (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern double remainder (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)); extern double __remainder (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern double scalbn (double __x, int __n) __attribute__ ((__nothrow__ , __leaf__)); extern double __scalbn (double __x, int __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int ilogb (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern int __ilogb (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern long int llogb (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __llogb (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern double scalbln (double __x, long int __n) __attribute__ ((__nothrow__ , __leaf__)); extern double __scalbln (double __x, long int __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern double nearbyint (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern double __nearbyint (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern double round (double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __round (double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern double trunc (double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __trunc (double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern double remquo (double __x, double __y, int *__quo) __attribute__ ((__nothrow__ , __leaf__)); extern double __remquo (double __x, double __y, int *__quo) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern long int lrint (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __lrint (double __x) __attribute__ ((__nothrow__ , __leaf__));
+__extension__
+extern long long int llrint (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long long int __llrint (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern long int lround (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __lround (double __x) __attribute__ ((__nothrow__ , __leaf__));
+__extension__
+extern long long int llround (double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long long int __llround (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern double fdim (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)); extern double __fdim (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern double fmax (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __fmax (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern double fmin (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __fmin (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern double fma (double __x, double __y, double __z) __attribute__ ((__nothrow__ , __leaf__)); extern double __fma (double __x, double __y, double __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern double roundeven (double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __roundeven (double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern __intmax_t fromfp (double __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __intmax_t __fromfp (double __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                            ;
+
+
+
+extern __uintmax_t ufromfp (double __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __uintmax_t __ufromfp (double __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                              ;
+
+
+
+
+extern __intmax_t fromfpx (double __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __intmax_t __fromfpx (double __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                             ;
+
+
+
+
+extern __uintmax_t ufromfpx (double __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __uintmax_t __ufromfpx (double __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                               ;
+
+
+extern int canonicalize (double *__cx, const double *__x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern double fmaxmag (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __fmaxmag (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern double fminmag (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __fminmag (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern double fmaximum (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __fmaximum (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern double fminimum (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __fminimum (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern double fmaximum_num (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __fmaximum_num (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern double fminimum_num (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __fminimum_num (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern double fmaximum_mag (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __fmaximum_mag (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern double fminimum_mag (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __fminimum_mag (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern double fmaximum_mag_num (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __fmaximum_mag_num (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern double fminimum_mag_num (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern double __fminimum_mag_num (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern int totalorder (const double *__x, const double *__y) __attribute__ ((__nothrow__ , __leaf__))
+
+     __attribute__ ((__pure__));
+
+
+extern int totalordermag (const double *__x, const double *__y) __attribute__ ((__nothrow__ , __leaf__))
+
+     __attribute__ ((__pure__));
+
+
+extern double getpayload (const double *__x) __attribute__ ((__nothrow__ , __leaf__)); extern double __getpayload (const double *__x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setpayload (double *__x, double __payload) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setpayloadsig (double *__x, double __payload) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+extern double scalb (double __x, double __n) __attribute__ ((__nothrow__ , __leaf__)); extern double __scalb (double __x, double __n) __attribute__ ((__nothrow__ , __leaf__));
+# 314 "/usr/include/math.h" 2 3 4
+# 329 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h" 1 3 4
+# 20 "/usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h" 3 4
+extern int __fpclassifyf (float __value) __attribute__ ((__nothrow__ , __leaf__))
+     __attribute__ ((__const__));
+
+
+extern int __signbitf (float __value) __attribute__ ((__nothrow__ , __leaf__))
+     __attribute__ ((__const__));
+
+
+
+extern int __isinff (float __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+extern int __finitef (float __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+extern int __isnanf (float __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+extern int __iseqsigf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int __issignalingf (float __value) __attribute__ ((__nothrow__ , __leaf__))
+     __attribute__ ((__const__));
+# 330 "/usr/include/math.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 1 3 4
+# 53 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+ extern float acosf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __acosf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern float asinf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __asinf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern float atanf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __atanf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern float atan2f (float __y, float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __atan2f (float __y, float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern float cosf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __cosf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern float sinf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __sinf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern float tanf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __tanf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern float coshf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __coshf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern float sinhf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __sinhf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern float tanhf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __tanhf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+ extern void sincosf (float __x, float *__sinx, float *__cosx) __attribute__ ((__nothrow__ , __leaf__)); extern void __sincosf (float __x, float *__sinx, float *__cosx) __attribute__ ((__nothrow__ , __leaf__))
+                                                        ;
+
+
+
+
+ extern float acoshf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __acoshf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern float asinhf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __asinhf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern float atanhf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __atanhf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+ extern float expf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __expf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern float frexpf (float __x, int *__exponent) __attribute__ ((__nothrow__ , __leaf__)); extern float __frexpf (float __x, int *__exponent) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern float ldexpf (float __x, int __exponent) __attribute__ ((__nothrow__ , __leaf__)); extern float __ldexpf (float __x, int __exponent) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern float logf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __logf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern float log10f (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __log10f (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern float modff (float __x, float *__iptr) __attribute__ ((__nothrow__ , __leaf__)); extern float __modff (float __x, float *__iptr) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+ extern float exp10f (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __exp10f (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern float expm1f (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __expm1f (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern float log1pf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __log1pf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern float logbf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __logbf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern float exp2f (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __exp2f (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern float log2f (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __log2f (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+ extern float powf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)); extern float __powf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern float sqrtf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __sqrtf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+ extern float hypotf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)); extern float __hypotf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern float cbrtf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __cbrtf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern float ceilf (float __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __ceilf (float __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern float fabsf (float __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __fabsf (float __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern float floorf (float __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __floorf (float __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern float fmodf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)); extern float __fmodf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__));
+# 177 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern int isinff (float __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+
+
+extern int finitef (float __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+extern float dremf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)); extern float __dremf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern float significandf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __significandf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern float copysignf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __copysignf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern float nanf (const char *__tagb) __attribute__ ((__nothrow__ , __leaf__)); extern float __nanf (const char *__tagb) __attribute__ ((__nothrow__ , __leaf__));
+# 213 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern int isnanf (float __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+
+
+
+extern float j0f (float) __attribute__ ((__nothrow__ , __leaf__)); extern float __j0f (float) __attribute__ ((__nothrow__ , __leaf__));
+extern float j1f (float) __attribute__ ((__nothrow__ , __leaf__)); extern float __j1f (float) __attribute__ ((__nothrow__ , __leaf__));
+extern float jnf (int, float) __attribute__ ((__nothrow__ , __leaf__)); extern float __jnf (int, float) __attribute__ ((__nothrow__ , __leaf__));
+extern float y0f (float) __attribute__ ((__nothrow__ , __leaf__)); extern float __y0f (float) __attribute__ ((__nothrow__ , __leaf__));
+extern float y1f (float) __attribute__ ((__nothrow__ , __leaf__)); extern float __y1f (float) __attribute__ ((__nothrow__ , __leaf__));
+extern float ynf (int, float) __attribute__ ((__nothrow__ , __leaf__)); extern float __ynf (int, float) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+ extern float erff (float) __attribute__ ((__nothrow__ , __leaf__)); extern float __erff (float) __attribute__ ((__nothrow__ , __leaf__));
+ extern float erfcf (float) __attribute__ ((__nothrow__ , __leaf__)); extern float __erfcf (float) __attribute__ ((__nothrow__ , __leaf__));
+extern float lgammaf (float) __attribute__ ((__nothrow__ , __leaf__)); extern float __lgammaf (float) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern float tgammaf (float) __attribute__ ((__nothrow__ , __leaf__)); extern float __tgammaf (float) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+extern float gammaf (float) __attribute__ ((__nothrow__ , __leaf__)); extern float __gammaf (float) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+extern float lgammaf_r (float, int *__signgamp) __attribute__ ((__nothrow__ , __leaf__)); extern float __lgammaf_r (float, int *__signgamp) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern float rintf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __rintf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern float nextafterf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)); extern float __nextafterf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__));
+
+extern float nexttowardf (float __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)); extern float __nexttowardf (float __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern float nextdownf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __nextdownf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+extern float nextupf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __nextupf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern float remainderf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)); extern float __remainderf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern float scalbnf (float __x, int __n) __attribute__ ((__nothrow__ , __leaf__)); extern float __scalbnf (float __x, int __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int ilogbf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern int __ilogbf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern long int llogbf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __llogbf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern float scalblnf (float __x, long int __n) __attribute__ ((__nothrow__ , __leaf__)); extern float __scalblnf (float __x, long int __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern float nearbyintf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern float __nearbyintf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern float roundf (float __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __roundf (float __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern float truncf (float __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __truncf (float __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern float remquof (float __x, float __y, int *__quo) __attribute__ ((__nothrow__ , __leaf__)); extern float __remquof (float __x, float __y, int *__quo) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern long int lrintf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __lrintf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+__extension__
+extern long long int llrintf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern long long int __llrintf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern long int lroundf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __lroundf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+__extension__
+extern long long int llroundf (float __x) __attribute__ ((__nothrow__ , __leaf__)); extern long long int __llroundf (float __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern float fdimf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)); extern float __fdimf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern float fmaxf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __fmaxf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern float fminf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __fminf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern float fmaf (float __x, float __y, float __z) __attribute__ ((__nothrow__ , __leaf__)); extern float __fmaf (float __x, float __y, float __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern float roundevenf (float __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __roundevenf (float __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern __intmax_t fromfpf (float __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __intmax_t __fromfpf (float __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                            ;
+
+
+
+extern __uintmax_t ufromfpf (float __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __uintmax_t __ufromfpf (float __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                              ;
+
+
+
+
+extern __intmax_t fromfpxf (float __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __intmax_t __fromfpxf (float __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                             ;
+
+
+
+
+extern __uintmax_t ufromfpxf (float __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __uintmax_t __ufromfpxf (float __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                               ;
+
+
+extern int canonicalizef (float *__cx, const float *__x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern float fmaxmagf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __fmaxmagf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern float fminmagf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __fminmagf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern float fmaximumf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __fmaximumf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern float fminimumf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __fminimumf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern float fmaximum_numf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __fmaximum_numf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern float fminimum_numf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __fminimum_numf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern float fmaximum_magf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __fmaximum_magf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern float fminimum_magf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __fminimum_magf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern float fmaximum_mag_numf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __fmaximum_mag_numf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern float fminimum_mag_numf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern float __fminimum_mag_numf (float __x, float __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern int totalorderf (const float *__x, const float *__y) __attribute__ ((__nothrow__ , __leaf__))
+
+     __attribute__ ((__pure__));
+
+
+extern int totalordermagf (const float *__x, const float *__y) __attribute__ ((__nothrow__ , __leaf__))
+
+     __attribute__ ((__pure__));
+
+
+extern float getpayloadf (const float *__x) __attribute__ ((__nothrow__ , __leaf__)); extern float __getpayloadf (const float *__x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setpayloadf (float *__x, float __payload) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setpayloadsigf (float *__x, float __payload) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+extern float scalbf (float __x, float __n) __attribute__ ((__nothrow__ , __leaf__)); extern float __scalbf (float __x, float __n) __attribute__ ((__nothrow__ , __leaf__));
+# 331 "/usr/include/math.h" 2 3 4
+# 398 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h" 1 3 4
+# 20 "/usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h" 3 4
+extern int __fpclassifyl (long double __value) __attribute__ ((__nothrow__ , __leaf__))
+     __attribute__ ((__const__));
+
+
+extern int __signbitl (long double __value) __attribute__ ((__nothrow__ , __leaf__))
+     __attribute__ ((__const__));
+
+
+
+extern int __isinfl (long double __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+extern int __finitel (long double __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+extern int __isnanl (long double __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+extern int __iseqsigl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int __issignalingl (long double __value) __attribute__ ((__nothrow__ , __leaf__))
+     __attribute__ ((__const__));
+# 399 "/usr/include/math.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 1 3 4
+# 53 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+ extern long double acosl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __acosl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern long double asinl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __asinl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern long double atanl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __atanl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern long double atan2l (long double __y, long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __atan2l (long double __y, long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern long double cosl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __cosl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern long double sinl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __sinl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern long double tanl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __tanl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern long double coshl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __coshl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern long double sinhl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __sinhl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern long double tanhl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __tanhl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+ extern void sincosl (long double __x, long double *__sinx, long double *__cosx) __attribute__ ((__nothrow__ , __leaf__)); extern void __sincosl (long double __x, long double *__sinx, long double *__cosx) __attribute__ ((__nothrow__ , __leaf__))
+                                                        ;
+
+
+
+
+ extern long double acoshl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __acoshl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern long double asinhl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __asinhl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern long double atanhl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __atanhl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+ extern long double expl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __expl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern long double frexpl (long double __x, int *__exponent) __attribute__ ((__nothrow__ , __leaf__)); extern long double __frexpl (long double __x, int *__exponent) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern long double ldexpl (long double __x, int __exponent) __attribute__ ((__nothrow__ , __leaf__)); extern long double __ldexpl (long double __x, int __exponent) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern long double logl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __logl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern long double log10l (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __log10l (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern long double modfl (long double __x, long double *__iptr) __attribute__ ((__nothrow__ , __leaf__)); extern long double __modfl (long double __x, long double *__iptr) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+ extern long double exp10l (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __exp10l (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern long double expm1l (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __expm1l (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern long double log1pl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __log1pl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern long double logbl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __logbl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern long double exp2l (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __exp2l (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern long double log2l (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __log2l (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+ extern long double powl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)); extern long double __powl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern long double sqrtl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __sqrtl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+ extern long double hypotl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)); extern long double __hypotl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern long double cbrtl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __cbrtl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern long double ceill (long double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __ceill (long double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern long double fabsl (long double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __fabsl (long double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern long double floorl (long double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __floorl (long double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern long double fmodl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)); extern long double __fmodl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+# 177 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern int isinfl (long double __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+
+
+extern int finitel (long double __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+extern long double dreml (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)); extern long double __dreml (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern long double significandl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __significandl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern long double copysignl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __copysignl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern long double nanl (const char *__tagb) __attribute__ ((__nothrow__ , __leaf__)); extern long double __nanl (const char *__tagb) __attribute__ ((__nothrow__ , __leaf__));
+# 213 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern int isnanl (long double __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+
+
+
+extern long double j0l (long double) __attribute__ ((__nothrow__ , __leaf__)); extern long double __j0l (long double) __attribute__ ((__nothrow__ , __leaf__));
+extern long double j1l (long double) __attribute__ ((__nothrow__ , __leaf__)); extern long double __j1l (long double) __attribute__ ((__nothrow__ , __leaf__));
+extern long double jnl (int, long double) __attribute__ ((__nothrow__ , __leaf__)); extern long double __jnl (int, long double) __attribute__ ((__nothrow__ , __leaf__));
+extern long double y0l (long double) __attribute__ ((__nothrow__ , __leaf__)); extern long double __y0l (long double) __attribute__ ((__nothrow__ , __leaf__));
+extern long double y1l (long double) __attribute__ ((__nothrow__ , __leaf__)); extern long double __y1l (long double) __attribute__ ((__nothrow__ , __leaf__));
+extern long double ynl (int, long double) __attribute__ ((__nothrow__ , __leaf__)); extern long double __ynl (int, long double) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+ extern long double erfl (long double) __attribute__ ((__nothrow__ , __leaf__)); extern long double __erfl (long double) __attribute__ ((__nothrow__ , __leaf__));
+ extern long double erfcl (long double) __attribute__ ((__nothrow__ , __leaf__)); extern long double __erfcl (long double) __attribute__ ((__nothrow__ , __leaf__));
+extern long double lgammal (long double) __attribute__ ((__nothrow__ , __leaf__)); extern long double __lgammal (long double) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern long double tgammal (long double) __attribute__ ((__nothrow__ , __leaf__)); extern long double __tgammal (long double) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+extern long double gammal (long double) __attribute__ ((__nothrow__ , __leaf__)); extern long double __gammal (long double) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+extern long double lgammal_r (long double, int *__signgamp) __attribute__ ((__nothrow__ , __leaf__)); extern long double __lgammal_r (long double, int *__signgamp) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern long double rintl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __rintl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern long double nextafterl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)); extern long double __nextafterl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+extern long double nexttowardl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)); extern long double __nexttowardl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern long double nextdownl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __nextdownl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+extern long double nextupl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __nextupl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern long double remainderl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)); extern long double __remainderl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern long double scalbnl (long double __x, int __n) __attribute__ ((__nothrow__ , __leaf__)); extern long double __scalbnl (long double __x, int __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int ilogbl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern int __ilogbl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern long int llogbl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __llogbl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern long double scalblnl (long double __x, long int __n) __attribute__ ((__nothrow__ , __leaf__)); extern long double __scalblnl (long double __x, long int __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern long double nearbyintl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __nearbyintl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern long double roundl (long double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __roundl (long double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern long double truncl (long double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __truncl (long double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern long double remquol (long double __x, long double __y, int *__quo) __attribute__ ((__nothrow__ , __leaf__)); extern long double __remquol (long double __x, long double __y, int *__quo) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern long int lrintl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __lrintl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+__extension__
+extern long long int llrintl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long long int __llrintl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern long int lroundl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __lroundl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+__extension__
+extern long long int llroundl (long double __x) __attribute__ ((__nothrow__ , __leaf__)); extern long long int __llroundl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern long double fdiml (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)); extern long double __fdiml (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern long double fmaxl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __fmaxl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern long double fminl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __fminl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern long double fmal (long double __x, long double __y, long double __z) __attribute__ ((__nothrow__ , __leaf__)); extern long double __fmal (long double __x, long double __y, long double __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern long double roundevenl (long double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __roundevenl (long double __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern __intmax_t fromfpl (long double __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __intmax_t __fromfpl (long double __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                            ;
+
+
+
+extern __uintmax_t ufromfpl (long double __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __uintmax_t __ufromfpl (long double __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                              ;
+
+
+
+
+extern __intmax_t fromfpxl (long double __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __intmax_t __fromfpxl (long double __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                             ;
+
+
+
+
+extern __uintmax_t ufromfpxl (long double __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __uintmax_t __ufromfpxl (long double __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                               ;
+
+
+extern int canonicalizel (long double *__cx, const long double *__x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern long double fmaxmagl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __fmaxmagl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern long double fminmagl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __fminmagl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern long double fmaximuml (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __fmaximuml (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern long double fminimuml (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __fminimuml (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern long double fmaximum_numl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __fmaximum_numl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern long double fminimum_numl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __fminimum_numl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern long double fmaximum_magl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __fmaximum_magl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern long double fminimum_magl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __fminimum_magl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern long double fmaximum_mag_numl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __fmaximum_mag_numl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern long double fminimum_mag_numl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern long double __fminimum_mag_numl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern int totalorderl (const long double *__x, const long double *__y) __attribute__ ((__nothrow__ , __leaf__))
+
+     __attribute__ ((__pure__));
+
+
+extern int totalordermagl (const long double *__x, const long double *__y) __attribute__ ((__nothrow__ , __leaf__))
+
+     __attribute__ ((__pure__));
+
+
+extern long double getpayloadl (const long double *__x) __attribute__ ((__nothrow__ , __leaf__)); extern long double __getpayloadl (const long double *__x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setpayloadl (long double *__x, long double __payload) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setpayloadsigl (long double *__x, long double __payload) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+extern long double scalbl (long double __x, long double __n) __attribute__ ((__nothrow__ , __leaf__)); extern long double __scalbl (long double __x, long double __n) __attribute__ ((__nothrow__ , __leaf__));
+# 400 "/usr/include/math.h" 2 3 4
+# 450 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 1 3 4
+# 53 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+ extern _Float32 acosf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __acosf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32 asinf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __asinf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32 atanf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __atanf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32 atan2f32 (_Float32 __y, _Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __atan2f32 (_Float32 __y, _Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float32 cosf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __cosf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32 sinf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __sinf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32 tanf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __tanf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float32 coshf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __coshf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32 sinhf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __sinhf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32 tanhf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __tanhf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+ extern void sincosf32 (_Float32 __x, _Float32 *__sinx, _Float32 *__cosx) __attribute__ ((__nothrow__ , __leaf__)); extern void __sincosf32 (_Float32 __x, _Float32 *__sinx, _Float32 *__cosx) __attribute__ ((__nothrow__ , __leaf__))
+                                                        ;
+
+
+
+
+ extern _Float32 acoshf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __acoshf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32 asinhf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __asinhf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32 atanhf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __atanhf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+ extern _Float32 expf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __expf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 frexpf32 (_Float32 __x, int *__exponent) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __frexpf32 (_Float32 __x, int *__exponent) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 ldexpf32 (_Float32 __x, int __exponent) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __ldexpf32 (_Float32 __x, int __exponent) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float32 logf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __logf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float32 log10f32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __log10f32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 modff32 (_Float32 __x, _Float32 *__iptr) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __modff32 (_Float32 __x, _Float32 *__iptr) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+ extern _Float32 exp10f32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __exp10f32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float32 expm1f32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __expm1f32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float32 log1pf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __log1pf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 logbf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __logbf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float32 exp2f32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __exp2f32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float32 log2f32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __log2f32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+ extern _Float32 powf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __powf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 sqrtf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __sqrtf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+ extern _Float32 hypotf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __hypotf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float32 cbrtf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __cbrtf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float32 ceilf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __ceilf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32 fabsf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __fabsf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32 floorf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __floorf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32 fmodf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __fmodf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__));
+# 198 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern _Float32 copysignf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __copysignf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern _Float32 nanf32 (const char *__tagb) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __nanf32 (const char *__tagb) __attribute__ ((__nothrow__ , __leaf__));
+# 220 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern _Float32 j0f32 (_Float32) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __j0f32 (_Float32) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float32 j1f32 (_Float32) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __j1f32 (_Float32) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float32 jnf32 (int, _Float32) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __jnf32 (int, _Float32) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float32 y0f32 (_Float32) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __y0f32 (_Float32) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float32 y1f32 (_Float32) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __y1f32 (_Float32) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float32 ynf32 (int, _Float32) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __ynf32 (int, _Float32) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+ extern _Float32 erff32 (_Float32) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __erff32 (_Float32) __attribute__ ((__nothrow__ , __leaf__));
+ extern _Float32 erfcf32 (_Float32) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __erfcf32 (_Float32) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float32 lgammaf32 (_Float32) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __lgammaf32 (_Float32) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern _Float32 tgammaf32 (_Float32) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __tgammaf32 (_Float32) __attribute__ ((__nothrow__ , __leaf__));
+# 252 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern _Float32 lgammaf32_r (_Float32, int *__signgamp) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __lgammaf32_r (_Float32, int *__signgamp) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float32 rintf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __rintf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 nextafterf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __nextafterf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float32 nextdownf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __nextdownf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+extern _Float32 nextupf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __nextupf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float32 remainderf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __remainderf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float32 scalbnf32 (_Float32 __x, int __n) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __scalbnf32 (_Float32 __x, int __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int ilogbf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern int __ilogbf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern long int llogbf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __llogbf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern _Float32 scalblnf32 (_Float32 __x, long int __n) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __scalblnf32 (_Float32 __x, long int __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float32 nearbyintf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __nearbyintf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float32 roundf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __roundf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern _Float32 truncf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __truncf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern _Float32 remquof32 (_Float32 __x, _Float32 __y, int *__quo) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __remquof32 (_Float32 __x, _Float32 __y, int *__quo) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern long int lrintf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __lrintf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+__extension__
+extern long long int llrintf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern long long int __llrintf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern long int lroundf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __lroundf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+__extension__
+extern long long int llroundf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)); extern long long int __llroundf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float32 fdimf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __fdimf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float32 fmaxf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __fmaxf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32 fminf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __fminf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern _Float32 fmaf32 (_Float32 __x, _Float32 __y, _Float32 __z) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __fmaf32 (_Float32 __x, _Float32 __y, _Float32 __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern _Float32 roundevenf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __roundevenf32 (_Float32 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern __intmax_t fromfpf32 (_Float32 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __intmax_t __fromfpf32 (_Float32 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                            ;
+
+
+
+extern __uintmax_t ufromfpf32 (_Float32 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __uintmax_t __ufromfpf32 (_Float32 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                              ;
+
+
+
+
+extern __intmax_t fromfpxf32 (_Float32 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __intmax_t __fromfpxf32 (_Float32 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                             ;
+
+
+
+
+extern __uintmax_t ufromfpxf32 (_Float32 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __uintmax_t __ufromfpxf32 (_Float32 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                               ;
+
+
+extern int canonicalizef32 (_Float32 *__cx, const _Float32 *__x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float32 fmaxmagf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __fmaxmagf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32 fminmagf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __fminmagf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern _Float32 fmaximumf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __fmaximumf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32 fminimumf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __fminimumf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32 fmaximum_numf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __fmaximum_numf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32 fminimum_numf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __fminimum_numf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32 fmaximum_magf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __fmaximum_magf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32 fminimum_magf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __fminimum_magf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32 fmaximum_mag_numf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __fmaximum_mag_numf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32 fminimum_mag_numf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32 __fminimum_mag_numf32 (_Float32 __x, _Float32 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern int totalorderf32 (const _Float32 *__x, const _Float32 *__y) __attribute__ ((__nothrow__ , __leaf__))
+
+     __attribute__ ((__pure__));
+
+
+extern int totalordermagf32 (const _Float32 *__x, const _Float32 *__y) __attribute__ ((__nothrow__ , __leaf__))
+
+     __attribute__ ((__pure__));
+
+
+extern _Float32 getpayloadf32 (const _Float32 *__x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32 __getpayloadf32 (const _Float32 *__x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setpayloadf32 (_Float32 *__x, _Float32 __payload) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setpayloadsigf32 (_Float32 *__x, _Float32 __payload) __attribute__ ((__nothrow__ , __leaf__));
+# 451 "/usr/include/math.h" 2 3 4
+# 467 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 1 3 4
+# 53 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+ extern _Float64 acosf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __acosf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64 asinf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __asinf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64 atanf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __atanf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64 atan2f64 (_Float64 __y, _Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __atan2f64 (_Float64 __y, _Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float64 cosf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __cosf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64 sinf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __sinf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64 tanf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __tanf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float64 coshf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __coshf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64 sinhf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __sinhf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64 tanhf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __tanhf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+ extern void sincosf64 (_Float64 __x, _Float64 *__sinx, _Float64 *__cosx) __attribute__ ((__nothrow__ , __leaf__)); extern void __sincosf64 (_Float64 __x, _Float64 *__sinx, _Float64 *__cosx) __attribute__ ((__nothrow__ , __leaf__))
+                                                        ;
+
+
+
+
+ extern _Float64 acoshf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __acoshf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64 asinhf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __asinhf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64 atanhf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __atanhf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+ extern _Float64 expf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __expf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64 frexpf64 (_Float64 __x, int *__exponent) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __frexpf64 (_Float64 __x, int *__exponent) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64 ldexpf64 (_Float64 __x, int __exponent) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __ldexpf64 (_Float64 __x, int __exponent) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float64 logf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __logf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float64 log10f64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __log10f64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64 modff64 (_Float64 __x, _Float64 *__iptr) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __modff64 (_Float64 __x, _Float64 *__iptr) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+ extern _Float64 exp10f64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __exp10f64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float64 expm1f64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __expm1f64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float64 log1pf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __log1pf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64 logbf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __logbf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float64 exp2f64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __exp2f64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float64 log2f64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __log2f64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+ extern _Float64 powf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __powf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64 sqrtf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __sqrtf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+ extern _Float64 hypotf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __hypotf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float64 cbrtf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __cbrtf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float64 ceilf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __ceilf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64 fabsf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __fabsf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64 floorf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __floorf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64 fmodf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __fmodf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__));
+# 198 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern _Float64 copysignf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __copysignf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern _Float64 nanf64 (const char *__tagb) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __nanf64 (const char *__tagb) __attribute__ ((__nothrow__ , __leaf__));
+# 220 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern _Float64 j0f64 (_Float64) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __j0f64 (_Float64) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float64 j1f64 (_Float64) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __j1f64 (_Float64) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float64 jnf64 (int, _Float64) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __jnf64 (int, _Float64) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float64 y0f64 (_Float64) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __y0f64 (_Float64) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float64 y1f64 (_Float64) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __y1f64 (_Float64) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float64 ynf64 (int, _Float64) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __ynf64 (int, _Float64) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+ extern _Float64 erff64 (_Float64) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __erff64 (_Float64) __attribute__ ((__nothrow__ , __leaf__));
+ extern _Float64 erfcf64 (_Float64) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __erfcf64 (_Float64) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float64 lgammaf64 (_Float64) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __lgammaf64 (_Float64) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern _Float64 tgammaf64 (_Float64) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __tgammaf64 (_Float64) __attribute__ ((__nothrow__ , __leaf__));
+# 252 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern _Float64 lgammaf64_r (_Float64, int *__signgamp) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __lgammaf64_r (_Float64, int *__signgamp) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float64 rintf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __rintf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64 nextafterf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __nextafterf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float64 nextdownf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __nextdownf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+extern _Float64 nextupf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __nextupf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float64 remainderf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __remainderf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float64 scalbnf64 (_Float64 __x, int __n) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __scalbnf64 (_Float64 __x, int __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int ilogbf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern int __ilogbf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern long int llogbf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __llogbf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern _Float64 scalblnf64 (_Float64 __x, long int __n) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __scalblnf64 (_Float64 __x, long int __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float64 nearbyintf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __nearbyintf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float64 roundf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __roundf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern _Float64 truncf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __truncf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern _Float64 remquof64 (_Float64 __x, _Float64 __y, int *__quo) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __remquof64 (_Float64 __x, _Float64 __y, int *__quo) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern long int lrintf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __lrintf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+__extension__
+extern long long int llrintf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern long long int __llrintf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern long int lroundf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __lroundf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+__extension__
+extern long long int llroundf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)); extern long long int __llroundf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float64 fdimf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __fdimf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float64 fmaxf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __fmaxf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64 fminf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __fminf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern _Float64 fmaf64 (_Float64 __x, _Float64 __y, _Float64 __z) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __fmaf64 (_Float64 __x, _Float64 __y, _Float64 __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern _Float64 roundevenf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __roundevenf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern __intmax_t fromfpf64 (_Float64 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __intmax_t __fromfpf64 (_Float64 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                            ;
+
+
+
+extern __uintmax_t ufromfpf64 (_Float64 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __uintmax_t __ufromfpf64 (_Float64 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                              ;
+
+
+
+
+extern __intmax_t fromfpxf64 (_Float64 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __intmax_t __fromfpxf64 (_Float64 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                             ;
+
+
+
+
+extern __uintmax_t ufromfpxf64 (_Float64 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __uintmax_t __ufromfpxf64 (_Float64 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                               ;
+
+
+extern int canonicalizef64 (_Float64 *__cx, const _Float64 *__x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float64 fmaxmagf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __fmaxmagf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64 fminmagf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __fminmagf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern _Float64 fmaximumf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __fmaximumf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64 fminimumf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __fminimumf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64 fmaximum_numf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __fmaximum_numf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64 fminimum_numf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __fminimum_numf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64 fmaximum_magf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __fmaximum_magf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64 fminimum_magf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __fminimum_magf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64 fmaximum_mag_numf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __fmaximum_mag_numf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64 fminimum_mag_numf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64 __fminimum_mag_numf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern int totalorderf64 (const _Float64 *__x, const _Float64 *__y) __attribute__ ((__nothrow__ , __leaf__))
+
+     __attribute__ ((__pure__));
+
+
+extern int totalordermagf64 (const _Float64 *__x, const _Float64 *__y) __attribute__ ((__nothrow__ , __leaf__))
+
+     __attribute__ ((__pure__));
+
+
+extern _Float64 getpayloadf64 (const _Float64 *__x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64 __getpayloadf64 (const _Float64 *__x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setpayloadf64 (_Float64 *__x, _Float64 __payload) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setpayloadsigf64 (_Float64 *__x, _Float64 __payload) __attribute__ ((__nothrow__ , __leaf__));
+# 468 "/usr/include/math.h" 2 3 4
+# 481 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h" 1 3 4
+# 20 "/usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h" 3 4
+extern int __fpclassifyf128 (_Float128 __value) __attribute__ ((__nothrow__ , __leaf__))
+     __attribute__ ((__const__));
+
+
+extern int __signbitf128 (_Float128 __value) __attribute__ ((__nothrow__ , __leaf__))
+     __attribute__ ((__const__));
+
+
+
+extern int __isinff128 (_Float128 __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+extern int __finitef128 (_Float128 __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+extern int __isnanf128 (_Float128 __value) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__const__));
+
+
+extern int __iseqsigf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int __issignalingf128 (_Float128 __value) __attribute__ ((__nothrow__ , __leaf__))
+     __attribute__ ((__const__));
+# 482 "/usr/include/math.h" 2 3 4
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 1 3 4
+# 53 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+ extern _Float128 acosf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __acosf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float128 asinf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __asinf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float128 atanf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __atanf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float128 atan2f128 (_Float128 __y, _Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __atan2f128 (_Float128 __y, _Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float128 cosf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __cosf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float128 sinf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __sinf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float128 tanf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __tanf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float128 coshf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __coshf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float128 sinhf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __sinhf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float128 tanhf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __tanhf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+ extern void sincosf128 (_Float128 __x, _Float128 *__sinx, _Float128 *__cosx) __attribute__ ((__nothrow__ , __leaf__)); extern void __sincosf128 (_Float128 __x, _Float128 *__sinx, _Float128 *__cosx) __attribute__ ((__nothrow__ , __leaf__))
+                                                        ;
+
+
+
+
+ extern _Float128 acoshf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __acoshf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float128 asinhf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __asinhf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float128 atanhf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __atanhf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+ extern _Float128 expf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __expf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float128 frexpf128 (_Float128 __x, int *__exponent) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __frexpf128 (_Float128 __x, int *__exponent) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float128 ldexpf128 (_Float128 __x, int __exponent) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __ldexpf128 (_Float128 __x, int __exponent) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float128 logf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __logf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float128 log10f128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __log10f128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float128 modff128 (_Float128 __x, _Float128 *__iptr) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __modff128 (_Float128 __x, _Float128 *__iptr) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+ extern _Float128 exp10f128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __exp10f128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float128 expm1f128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __expm1f128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float128 log1pf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __log1pf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float128 logbf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __logbf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float128 exp2f128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __exp2f128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float128 log2f128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __log2f128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+ extern _Float128 powf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __powf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float128 sqrtf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __sqrtf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+ extern _Float128 hypotf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __hypotf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float128 cbrtf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __cbrtf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float128 ceilf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __ceilf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float128 fabsf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __fabsf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float128 floorf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __floorf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float128 fmodf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __fmodf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+# 198 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern _Float128 copysignf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __copysignf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern _Float128 nanf128 (const char *__tagb) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __nanf128 (const char *__tagb) __attribute__ ((__nothrow__ , __leaf__));
+# 220 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern _Float128 j0f128 (_Float128) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __j0f128 (_Float128) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float128 j1f128 (_Float128) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __j1f128 (_Float128) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float128 jnf128 (int, _Float128) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __jnf128 (int, _Float128) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float128 y0f128 (_Float128) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __y0f128 (_Float128) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float128 y1f128 (_Float128) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __y1f128 (_Float128) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float128 ynf128 (int, _Float128) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __ynf128 (int, _Float128) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+ extern _Float128 erff128 (_Float128) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __erff128 (_Float128) __attribute__ ((__nothrow__ , __leaf__));
+ extern _Float128 erfcf128 (_Float128) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __erfcf128 (_Float128) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float128 lgammaf128 (_Float128) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __lgammaf128 (_Float128) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern _Float128 tgammaf128 (_Float128) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __tgammaf128 (_Float128) __attribute__ ((__nothrow__ , __leaf__));
+# 252 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern _Float128 lgammaf128_r (_Float128, int *__signgamp) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __lgammaf128_r (_Float128, int *__signgamp) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float128 rintf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __rintf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float128 nextafterf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __nextafterf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float128 nextdownf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __nextdownf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+extern _Float128 nextupf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __nextupf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float128 remainderf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __remainderf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float128 scalbnf128 (_Float128 __x, int __n) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __scalbnf128 (_Float128 __x, int __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int ilogbf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern int __ilogbf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern long int llogbf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __llogbf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern _Float128 scalblnf128 (_Float128 __x, long int __n) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __scalblnf128 (_Float128 __x, long int __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float128 nearbyintf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __nearbyintf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float128 roundf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __roundf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern _Float128 truncf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __truncf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern _Float128 remquof128 (_Float128 __x, _Float128 __y, int *__quo) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __remquof128 (_Float128 __x, _Float128 __y, int *__quo) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern long int lrintf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __lrintf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+__extension__
+extern long long int llrintf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern long long int __llrintf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern long int lroundf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __lroundf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+__extension__
+extern long long int llroundf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)); extern long long int __llroundf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float128 fdimf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __fdimf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float128 fmaxf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __fmaxf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float128 fminf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __fminf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern _Float128 fmaf128 (_Float128 __x, _Float128 __y, _Float128 __z) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __fmaf128 (_Float128 __x, _Float128 __y, _Float128 __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern _Float128 roundevenf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __roundevenf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern __intmax_t fromfpf128 (_Float128 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __intmax_t __fromfpf128 (_Float128 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                            ;
+
+
+
+extern __uintmax_t ufromfpf128 (_Float128 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __uintmax_t __ufromfpf128 (_Float128 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                              ;
+
+
+
+
+extern __intmax_t fromfpxf128 (_Float128 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __intmax_t __fromfpxf128 (_Float128 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                             ;
+
+
+
+
+extern __uintmax_t ufromfpxf128 (_Float128 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __uintmax_t __ufromfpxf128 (_Float128 __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                               ;
+
+
+extern int canonicalizef128 (_Float128 *__cx, const _Float128 *__x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float128 fmaxmagf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __fmaxmagf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float128 fminmagf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __fminmagf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern _Float128 fmaximumf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __fmaximumf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float128 fminimumf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __fminimumf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float128 fmaximum_numf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __fmaximum_numf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float128 fminimum_numf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __fminimum_numf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float128 fmaximum_magf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __fmaximum_magf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float128 fminimum_magf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __fminimum_magf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float128 fmaximum_mag_numf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __fmaximum_mag_numf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float128 fminimum_mag_numf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float128 __fminimum_mag_numf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern int totalorderf128 (const _Float128 *__x, const _Float128 *__y) __attribute__ ((__nothrow__ , __leaf__))
+
+     __attribute__ ((__pure__));
+
+
+extern int totalordermagf128 (const _Float128 *__x, const _Float128 *__y) __attribute__ ((__nothrow__ , __leaf__))
+
+     __attribute__ ((__pure__));
+
+
+extern _Float128 getpayloadf128 (const _Float128 *__x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float128 __getpayloadf128 (const _Float128 *__x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setpayloadf128 (_Float128 *__x, _Float128 __payload) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setpayloadsigf128 (_Float128 *__x, _Float128 __payload) __attribute__ ((__nothrow__ , __leaf__));
+# 485 "/usr/include/math.h" 2 3 4
+# 501 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 1 3 4
+# 53 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+ extern _Float32x acosf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __acosf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32x asinf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __asinf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32x atanf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __atanf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32x atan2f32x (_Float32x __y, _Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __atan2f32x (_Float32x __y, _Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float32x cosf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __cosf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32x sinf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __sinf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32x tanf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __tanf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float32x coshf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __coshf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32x sinhf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __sinhf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32x tanhf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __tanhf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+ extern void sincosf32x (_Float32x __x, _Float32x *__sinx, _Float32x *__cosx) __attribute__ ((__nothrow__ , __leaf__)); extern void __sincosf32x (_Float32x __x, _Float32x *__sinx, _Float32x *__cosx) __attribute__ ((__nothrow__ , __leaf__))
+                                                        ;
+
+
+
+
+ extern _Float32x acoshf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __acoshf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32x asinhf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __asinhf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float32x atanhf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __atanhf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+ extern _Float32x expf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __expf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x frexpf32x (_Float32x __x, int *__exponent) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __frexpf32x (_Float32x __x, int *__exponent) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x ldexpf32x (_Float32x __x, int __exponent) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __ldexpf32x (_Float32x __x, int __exponent) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float32x logf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __logf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float32x log10f32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __log10f32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x modff32x (_Float32x __x, _Float32x *__iptr) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __modff32x (_Float32x __x, _Float32x *__iptr) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+ extern _Float32x exp10f32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __exp10f32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float32x expm1f32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __expm1f32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float32x log1pf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __log1pf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x logbf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __logbf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float32x exp2f32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __exp2f32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float32x log2f32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __log2f32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+ extern _Float32x powf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __powf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x sqrtf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __sqrtf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+ extern _Float32x hypotf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __hypotf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float32x cbrtf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __cbrtf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float32x ceilf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __ceilf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32x fabsf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __fabsf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32x floorf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __floorf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32x fmodf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __fmodf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__));
+# 198 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern _Float32x copysignf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __copysignf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern _Float32x nanf32x (const char *__tagb) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __nanf32x (const char *__tagb) __attribute__ ((__nothrow__ , __leaf__));
+# 220 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern _Float32x j0f32x (_Float32x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __j0f32x (_Float32x) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float32x j1f32x (_Float32x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __j1f32x (_Float32x) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float32x jnf32x (int, _Float32x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __jnf32x (int, _Float32x) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float32x y0f32x (_Float32x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __y0f32x (_Float32x) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float32x y1f32x (_Float32x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __y1f32x (_Float32x) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float32x ynf32x (int, _Float32x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __ynf32x (int, _Float32x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+ extern _Float32x erff32x (_Float32x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __erff32x (_Float32x) __attribute__ ((__nothrow__ , __leaf__));
+ extern _Float32x erfcf32x (_Float32x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __erfcf32x (_Float32x) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float32x lgammaf32x (_Float32x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __lgammaf32x (_Float32x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern _Float32x tgammaf32x (_Float32x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __tgammaf32x (_Float32x) __attribute__ ((__nothrow__ , __leaf__));
+# 252 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern _Float32x lgammaf32x_r (_Float32x, int *__signgamp) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __lgammaf32x_r (_Float32x, int *__signgamp) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float32x rintf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __rintf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x nextafterf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __nextafterf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float32x nextdownf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __nextdownf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+extern _Float32x nextupf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __nextupf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float32x remainderf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __remainderf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float32x scalbnf32x (_Float32x __x, int __n) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __scalbnf32x (_Float32x __x, int __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int ilogbf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern int __ilogbf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern long int llogbf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __llogbf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern _Float32x scalblnf32x (_Float32x __x, long int __n) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __scalblnf32x (_Float32x __x, long int __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float32x nearbyintf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __nearbyintf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float32x roundf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __roundf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern _Float32x truncf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __truncf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern _Float32x remquof32x (_Float32x __x, _Float32x __y, int *__quo) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __remquof32x (_Float32x __x, _Float32x __y, int *__quo) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern long int lrintf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __lrintf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+__extension__
+extern long long int llrintf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern long long int __llrintf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern long int lroundf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __lroundf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+__extension__
+extern long long int llroundf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)); extern long long int __llroundf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float32x fdimf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __fdimf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float32x fmaxf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __fmaxf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32x fminf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __fminf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern _Float32x fmaf32x (_Float32x __x, _Float32x __y, _Float32x __z) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __fmaf32x (_Float32x __x, _Float32x __y, _Float32x __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern _Float32x roundevenf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __roundevenf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern __intmax_t fromfpf32x (_Float32x __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __intmax_t __fromfpf32x (_Float32x __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                            ;
+
+
+
+extern __uintmax_t ufromfpf32x (_Float32x __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __uintmax_t __ufromfpf32x (_Float32x __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                              ;
+
+
+
+
+extern __intmax_t fromfpxf32x (_Float32x __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __intmax_t __fromfpxf32x (_Float32x __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                             ;
+
+
+
+
+extern __uintmax_t ufromfpxf32x (_Float32x __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __uintmax_t __ufromfpxf32x (_Float32x __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                               ;
+
+
+extern int canonicalizef32x (_Float32x *__cx, const _Float32x *__x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float32x fmaxmagf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __fmaxmagf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32x fminmagf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __fminmagf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern _Float32x fmaximumf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __fmaximumf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32x fminimumf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __fminimumf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32x fmaximum_numf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __fmaximum_numf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32x fminimum_numf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __fminimum_numf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32x fmaximum_magf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __fmaximum_magf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32x fminimum_magf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __fminimum_magf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32x fmaximum_mag_numf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __fmaximum_mag_numf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float32x fminimum_mag_numf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float32x __fminimum_mag_numf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern int totalorderf32x (const _Float32x *__x, const _Float32x *__y) __attribute__ ((__nothrow__ , __leaf__))
+
+     __attribute__ ((__pure__));
+
+
+extern int totalordermagf32x (const _Float32x *__x, const _Float32x *__y) __attribute__ ((__nothrow__ , __leaf__))
+
+     __attribute__ ((__pure__));
+
+
+extern _Float32x getpayloadf32x (const _Float32x *__x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float32x __getpayloadf32x (const _Float32x *__x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setpayloadf32x (_Float32x *__x, _Float32x __payload) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setpayloadsigf32x (_Float32x *__x, _Float32x __payload) __attribute__ ((__nothrow__ , __leaf__));
+# 502 "/usr/include/math.h" 2 3 4
+# 518 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 1 3 4
+# 53 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+ extern _Float64x acosf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __acosf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64x asinf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __asinf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64x atanf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __atanf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64x atan2f64x (_Float64x __y, _Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __atan2f64x (_Float64x __y, _Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float64x cosf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __cosf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64x sinf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __sinf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64x tanf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __tanf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float64x coshf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __coshf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64x sinhf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __sinhf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64x tanhf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __tanhf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+ extern void sincosf64x (_Float64x __x, _Float64x *__sinx, _Float64x *__cosx) __attribute__ ((__nothrow__ , __leaf__)); extern void __sincosf64x (_Float64x __x, _Float64x *__sinx, _Float64x *__cosx) __attribute__ ((__nothrow__ , __leaf__))
+                                                        ;
+
+
+
+
+ extern _Float64x acoshf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __acoshf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64x asinhf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __asinhf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+ extern _Float64x atanhf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __atanhf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+ extern _Float64x expf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __expf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64x frexpf64x (_Float64x __x, int *__exponent) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __frexpf64x (_Float64x __x, int *__exponent) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64x ldexpf64x (_Float64x __x, int __exponent) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __ldexpf64x (_Float64x __x, int __exponent) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float64x logf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __logf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float64x log10f64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __log10f64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64x modff64x (_Float64x __x, _Float64x *__iptr) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __modff64x (_Float64x __x, _Float64x *__iptr) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+ extern _Float64x exp10f64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __exp10f64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float64x expm1f64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __expm1f64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float64x log1pf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __log1pf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64x logbf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __logbf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float64x exp2f64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __exp2f64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+ extern _Float64x log2f64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __log2f64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+ extern _Float64x powf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __powf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64x sqrtf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __sqrtf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+ extern _Float64x hypotf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __hypotf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+ extern _Float64x cbrtf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __cbrtf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float64x ceilf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __ceilf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64x fabsf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __fabsf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64x floorf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __floorf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64x fmodf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __fmodf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+# 198 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern _Float64x copysignf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __copysignf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern _Float64x nanf64x (const char *__tagb) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __nanf64x (const char *__tagb) __attribute__ ((__nothrow__ , __leaf__));
+# 220 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern _Float64x j0f64x (_Float64x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __j0f64x (_Float64x) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float64x j1f64x (_Float64x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __j1f64x (_Float64x) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float64x jnf64x (int, _Float64x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __jnf64x (int, _Float64x) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float64x y0f64x (_Float64x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __y0f64x (_Float64x) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float64x y1f64x (_Float64x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __y1f64x (_Float64x) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float64x ynf64x (int, _Float64x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __ynf64x (int, _Float64x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+ extern _Float64x erff64x (_Float64x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __erff64x (_Float64x) __attribute__ ((__nothrow__ , __leaf__));
+ extern _Float64x erfcf64x (_Float64x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __erfcf64x (_Float64x) __attribute__ ((__nothrow__ , __leaf__));
+extern _Float64x lgammaf64x (_Float64x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __lgammaf64x (_Float64x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern _Float64x tgammaf64x (_Float64x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __tgammaf64x (_Float64x) __attribute__ ((__nothrow__ , __leaf__));
+# 252 "/usr/include/x86_64-linux-gnu/bits/mathcalls.h" 3 4
+extern _Float64x lgammaf64x_r (_Float64x, int *__signgamp) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __lgammaf64x_r (_Float64x, int *__signgamp) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float64x rintf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __rintf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64x nextafterf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __nextafterf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float64x nextdownf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __nextdownf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+extern _Float64x nextupf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __nextupf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float64x remainderf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __remainderf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float64x scalbnf64x (_Float64x __x, int __n) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __scalbnf64x (_Float64x __x, int __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int ilogbf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern int __ilogbf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern long int llogbf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __llogbf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern _Float64x scalblnf64x (_Float64x __x, long int __n) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __scalblnf64x (_Float64x __x, long int __n) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float64x nearbyintf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __nearbyintf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float64x roundf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __roundf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern _Float64x truncf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __truncf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern _Float64x remquof64x (_Float64x __x, _Float64x __y, int *__quo) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __remquof64x (_Float64x __x, _Float64x __y, int *__quo) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern long int lrintf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __lrintf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+__extension__
+extern long long int llrintf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern long long int __llrintf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern long int lroundf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern long int __lroundf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+__extension__
+extern long long int llroundf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)); extern long long int __llroundf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float64x fdimf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __fdimf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern _Float64x fmaxf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __fmaxf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64x fminf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __fminf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern _Float64x fmaf64x (_Float64x __x, _Float64x __y, _Float64x __z) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __fmaf64x (_Float64x __x, _Float64x __y, _Float64x __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern _Float64x roundevenf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __roundevenf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+extern __intmax_t fromfpf64x (_Float64x __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __intmax_t __fromfpf64x (_Float64x __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                            ;
+
+
+
+extern __uintmax_t ufromfpf64x (_Float64x __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __uintmax_t __ufromfpf64x (_Float64x __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                              ;
+
+
+
+
+extern __intmax_t fromfpxf64x (_Float64x __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __intmax_t __fromfpxf64x (_Float64x __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                             ;
+
+
+
+
+extern __uintmax_t ufromfpxf64x (_Float64x __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__)); extern __uintmax_t __ufromfpxf64x (_Float64x __x, int __round, unsigned int __width) __attribute__ ((__nothrow__ , __leaf__))
+                               ;
+
+
+extern int canonicalizef64x (_Float64x *__cx, const _Float64x *__x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern _Float64x fmaxmagf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __fmaxmagf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64x fminmagf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __fminmagf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern _Float64x fmaximumf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __fmaximumf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64x fminimumf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __fminimumf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64x fmaximum_numf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __fmaximum_numf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64x fminimum_numf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __fminimum_numf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64x fmaximum_magf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __fmaximum_magf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64x fminimum_magf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __fminimum_magf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64x fmaximum_mag_numf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __fmaximum_mag_numf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern _Float64x fminimum_mag_numf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__)); extern _Float64x __fminimum_mag_numf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+extern int totalorderf64x (const _Float64x *__x, const _Float64x *__y) __attribute__ ((__nothrow__ , __leaf__))
+
+     __attribute__ ((__pure__));
+
+
+extern int totalordermagf64x (const _Float64x *__x, const _Float64x *__y) __attribute__ ((__nothrow__ , __leaf__))
+
+     __attribute__ ((__pure__));
+
+
+extern _Float64x getpayloadf64x (const _Float64x *__x) __attribute__ ((__nothrow__ , __leaf__)); extern _Float64x __getpayloadf64x (const _Float64x *__x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setpayloadf64x (_Float64x *__x, _Float64x __payload) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setpayloadsigf64x (_Float64x *__x, _Float64x __payload) __attribute__ ((__nothrow__ , __leaf__));
+# 519 "/usr/include/math.h" 2 3 4
+# 566 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 3 4
+extern float fadd (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern float fdiv (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern float ffma (double __x, double __y, double __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern float fmul (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern float fsqrt (double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern float fsub (double __x, double __y) __attribute__ ((__nothrow__ , __leaf__));
+# 567 "/usr/include/math.h" 2 3 4
+# 587 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 3 4
+extern float faddl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern float fdivl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern float ffmal (long double __x, long double __y, long double __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern float fmull (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern float fsqrtl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern float fsubl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+# 588 "/usr/include/math.h" 2 3 4
+# 616 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 3 4
+extern double daddl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern double ddivl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern double dfmal (long double __x, long double __y, long double __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern double dmull (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern double dsqrtl (long double __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern double dsubl (long double __x, long double __y) __attribute__ ((__nothrow__ , __leaf__));
+# 617 "/usr/include/math.h" 2 3 4
+# 697 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 3 4
+extern _Float32 f32addf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32divf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32fmaf32x (_Float32x __x, _Float32x __y, _Float32x __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32mulf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32sqrtf32x (_Float32x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32subf32x (_Float32x __x, _Float32x __y) __attribute__ ((__nothrow__ , __leaf__));
+# 698 "/usr/include/math.h" 2 3 4
+# 707 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 3 4
+extern _Float32 f32addf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32divf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32fmaf64 (_Float64 __x, _Float64 __y, _Float64 __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32mulf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32sqrtf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32subf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__));
+# 708 "/usr/include/math.h" 2 3 4
+# 717 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 3 4
+extern _Float32 f32addf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32divf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32fmaf64x (_Float64x __x, _Float64x __y, _Float64x __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32mulf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32sqrtf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32subf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+# 718 "/usr/include/math.h" 2 3 4
+# 727 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 3 4
+extern _Float32 f32addf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32divf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32fmaf128 (_Float128 __x, _Float128 __y, _Float128 __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32mulf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32sqrtf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32 f32subf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+# 728 "/usr/include/math.h" 2 3 4
+# 747 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 3 4
+extern _Float32x f32xaddf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x f32xdivf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x f32xfmaf64 (_Float64 __x, _Float64 __y, _Float64 __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x f32xmulf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x f32xsqrtf64 (_Float64 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x f32xsubf64 (_Float64 __x, _Float64 __y) __attribute__ ((__nothrow__ , __leaf__));
+# 748 "/usr/include/math.h" 2 3 4
+# 757 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 3 4
+extern _Float32x f32xaddf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x f32xdivf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x f32xfmaf64x (_Float64x __x, _Float64x __y, _Float64x __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x f32xmulf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x f32xsqrtf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x f32xsubf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+# 758 "/usr/include/math.h" 2 3 4
+# 767 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 3 4
+extern _Float32x f32xaddf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x f32xdivf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x f32xfmaf128 (_Float128 __x, _Float128 __y, _Float128 __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x f32xmulf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x f32xsqrtf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float32x f32xsubf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+# 768 "/usr/include/math.h" 2 3 4
+# 787 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 3 4
+extern _Float64 f64addf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64 f64divf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64 f64fmaf64x (_Float64x __x, _Float64x __y, _Float64x __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64 f64mulf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64 f64sqrtf64x (_Float64x __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64 f64subf64x (_Float64x __x, _Float64x __y) __attribute__ ((__nothrow__ , __leaf__));
+# 788 "/usr/include/math.h" 2 3 4
+# 797 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 3 4
+extern _Float64 f64addf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64 f64divf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64 f64fmaf128 (_Float128 __x, _Float128 __y, _Float128 __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64 f64mulf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64 f64sqrtf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64 f64subf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+# 798 "/usr/include/math.h" 2 3 4
+# 817 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h" 3 4
+extern _Float64x f64xaddf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64x f64xdivf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64x f64xfmaf128 (_Float128 __x, _Float128 __y, _Float128 __z) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64x f64xmulf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64x f64xsqrtf128 (_Float128 __x) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern _Float64x f64xsubf128 (_Float128 __x, _Float128 __y) __attribute__ ((__nothrow__ , __leaf__));
+# 818 "/usr/include/math.h" 2 3 4
+# 854 "/usr/include/math.h" 3 4
+extern int signgam;
+# 934 "/usr/include/math.h" 3 4
+enum
+  {
+    FP_NAN =
+
+      0,
+    FP_INFINITE =
+
+      1,
+    FP_ZERO =
+
+      2,
+    FP_SUBNORMAL =
+
+      3,
+    FP_NORMAL =
+
+      4
+  };
+# 1055 "/usr/include/math.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/iscanonical.h" 1 3 4
+# 23 "/usr/include/x86_64-linux-gnu/bits/iscanonical.h" 3 4
+extern int __iscanonicall (long double __x)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+# 1056 "/usr/include/math.h" 2 3 4
+# 1472 "/usr/include/math.h" 3 4
+
+# 119 "./MagickCore/studio.h" 2
+# 1 "/usr/include/time.h" 1 3 4
+# 29 "/usr/include/time.h" 3 4
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 30 "/usr/include/time.h" 2 3 4
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/time.h" 1 3 4
+# 73 "/usr/include/x86_64-linux-gnu/bits/time.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/timex.h" 1 3 4
+# 26 "/usr/include/x86_64-linux-gnu/bits/timex.h" 3 4
+struct timex
+{
+# 58 "/usr/include/x86_64-linux-gnu/bits/timex.h" 3 4
+  unsigned int modes;
+  __syscall_slong_t offset;
+  __syscall_slong_t freq;
+  __syscall_slong_t maxerror;
+  __syscall_slong_t esterror;
+  int status;
+  __syscall_slong_t constant;
+  __syscall_slong_t precision;
+  __syscall_slong_t tolerance;
+  struct timeval time;
+  __syscall_slong_t tick;
+  __syscall_slong_t ppsfreq;
+  __syscall_slong_t jitter;
+  int shift;
+  __syscall_slong_t stabil;
+  __syscall_slong_t jitcnt;
+  __syscall_slong_t calcnt;
+  __syscall_slong_t errcnt;
+  __syscall_slong_t stbcnt;
+
+  int tai;
+
+
+  int :32; int :32; int :32; int :32;
+  int :32; int :32; int :32; int :32;
+  int :32; int :32; int :32;
+
+};
+# 74 "/usr/include/x86_64-linux-gnu/bits/time.h" 2 3 4
+
+
+
+
+extern int clock_adjtime (__clockid_t __clock_id, struct timex *__utx) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+# 90 "/usr/include/x86_64-linux-gnu/bits/time.h" 3 4
+
+# 34 "/usr/include/time.h" 2 3 4
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/struct_tm.h" 1 3 4
+
+
+
+
+
+
+struct tm
+{
+  int tm_sec;
+  int tm_min;
+  int tm_hour;
+  int tm_mday;
+  int tm_mon;
+  int tm_year;
+  int tm_wday;
+  int tm_yday;
+  int tm_isdst;
+
+
+  long int tm_gmtoff;
+  const char *tm_zone;
+
+
+
+
+};
+# 40 "/usr/include/time.h" 2 3 4
+# 48 "/usr/include/time.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h" 1 3 4
+
+
+
+
+
+
+
+struct itimerspec
+  {
+    struct timespec it_interval;
+    struct timespec it_value;
+  };
+# 49 "/usr/include/time.h" 2 3 4
+struct sigevent;
+# 68 "/usr/include/time.h" 3 4
+
+
+
+
+extern clock_t clock (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern time_t time (time_t *__timer) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern double difftime (time_t __time1, time_t __time0)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern time_t mktime (struct tm *__tp) __attribute__ ((__nothrow__ , __leaf__));
+# 100 "/usr/include/time.h" 3 4
+extern size_t strftime (char *__restrict __s, size_t __maxsize,
+   const char *__restrict __format,
+   const struct tm *__restrict __tp)
+   __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 3, 4)));
+
+
+
+
+extern char *strptime (const char *__restrict __s,
+         const char *__restrict __fmt, struct tm *__tp)
+     __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern size_t strftime_l (char *__restrict __s, size_t __maxsize,
+     const char *__restrict __format,
+     const struct tm *__restrict __tp,
+     locale_t __loc) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern char *strptime_l (const char *__restrict __s,
+    const char *__restrict __fmt, struct tm *__tp,
+    locale_t __loc) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern struct tm *gmtime (const time_t *__timer) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern struct tm *localtime (const time_t *__timer) __attribute__ ((__nothrow__ , __leaf__));
+# 155 "/usr/include/time.h" 3 4
+extern struct tm *gmtime_r (const time_t *__restrict __timer,
+       struct tm *__restrict __tp) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern struct tm *localtime_r (const time_t *__restrict __timer,
+          struct tm *__restrict __tp) __attribute__ ((__nothrow__ , __leaf__));
+# 180 "/usr/include/time.h" 3 4
+extern char *asctime (const struct tm *__tp) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern char *ctime (const time_t *__timer) __attribute__ ((__nothrow__ , __leaf__));
+# 198 "/usr/include/time.h" 3 4
+extern char *asctime_r (const struct tm *__restrict __tp,
+   char *__restrict __buf) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern char *ctime_r (const time_t *__restrict __timer,
+        char *__restrict __buf) __attribute__ ((__nothrow__ , __leaf__));
+# 218 "/usr/include/time.h" 3 4
+extern char *__tzname[2];
+extern int __daylight;
+extern long int __timezone;
+
+
+
+
+extern char *tzname[2];
+
+
+
+extern void tzset (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int daylight;
+extern long int timezone;
+# 247 "/usr/include/time.h" 3 4
+extern time_t timegm (struct tm *__tp) __attribute__ ((__nothrow__ , __leaf__));
+# 264 "/usr/include/time.h" 3 4
+extern time_t timelocal (struct tm *__tp) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+extern int dysize (int __year) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+# 282 "/usr/include/time.h" 3 4
+extern int nanosleep (const struct timespec *__requested_time,
+        struct timespec *__remaining);
+
+
+extern int clock_getres (clockid_t __clock_id, struct timespec *__res) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int clock_gettime (clockid_t __clock_id, struct timespec *__tp)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+extern int clock_settime (clockid_t __clock_id, const struct timespec *__tp)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+# 324 "/usr/include/time.h" 3 4
+extern int clock_nanosleep (clockid_t __clock_id, int __flags,
+       const struct timespec *__req,
+       struct timespec *__rem);
+# 339 "/usr/include/time.h" 3 4
+extern int clock_getcpuclockid (pid_t __pid, clockid_t *__clock_id) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern int timer_create (clockid_t __clock_id,
+    struct sigevent *__restrict __evp,
+    timer_t *__restrict __timerid) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int timer_delete (timer_t __timerid) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int timer_settime (timer_t __timerid, int __flags,
+     const struct itimerspec *__restrict __value,
+     struct itimerspec *__restrict __ovalue) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int timer_gettime (timer_t __timerid, struct itimerspec *__value)
+     __attribute__ ((__nothrow__ , __leaf__));
+# 377 "/usr/include/time.h" 3 4
+extern int timer_getoverrun (timer_t __timerid) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern int timespec_get (struct timespec *__ts, int __base)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+# 400 "/usr/include/time.h" 3 4
+extern int timespec_getres (struct timespec *__ts, int __base)
+     __attribute__ ((__nothrow__ , __leaf__));
+# 426 "/usr/include/time.h" 3 4
+extern int getdate_err;
+# 435 "/usr/include/time.h" 3 4
+extern struct tm *getdate (const char *__string);
+# 449 "/usr/include/time.h" 3 4
+extern int getdate_r (const char *__restrict __string,
+        struct tm *__restrict __resbufp);
+
+
+
+# 120 "./MagickCore/studio.h" 2
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h" 1 3 4
+# 34 "/usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h" 3 4
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h" 1 3 4
+
+
+
+
+
+
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h" 1 3 4
+# 205 "/usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h" 3 4
+# 1 "/usr/include/limits.h" 1 3 4
+# 26 "/usr/include/limits.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/libc-header-start.h" 1 3 4
+# 27 "/usr/include/limits.h" 2 3 4
+# 195 "/usr/include/limits.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/posix1_lim.h" 1 3 4
+# 27 "/usr/include/x86_64-linux-gnu/bits/posix1_lim.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/wordsize.h" 1 3 4
+# 28 "/usr/include/x86_64-linux-gnu/bits/posix1_lim.h" 2 3 4
+# 161 "/usr/include/x86_64-linux-gnu/bits/posix1_lim.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/local_lim.h" 1 3 4
+# 38 "/usr/include/x86_64-linux-gnu/bits/local_lim.h" 3 4
+# 1 "/usr/include/linux/limits.h" 1 3 4
+# 39 "/usr/include/x86_64-linux-gnu/bits/local_lim.h" 2 3 4
+# 81 "/usr/include/x86_64-linux-gnu/bits/local_lim.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/pthread_stack_min-dynamic.h" 1 3 4
+# 23 "/usr/include/x86_64-linux-gnu/bits/pthread_stack_min-dynamic.h" 3 4
+
+extern long int __sysconf (int __name) __attribute__ ((__nothrow__ , __leaf__));
+
+# 82 "/usr/include/x86_64-linux-gnu/bits/local_lim.h" 2 3 4
+# 162 "/usr/include/x86_64-linux-gnu/bits/posix1_lim.h" 2 3 4
+# 196 "/usr/include/limits.h" 2 3 4
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/posix2_lim.h" 1 3 4
+# 200 "/usr/include/limits.h" 2 3 4
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/xopen_lim.h" 1 3 4
+# 64 "/usr/include/x86_64-linux-gnu/bits/xopen_lim.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/uio_lim.h" 1 3 4
+# 65 "/usr/include/x86_64-linux-gnu/bits/xopen_lim.h" 2 3 4
+# 204 "/usr/include/limits.h" 2 3 4
+# 206 "/usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h" 2 3 4
+# 8 "/usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h" 2 3 4
+# 35 "/usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h" 2 3 4
+# 121 "./MagickCore/studio.h" 2
+# 1 "/usr/include/signal.h" 1 3 4
+# 27 "/usr/include/signal.h" 3 4
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/signum-generic.h" 1 3 4
+# 76 "/usr/include/x86_64-linux-gnu/bits/signum-generic.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/signum-arch.h" 1 3 4
+# 77 "/usr/include/x86_64-linux-gnu/bits/signum-generic.h" 2 3 4
+# 31 "/usr/include/signal.h" 2 3 4
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/sig_atomic_t.h" 1 3 4
+
+
+
+
+
+
+
+typedef __sig_atomic_t sig_atomic_t;
+# 33 "/usr/include/signal.h" 2 3 4
+# 57 "/usr/include/signal.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/siginfo_t.h" 1 3 4
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/wordsize.h" 1 3 4
+# 5 "/usr/include/x86_64-linux-gnu/bits/types/siginfo_t.h" 2 3 4
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/__sigval_t.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/types/__sigval_t.h" 3 4
+union sigval
+{
+  int sival_int;
+  void *sival_ptr;
+};
+
+typedef union sigval __sigval_t;
+# 7 "/usr/include/x86_64-linux-gnu/bits/types/siginfo_t.h" 2 3 4
+# 16 "/usr/include/x86_64-linux-gnu/bits/types/siginfo_t.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/siginfo-arch.h" 1 3 4
+# 17 "/usr/include/x86_64-linux-gnu/bits/types/siginfo_t.h" 2 3 4
+# 36 "/usr/include/x86_64-linux-gnu/bits/types/siginfo_t.h" 3 4
+typedef struct
+  {
+    int si_signo;
+
+    int si_errno;
+
+    int si_code;
+
+
+
+
+
+    int __pad0;
+
+
+    union
+      {
+ int _pad[((128 / sizeof (int)) - 4)];
+
+
+ struct
+   {
+     __pid_t si_pid;
+     __uid_t si_uid;
+   } _kill;
+
+
+ struct
+   {
+     int si_tid;
+     int si_overrun;
+     __sigval_t si_sigval;
+   } _timer;
+
+
+ struct
+   {
+     __pid_t si_pid;
+     __uid_t si_uid;
+     __sigval_t si_sigval;
+   } _rt;
+
+
+ struct
+   {
+     __pid_t si_pid;
+     __uid_t si_uid;
+     int si_status;
+     __clock_t si_utime;
+     __clock_t si_stime;
+   } _sigchld;
+
+
+ struct
+   {
+     void *si_addr;
+    
+     short int si_addr_lsb;
+     union
+       {
+
+  struct
+    {
+      void *_lower;
+      void *_upper;
+    } _addr_bnd;
+
+  __uint32_t _pkey;
+       } _bounds;
+   } _sigfault;
+
+
+ struct
+   {
+     long int si_band;
+     int si_fd;
+   } _sigpoll;
+
+
+
+ struct
+   {
+     void *_call_addr;
+     int _syscall;
+     unsigned int _arch;
+   } _sigsys;
+
+      } _sifields;
+  } siginfo_t ;
+# 58 "/usr/include/signal.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/siginfo-consts.h" 1 3 4
+# 35 "/usr/include/x86_64-linux-gnu/bits/siginfo-consts.h" 3 4
+enum
+{
+  SI_ASYNCNL = -60,
+  SI_DETHREAD = -7,
+
+  SI_TKILL,
+  SI_SIGIO,
+
+  SI_ASYNCIO,
+  SI_MESGQ,
+  SI_TIMER,
+
+
+
+
+
+  SI_QUEUE,
+  SI_USER,
+  SI_KERNEL = 0x80
+# 66 "/usr/include/x86_64-linux-gnu/bits/siginfo-consts.h" 3 4
+};
+
+
+
+
+enum
+{
+  ILL_ILLOPC = 1,
+
+  ILL_ILLOPN,
+
+  ILL_ILLADR,
+
+  ILL_ILLTRP,
+
+  ILL_PRVOPC,
+
+  ILL_PRVREG,
+
+  ILL_COPROC,
+
+  ILL_BADSTK,
+
+  ILL_BADIADDR
+
+};
+
+
+enum
+{
+  FPE_INTDIV = 1,
+
+  FPE_INTOVF,
+
+  FPE_FLTDIV,
+
+  FPE_FLTOVF,
+
+  FPE_FLTUND,
+
+  FPE_FLTRES,
+
+  FPE_FLTINV,
+
+  FPE_FLTSUB,
+
+  FPE_FLTUNK = 14,
+
+  FPE_CONDTRAP
+
+};
+
+
+enum
+{
+  SEGV_MAPERR = 1,
+
+  SEGV_ACCERR,
+
+  SEGV_BNDERR,
+
+  SEGV_PKUERR,
+
+  SEGV_ACCADI,
+
+  SEGV_ADIDERR,
+
+  SEGV_ADIPERR,
+
+  SEGV_MTEAERR,
+
+  SEGV_MTESERR
+
+};
+
+
+enum
+{
+  BUS_ADRALN = 1,
+
+  BUS_ADRERR,
+
+  BUS_OBJERR,
+
+  BUS_MCEERR_AR,
+
+  BUS_MCEERR_AO
+
+};
+
+
+
+
+enum
+{
+  TRAP_BRKPT = 1,
+
+  TRAP_TRACE,
+
+  TRAP_BRANCH,
+
+  TRAP_HWBKPT,
+
+  TRAP_UNK
+
+};
+
+
+
+
+enum
+{
+  CLD_EXITED = 1,
+
+  CLD_KILLED,
+
+  CLD_DUMPED,
+
+  CLD_TRAPPED,
+
+  CLD_STOPPED,
+
+  CLD_CONTINUED
+
+};
+
+
+enum
+{
+  POLL_IN = 1,
+
+  POLL_OUT,
+
+  POLL_MSG,
+
+  POLL_ERR,
+
+  POLL_PRI,
+
+  POLL_HUP
+
+};
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/siginfo-consts-arch.h" 1 3 4
+# 214 "/usr/include/x86_64-linux-gnu/bits/siginfo-consts.h" 2 3 4
+# 59 "/usr/include/signal.h" 2 3 4
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/sigval_t.h" 1 3 4
+# 16 "/usr/include/x86_64-linux-gnu/bits/types/sigval_t.h" 3 4
+typedef __sigval_t sigval_t;
+# 63 "/usr/include/signal.h" 2 3 4
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/sigevent_t.h" 1 3 4
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/wordsize.h" 1 3 4
+# 5 "/usr/include/x86_64-linux-gnu/bits/types/sigevent_t.h" 2 3 4
+# 22 "/usr/include/x86_64-linux-gnu/bits/types/sigevent_t.h" 3 4
+typedef struct sigevent
+  {
+    __sigval_t sigev_value;
+    int sigev_signo;
+    int sigev_notify;
+
+    union
+      {
+ int _pad[((64 / sizeof (int)) - 4)];
+
+
+
+ __pid_t _tid;
+
+ struct
+   {
+     void (*_function) (__sigval_t);
+     pthread_attr_t *_attribute;
+   } _sigev_thread;
+      } _sigev_un;
+  } sigevent_t;
+# 67 "/usr/include/signal.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/sigevent-consts.h" 1 3 4
+# 27 "/usr/include/x86_64-linux-gnu/bits/sigevent-consts.h" 3 4
+enum
+{
+  SIGEV_SIGNAL = 0,
+
+  SIGEV_NONE,
+
+  SIGEV_THREAD,
+
+
+  SIGEV_THREAD_ID = 4
+
+
+};
+# 68 "/usr/include/signal.h" 2 3 4
+
+
+
+
+typedef void (*__sighandler_t) (int);
+
+
+
+
+extern __sighandler_t __sysv_signal (int __sig, __sighandler_t __handler)
+     __attribute__ ((__nothrow__ , __leaf__));
+
+extern __sighandler_t sysv_signal (int __sig, __sighandler_t __handler)
+     __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern __sighandler_t signal (int __sig, __sighandler_t __handler)
+     __attribute__ ((__nothrow__ , __leaf__));
+# 112 "/usr/include/signal.h" 3 4
+extern int kill (__pid_t __pid, int __sig) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern int killpg (__pid_t __pgrp, int __sig) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int raise (int __sig) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern __sighandler_t ssignal (int __sig, __sighandler_t __handler)
+     __attribute__ ((__nothrow__ , __leaf__));
+extern int gsignal (int __sig) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern void psignal (int __sig, const char *__s);
+
+
+extern void psiginfo (const siginfo_t *__pinfo, const char *__s);
+# 151 "/usr/include/signal.h" 3 4
+extern int sigpause (int __sig) __asm__ ("__xpg_sigpause")
+  __attribute__ ((__deprecated__ ("Use the sigsuspend function instead")));
+# 173 "/usr/include/signal.h" 3 4
+extern int sigblock (int __mask) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__deprecated__));
+
+
+extern int sigsetmask (int __mask) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__deprecated__));
+
+
+extern int siggetmask (void) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__deprecated__));
+# 188 "/usr/include/signal.h" 3 4
+typedef __sighandler_t sighandler_t;
+
+
+
+
+typedef __sighandler_t sig_t;
+
+
+
+
+
+extern int sigemptyset (sigset_t *__set) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int sigfillset (sigset_t *__set) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int sigaddset (sigset_t *__set, int __signo) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int sigdelset (sigset_t *__set, int __signo) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int sigismember (const sigset_t *__set, int __signo)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern int sigisemptyset (const sigset_t *__set) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int sigandset (sigset_t *__set, const sigset_t *__left,
+        const sigset_t *__right) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2, 3)));
+
+
+extern int sigorset (sigset_t *__set, const sigset_t *__left,
+       const sigset_t *__right) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2, 3)));
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/sigaction.h" 1 3 4
+# 27 "/usr/include/x86_64-linux-gnu/bits/sigaction.h" 3 4
+struct sigaction
+  {
+
+
+    union
+      {
+
+ __sighandler_t sa_handler;
+
+ void (*sa_sigaction) (int, siginfo_t *, void *);
+      }
+    __sigaction_handler;
+
+
+
+
+
+
+
+    __sigset_t sa_mask;
+
+
+    int sa_flags;
+
+
+    void (*sa_restorer) (void);
+  };
+# 230 "/usr/include/signal.h" 2 3 4
+
+
+extern int sigprocmask (int __how, const sigset_t *__restrict __set,
+   sigset_t *__restrict __oset) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern int sigsuspend (const sigset_t *__set) __attribute__ ((__nonnull__ (1)));
+
+
+extern int sigaction (int __sig, const struct sigaction *__restrict __act,
+        struct sigaction *__restrict __oact) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int sigpending (sigset_t *__set) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+
+
+extern int sigwait (const sigset_t *__restrict __set, int *__restrict __sig)
+     __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+
+
+
+extern int sigwaitinfo (const sigset_t *__restrict __set,
+   siginfo_t *__restrict __info) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+
+
+extern int sigtimedwait (const sigset_t *__restrict __set,
+    siginfo_t *__restrict __info,
+    const struct timespec *__restrict __timeout)
+     __attribute__ ((__nonnull__ (1)));
+# 292 "/usr/include/signal.h" 3 4
+extern int sigqueue (__pid_t __pid, int __sig, const union sigval __val)
+     __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/sigcontext.h" 1 3 4
+# 31 "/usr/include/x86_64-linux-gnu/bits/sigcontext.h" 3 4
+struct _fpx_sw_bytes
+{
+  __uint32_t magic1;
+  __uint32_t extended_size;
+  __uint64_t xstate_bv;
+  __uint32_t xstate_size;
+  __uint32_t __glibc_reserved1[7];
+};
+
+struct _fpreg
+{
+  unsigned short significand[4];
+  unsigned short exponent;
+};
+
+struct _fpxreg
+{
+  unsigned short significand[4];
+  unsigned short exponent;
+  unsigned short __glibc_reserved1[3];
+};
+
+struct _xmmreg
+{
+  __uint32_t element[4];
+};
+# 123 "/usr/include/x86_64-linux-gnu/bits/sigcontext.h" 3 4
+struct _fpstate
+{
+
+  __uint16_t cwd;
+  __uint16_t swd;
+  __uint16_t ftw;
+  __uint16_t fop;
+  __uint64_t rip;
+  __uint64_t rdp;
+  __uint32_t mxcsr;
+  __uint32_t mxcr_mask;
+  struct _fpxreg _st[8];
+  struct _xmmreg _xmm[16];
+  __uint32_t __glibc_reserved1[24];
+};
+
+struct sigcontext
+{
+  __uint64_t r8;
+  __uint64_t r9;
+  __uint64_t r10;
+  __uint64_t r11;
+  __uint64_t r12;
+  __uint64_t r13;
+  __uint64_t r14;
+  __uint64_t r15;
+  __uint64_t rdi;
+  __uint64_t rsi;
+  __uint64_t rbp;
+  __uint64_t rbx;
+  __uint64_t rdx;
+  __uint64_t rax;
+  __uint64_t rcx;
+  __uint64_t rsp;
+  __uint64_t rip;
+  __uint64_t eflags;
+  unsigned short cs;
+  unsigned short gs;
+  unsigned short fs;
+  unsigned short __pad0;
+  __uint64_t err;
+  __uint64_t trapno;
+  __uint64_t oldmask;
+  __uint64_t cr2;
+  __extension__ union
+    {
+      struct _fpstate * fpstate;
+      __uint64_t __fpstate_word;
+    };
+  __uint64_t __reserved1 [8];
+};
+
+
+
+struct _xsave_hdr
+{
+  __uint64_t xstate_bv;
+  __uint64_t __glibc_reserved1[2];
+  __uint64_t __glibc_reserved2[5];
+};
+
+struct _ymmh_state
+{
+  __uint32_t ymmh_space[64];
+};
+
+struct _xstate
+{
+  struct _fpstate fpstate;
+  struct _xsave_hdr xstate_hdr;
+  struct _ymmh_state ymmh;
+};
+# 302 "/usr/include/signal.h" 2 3 4
+
+
+extern int sigreturn (struct sigcontext *__scp) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 312 "/usr/include/signal.h" 2 3 4
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/stack_t.h" 1 3 4
+# 23 "/usr/include/x86_64-linux-gnu/bits/types/stack_t.h" 3 4
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/types/stack_t.h" 2 3 4
+
+
+typedef struct
+  {
+    void *ss_sp;
+    int ss_flags;
+    size_t ss_size;
+  } stack_t;
+# 314 "/usr/include/signal.h" 2 3 4
+
+
+# 1 "/usr/include/x86_64-linux-gnu/sys/ucontext.h" 1 3 4
+# 37 "/usr/include/x86_64-linux-gnu/sys/ucontext.h" 3 4
+__extension__ typedef long long int greg_t;
+# 46 "/usr/include/x86_64-linux-gnu/sys/ucontext.h" 3 4
+typedef greg_t gregset_t[23];
+
+
+
+enum
+{
+  REG_R8 = 0,
+
+  REG_R9,
+
+  REG_R10,
+
+  REG_R11,
+
+  REG_R12,
+
+  REG_R13,
+
+  REG_R14,
+
+  REG_R15,
+
+  REG_RDI,
+
+  REG_RSI,
+
+  REG_RBP,
+
+  REG_RBX,
+
+  REG_RDX,
+
+  REG_RAX,
+
+  REG_RCX,
+
+  REG_RSP,
+
+  REG_RIP,
+
+  REG_EFL,
+
+  REG_CSGSFS,
+
+  REG_ERR,
+
+  REG_TRAPNO,
+
+  REG_OLDMASK,
+
+  REG_CR2
+
+};
+
+
+struct _libc_fpxreg
+{
+  unsigned short int significand[4];
+  unsigned short int exponent;
+  unsigned short int __glibc_reserved1[3];
+};
+
+struct _libc_xmmreg
+{
+  __uint32_t element[4];
+};
+
+struct _libc_fpstate
+{
+
+  __uint16_t cwd;
+  __uint16_t swd;
+  __uint16_t ftw;
+  __uint16_t fop;
+  __uint64_t rip;
+  __uint64_t rdp;
+  __uint32_t mxcsr;
+  __uint32_t mxcr_mask;
+  struct _libc_fpxreg _st[8];
+  struct _libc_xmmreg _xmm[16];
+  __uint32_t __glibc_reserved1[24];
+};
+
+
+typedef struct _libc_fpstate *fpregset_t;
+
+
+typedef struct
+  {
+    gregset_t gregs;
+
+    fpregset_t fpregs;
+    __extension__ unsigned long long __reserved1 [8];
+} mcontext_t;
+
+
+typedef struct ucontext_t
+  {
+    unsigned long int uc_flags;
+    struct ucontext_t *uc_link;
+    stack_t uc_stack;
+    mcontext_t uc_mcontext;
+    sigset_t uc_sigmask;
+    struct _libc_fpstate __fpregs_mem;
+    __extension__ unsigned long long int __ssp[4];
+  } ucontext_t;
+# 317 "/usr/include/signal.h" 2 3 4
+
+
+
+
+
+
+
+extern int siginterrupt (int __sig, int __interrupt) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__deprecated__ ("Use sigaction with SA_RESTART instead")));
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/sigstack.h" 1 3 4
+# 328 "/usr/include/signal.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/sigstksz.h" 1 3 4
+# 329 "/usr/include/signal.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/ss_flags.h" 1 3 4
+# 27 "/usr/include/x86_64-linux-gnu/bits/ss_flags.h" 3 4
+enum
+{
+  SS_ONSTACK = 1,
+
+  SS_DISABLE
+
+};
+# 330 "/usr/include/signal.h" 2 3 4
+
+
+
+extern int sigaltstack (const stack_t *__restrict __ss,
+   stack_t *__restrict __oss) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/struct_sigstack.h" 1 3 4
+# 23 "/usr/include/x86_64-linux-gnu/bits/types/struct_sigstack.h" 3 4
+struct sigstack
+  {
+    void *ss_sp;
+    int ss_onstack;
+  };
+# 340 "/usr/include/signal.h" 2 3 4
+
+
+
+
+
+
+
+extern int sigstack (struct sigstack *__ss, struct sigstack *__oss)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__deprecated__));
+
+
+
+
+
+
+extern int sighold (int __sig) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__deprecated__ ("Use the sigprocmask function instead")));
+
+
+extern int sigrelse (int __sig) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__deprecated__ ("Use the sigprocmask function instead")));
+
+
+extern int sigignore (int __sig) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__deprecated__ ("Use the signal function instead")));
+
+
+extern __sighandler_t sigset (int __sig, __sighandler_t __disp) __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__deprecated__ ("Use the signal and sigprocmask functions instead")))
+                                                        ;
+
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/sigthread.h" 1 3 4
+# 31 "/usr/include/x86_64-linux-gnu/bits/sigthread.h" 3 4
+extern int pthread_sigmask (int __how,
+       const __sigset_t *__restrict __newmask,
+       __sigset_t *__restrict __oldmask)__attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int pthread_kill (pthread_t __threadid, int __signo) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int pthread_sigqueue (pthread_t __threadid, int __signo,
+        const union sigval __value) __attribute__ ((__nothrow__ , __leaf__));
+# 377 "/usr/include/signal.h" 2 3 4
+
+
+
+
+
+
+extern int __libc_current_sigrtmin (void) __attribute__ ((__nothrow__ , __leaf__));
+
+extern int __libc_current_sigrtmax (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/signal_ext.h" 1 3 4
+# 29 "/usr/include/x86_64-linux-gnu/bits/signal_ext.h" 3 4
+extern int tgkill (__pid_t __tgid, __pid_t __tid, int __signal);
+# 392 "/usr/include/signal.h" 2 3 4
+
+
+# 122 "./MagickCore/studio.h" 2
+# 1 "/usr/include/assert.h" 1 3 4
+# 66 "/usr/include/assert.h" 3 4
+
+
+
+extern void __assert_fail (const char *__assertion, const char *__file,
+      unsigned int __line, const char *__function)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__noreturn__));
+
+
+extern void __assert_perror_fail (int __errnum, const char *__file,
+      unsigned int __line, const char *__function)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__noreturn__));
+
+
+
+
+extern void __assert (const char *__assertion, const char *__file, int __line)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__noreturn__));
+
+
+
+# 123 "./MagickCore/studio.h" 2
+
+
+
+
+
+# 1 "/usr/include/pthread.h" 1 3 4
+# 22 "/usr/include/pthread.h" 3 4
+# 1 "/usr/include/sched.h" 1 3 4
+# 29 "/usr/include/sched.h" 3 4
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 30 "/usr/include/sched.h" 2 3 4
+# 43 "/usr/include/sched.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/sched.h" 1 3 4
+# 80 "/usr/include/x86_64-linux-gnu/bits/sched.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h" 1 3 4
+# 23 "/usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h" 3 4
+struct sched_param
+{
+  int sched_priority;
+};
+# 81 "/usr/include/x86_64-linux-gnu/bits/sched.h" 2 3 4
+
+
+
+
+
+extern int clone (int (*__fn) (void *__arg), void *__child_stack,
+    int __flags, void *__arg, ...) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int unshare (int __flags) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int sched_getcpu (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int getcpu (unsigned int *, unsigned int *) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int setns (int __fd, int __nstype) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+# 44 "/usr/include/sched.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/cpu-set.h" 1 3 4
+# 32 "/usr/include/x86_64-linux-gnu/bits/cpu-set.h" 3 4
+typedef unsigned long int __cpu_mask;
+
+
+
+
+
+
+typedef struct
+{
+  __cpu_mask __bits[1024 / (8 * sizeof (__cpu_mask))];
+} cpu_set_t;
+# 115 "/usr/include/x86_64-linux-gnu/bits/cpu-set.h" 3 4
+
+
+extern int __sched_cpucount (size_t __setsize, const cpu_set_t *__setp)
+     __attribute__ ((__nothrow__ , __leaf__));
+extern cpu_set_t *__sched_cpualloc (size_t __count) __attribute__ ((__nothrow__ , __leaf__)) ;
+extern void __sched_cpufree (cpu_set_t *__set) __attribute__ ((__nothrow__ , __leaf__));
+
+
+# 45 "/usr/include/sched.h" 2 3 4
+
+
+
+
+
+
+
+
+
+extern int sched_setparam (__pid_t __pid, const struct sched_param *__param)
+     __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int sched_getparam (__pid_t __pid, struct sched_param *__param) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int sched_setscheduler (__pid_t __pid, int __policy,
+          const struct sched_param *__param) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int sched_getscheduler (__pid_t __pid) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int sched_yield (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int sched_get_priority_max (int __algorithm) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int sched_get_priority_min (int __algorithm) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int sched_rr_get_interval (__pid_t __pid, struct timespec *__t) __attribute__ ((__nothrow__ , __leaf__));
+# 130 "/usr/include/sched.h" 3 4
+extern int sched_setaffinity (__pid_t __pid, size_t __cpusetsize,
+         const cpu_set_t *__cpuset) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int sched_getaffinity (__pid_t __pid, size_t __cpusetsize,
+         cpu_set_t *__cpuset) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+# 23 "/usr/include/pthread.h" 2 3 4
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/setjmp.h" 1 3 4
+# 26 "/usr/include/x86_64-linux-gnu/bits/setjmp.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/wordsize.h" 1 3 4
+# 27 "/usr/include/x86_64-linux-gnu/bits/setjmp.h" 2 3 4
+
+
+
+
+typedef long int __jmp_buf[8];
+# 28 "/usr/include/pthread.h" 2 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/wordsize.h" 1 3 4
+# 29 "/usr/include/pthread.h" 2 3 4
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/struct___jmp_buf_tag.h" 1 3 4
+# 26 "/usr/include/x86_64-linux-gnu/bits/types/struct___jmp_buf_tag.h" 3 4
+struct __jmp_buf_tag
+  {
+
+
+
+
+    __jmp_buf __jmpbuf;
+    int __mask_was_saved;
+    __sigset_t __saved_mask;
+  };
+# 32 "/usr/include/pthread.h" 2 3 4
+
+
+
+
+
+enum
+{
+  PTHREAD_CREATE_JOINABLE,
+
+  PTHREAD_CREATE_DETACHED
+
+};
+
+
+
+enum
+{
+  PTHREAD_MUTEX_TIMED_NP,
+  PTHREAD_MUTEX_RECURSIVE_NP,
+  PTHREAD_MUTEX_ERRORCHECK_NP,
+  PTHREAD_MUTEX_ADAPTIVE_NP
+
+  ,
+  PTHREAD_MUTEX_NORMAL = PTHREAD_MUTEX_TIMED_NP,
+  PTHREAD_MUTEX_RECURSIVE = PTHREAD_MUTEX_RECURSIVE_NP,
+  PTHREAD_MUTEX_ERRORCHECK = PTHREAD_MUTEX_ERRORCHECK_NP,
+  PTHREAD_MUTEX_DEFAULT = PTHREAD_MUTEX_NORMAL
+
+
+
+  , PTHREAD_MUTEX_FAST_NP = PTHREAD_MUTEX_TIMED_NP
+
+};
+
+
+
+
+enum
+{
+  PTHREAD_MUTEX_STALLED,
+  PTHREAD_MUTEX_STALLED_NP = PTHREAD_MUTEX_STALLED,
+  PTHREAD_MUTEX_ROBUST,
+  PTHREAD_MUTEX_ROBUST_NP = PTHREAD_MUTEX_ROBUST
+};
+
+
+
+
+
+enum
+{
+  PTHREAD_PRIO_NONE,
+  PTHREAD_PRIO_INHERIT,
+  PTHREAD_PRIO_PROTECT
+};
+# 104 "/usr/include/pthread.h" 3 4
+enum
+{
+  PTHREAD_RWLOCK_PREFER_READER_NP,
+  PTHREAD_RWLOCK_PREFER_WRITER_NP,
+  PTHREAD_RWLOCK_PREFER_WRITER_NONRECURSIVE_NP,
+  PTHREAD_RWLOCK_DEFAULT_NP = PTHREAD_RWLOCK_PREFER_READER_NP
+};
+# 124 "/usr/include/pthread.h" 3 4
+enum
+{
+  PTHREAD_INHERIT_SCHED,
+
+  PTHREAD_EXPLICIT_SCHED
+
+};
+
+
+
+enum
+{
+  PTHREAD_SCOPE_SYSTEM,
+
+  PTHREAD_SCOPE_PROCESS
+
+};
+
+
+
+enum
+{
+  PTHREAD_PROCESS_PRIVATE,
+
+  PTHREAD_PROCESS_SHARED
+
+};
+# 159 "/usr/include/pthread.h" 3 4
+struct _pthread_cleanup_buffer
+{
+  void (*__routine) (void *);
+  void *__arg;
+  int __canceltype;
+  struct _pthread_cleanup_buffer *__prev;
+};
+
+
+enum
+{
+  PTHREAD_CANCEL_ENABLE,
+
+  PTHREAD_CANCEL_DISABLE
+
+};
+enum
+{
+  PTHREAD_CANCEL_DEFERRED,
+
+  PTHREAD_CANCEL_ASYNCHRONOUS
+
+};
+# 197 "/usr/include/pthread.h" 3 4
+
+
+
+
+
+extern int pthread_create (pthread_t *__restrict __newthread,
+      const pthread_attr_t *__restrict __attr,
+      void *(*__start_routine) (void *),
+      void *__restrict __arg) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1, 3)));
+
+
+
+
+
+extern void pthread_exit (void *__retval) __attribute__ ((__noreturn__));
+
+
+
+
+
+
+
+extern int pthread_join (pthread_t __th, void **__thread_return);
+
+
+
+
+extern int pthread_tryjoin_np (pthread_t __th, void **__thread_return) __attribute__ ((__nothrow__ , __leaf__));
+# 233 "/usr/include/pthread.h" 3 4
+extern int pthread_timedjoin_np (pthread_t __th, void **__thread_return,
+     const struct timespec *__abstime);
+# 243 "/usr/include/pthread.h" 3 4
+extern int pthread_clockjoin_np (pthread_t __th, void **__thread_return,
+                                 clockid_t __clockid,
+     const struct timespec *__abstime);
+# 269 "/usr/include/pthread.h" 3 4
+extern int pthread_detach (pthread_t __th) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern pthread_t pthread_self (void) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+extern int pthread_equal (pthread_t __thread1, pthread_t __thread2)
+  __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__const__));
+
+
+
+
+
+
+
+extern int pthread_attr_init (pthread_attr_t *__attr) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_attr_destroy (pthread_attr_t *__attr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_attr_getdetachstate (const pthread_attr_t *__attr,
+     int *__detachstate)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int pthread_attr_setdetachstate (pthread_attr_t *__attr,
+     int __detachstate)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern int pthread_attr_getguardsize (const pthread_attr_t *__attr,
+          size_t *__guardsize)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int pthread_attr_setguardsize (pthread_attr_t *__attr,
+          size_t __guardsize)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern int pthread_attr_getschedparam (const pthread_attr_t *__restrict __attr,
+           struct sched_param *__restrict __param)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int pthread_attr_setschedparam (pthread_attr_t *__restrict __attr,
+           const struct sched_param *__restrict
+           __param) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int pthread_attr_getschedpolicy (const pthread_attr_t *__restrict
+     __attr, int *__restrict __policy)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int pthread_attr_setschedpolicy (pthread_attr_t *__attr, int __policy)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_attr_getinheritsched (const pthread_attr_t *__restrict
+      __attr, int *__restrict __inherit)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int pthread_attr_setinheritsched (pthread_attr_t *__attr,
+      int __inherit)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern int pthread_attr_getscope (const pthread_attr_t *__restrict __attr,
+      int *__restrict __scope)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int pthread_attr_setscope (pthread_attr_t *__attr, int __scope)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_attr_getstackaddr (const pthread_attr_t *__restrict
+          __attr, void **__restrict __stackaddr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2))) __attribute__ ((__deprecated__));
+
+
+
+
+
+extern int pthread_attr_setstackaddr (pthread_attr_t *__attr,
+          void *__stackaddr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1))) __attribute__ ((__deprecated__));
+
+
+extern int pthread_attr_getstacksize (const pthread_attr_t *__restrict
+          __attr, size_t *__restrict __stacksize)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+extern int pthread_attr_setstacksize (pthread_attr_t *__attr,
+          size_t __stacksize)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern int pthread_attr_getstack (const pthread_attr_t *__restrict __attr,
+      void **__restrict __stackaddr,
+      size_t *__restrict __stacksize)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2, 3)));
+
+
+
+
+extern int pthread_attr_setstack (pthread_attr_t *__attr, void *__stackaddr,
+      size_t __stacksize) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+extern int pthread_attr_setaffinity_np (pthread_attr_t *__attr,
+     size_t __cpusetsize,
+     const cpu_set_t *__cpuset)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 3)));
+
+
+
+extern int pthread_attr_getaffinity_np (const pthread_attr_t *__attr,
+     size_t __cpusetsize,
+     cpu_set_t *__cpuset)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 3)));
+
+
+extern int pthread_getattr_default_np (pthread_attr_t *__attr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_attr_setsigmask_np (pthread_attr_t *__attr,
+           const __sigset_t *sigmask);
+
+
+
+
+extern int pthread_attr_getsigmask_np (const pthread_attr_t *__attr,
+           __sigset_t *sigmask);
+
+
+
+
+
+
+
+extern int pthread_setattr_default_np (const pthread_attr_t *__attr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+extern int pthread_getattr_np (pthread_t __th, pthread_attr_t *__attr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+
+
+
+
+extern int pthread_setschedparam (pthread_t __target_thread, int __policy,
+      const struct sched_param *__param)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3)));
+
+
+extern int pthread_getschedparam (pthread_t __target_thread,
+      int *__restrict __policy,
+      struct sched_param *__restrict __param)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2, 3)));
+
+
+extern int pthread_setschedprio (pthread_t __target_thread, int __prio)
+     __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern int pthread_getname_np (pthread_t __target_thread, char *__buf,
+          size_t __buflen)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+extern int pthread_setname_np (pthread_t __target_thread, const char *__name)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+
+
+extern int pthread_getconcurrency (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int pthread_setconcurrency (int __level) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int pthread_yield (void) __attribute__ ((__nothrow__ , __leaf__));
+
+extern int pthread_yield (void) __asm__ ("" "sched_yield") __attribute__ ((__nothrow__ , __leaf__))
+  __attribute__ ((__deprecated__ ("pthread_yield is deprecated, use sched_yield instead")))
+                                                      ;
+
+
+
+
+
+
+
+extern int pthread_setaffinity_np (pthread_t __th, size_t __cpusetsize,
+       const cpu_set_t *__cpuset)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3)));
+
+
+extern int pthread_getaffinity_np (pthread_t __th, size_t __cpusetsize,
+       cpu_set_t *__cpuset)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (3)));
+# 509 "/usr/include/pthread.h" 3 4
+extern int pthread_once (pthread_once_t *__once_control,
+    void (*__init_routine) (void)) __attribute__ ((__nonnull__ (1, 2)));
+# 521 "/usr/include/pthread.h" 3 4
+extern int pthread_setcancelstate (int __state, int *__oldstate);
+
+
+
+extern int pthread_setcanceltype (int __type, int *__oldtype);
+
+
+extern int pthread_cancel (pthread_t __th);
+
+
+
+
+extern void pthread_testcancel (void);
+
+
+
+
+struct __cancel_jmp_buf_tag
+{
+  __jmp_buf __cancel_jmp_buf;
+  int __mask_was_saved;
+};
+
+typedef struct
+{
+  struct __cancel_jmp_buf_tag __cancel_jmp_buf[1];
+  void *__pad[4];
+} __pthread_unwind_buf_t __attribute__ ((__aligned__));
+# 557 "/usr/include/pthread.h" 3 4
+struct __pthread_cleanup_frame
+{
+  void (*__cancel_routine) (void *);
+  void *__cancel_arg;
+  int __do_it;
+  int __cancel_type;
+};
+# 697 "/usr/include/pthread.h" 3 4
+extern void __pthread_register_cancel (__pthread_unwind_buf_t *__buf)
+     ;
+# 709 "/usr/include/pthread.h" 3 4
+extern void __pthread_unregister_cancel (__pthread_unwind_buf_t *__buf)
+  ;
+# 732 "/usr/include/pthread.h" 3 4
+extern void __pthread_register_cancel_defer (__pthread_unwind_buf_t *__buf)
+     ;
+# 745 "/usr/include/pthread.h" 3 4
+extern void __pthread_unregister_cancel_restore (__pthread_unwind_buf_t *__buf)
+  ;
+
+
+
+extern void __pthread_unwind_next (__pthread_unwind_buf_t *__buf)
+     __attribute__ ((__noreturn__))
+
+     __attribute__ ((__weak__))
+
+     ;
+# 766 "/usr/include/pthread.h" 3 4
+extern int __sigsetjmp_cancel (struct __cancel_jmp_buf_tag __env[1], int __savemask) __asm__ ("" "__sigsetjmp") __attribute__ ((__nothrow__))
+
+
+                     __attribute__ ((__returns_twice__));
+# 781 "/usr/include/pthread.h" 3 4
+extern int pthread_mutex_init (pthread_mutex_t *__mutex,
+          const pthread_mutexattr_t *__mutexattr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_mutex_destroy (pthread_mutex_t *__mutex)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_mutex_trylock (pthread_mutex_t *__mutex)
+     __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_mutex_lock (pthread_mutex_t *__mutex)
+     __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+extern int pthread_mutex_timedlock (pthread_mutex_t *__restrict __mutex,
+        const struct timespec *__restrict
+        __abstime) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1, 2)));
+# 817 "/usr/include/pthread.h" 3 4
+extern int pthread_mutex_clocklock (pthread_mutex_t *__restrict __mutex,
+        clockid_t __clockid,
+        const struct timespec *__restrict
+        __abstime) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1, 3)));
+# 835 "/usr/include/pthread.h" 3 4
+extern int pthread_mutex_unlock (pthread_mutex_t *__mutex)
+     __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern int pthread_mutex_getprioceiling (const pthread_mutex_t *
+      __restrict __mutex,
+      int *__restrict __prioceiling)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+extern int pthread_mutex_setprioceiling (pthread_mutex_t *__restrict __mutex,
+      int __prioceiling,
+      int *__restrict __old_ceiling)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 3)));
+
+
+
+
+extern int pthread_mutex_consistent (pthread_mutex_t *__mutex)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_mutex_consistent_np (pthread_mutex_t *) __asm__ ("" "pthread_mutex_consistent") __attribute__ ((__nothrow__ , __leaf__))
+                                __attribute__ ((__nonnull__ (1)))
+  __attribute__ ((__deprecated__ ("pthread_mutex_consistent_np is deprecated, use pthread_mutex_consistent")))
+                                                                         ;
+# 874 "/usr/include/pthread.h" 3 4
+extern int pthread_mutexattr_init (pthread_mutexattr_t *__attr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_mutexattr_destroy (pthread_mutexattr_t *__attr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_mutexattr_getpshared (const pthread_mutexattr_t *
+      __restrict __attr,
+      int *__restrict __pshared)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int pthread_mutexattr_setpshared (pthread_mutexattr_t *__attr,
+      int __pshared)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern int pthread_mutexattr_gettype (const pthread_mutexattr_t *__restrict
+          __attr, int *__restrict __kind)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+extern int pthread_mutexattr_settype (pthread_mutexattr_t *__attr, int __kind)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern int pthread_mutexattr_getprotocol (const pthread_mutexattr_t *
+       __restrict __attr,
+       int *__restrict __protocol)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+extern int pthread_mutexattr_setprotocol (pthread_mutexattr_t *__attr,
+       int __protocol)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_mutexattr_getprioceiling (const pthread_mutexattr_t *
+          __restrict __attr,
+          int *__restrict __prioceiling)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int pthread_mutexattr_setprioceiling (pthread_mutexattr_t *__attr,
+          int __prioceiling)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern int pthread_mutexattr_getrobust (const pthread_mutexattr_t *__attr,
+     int *__robustness)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int pthread_mutexattr_getrobust_np (pthread_mutexattr_t *, int *) __asm__ ("" "pthread_mutexattr_getrobust") __attribute__ ((__nothrow__ , __leaf__))
+
+                                   __attribute__ ((__nonnull__ (1)))
+  __attribute__ ((__deprecated__ ("pthread_mutexattr_getrobust_np is deprecated, use pthread_mutexattr_getrobust")))
+                                                                               ;
+
+
+
+
+
+
+extern int pthread_mutexattr_setrobust (pthread_mutexattr_t *__attr,
+     int __robustness)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_mutexattr_setrobust_np (pthread_mutexattr_t *, int) __asm__ ("" "pthread_mutexattr_setrobust") __attribute__ ((__nothrow__ , __leaf__))
+
+                                   __attribute__ ((__nonnull__ (1)))
+  __attribute__ ((__deprecated__ ("pthread_mutexattr_setrobust_np is deprecated, use pthread_mutexattr_setrobust")))
+                                                                               ;
+# 967 "/usr/include/pthread.h" 3 4
+extern int pthread_rwlock_init (pthread_rwlock_t *__restrict __rwlock,
+    const pthread_rwlockattr_t *__restrict
+    __attr) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_rwlock_destroy (pthread_rwlock_t *__rwlock)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_rwlock_rdlock (pthread_rwlock_t *__rwlock)
+     __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_rwlock_tryrdlock (pthread_rwlock_t *__rwlock)
+  __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+extern int pthread_rwlock_timedrdlock (pthread_rwlock_t *__restrict __rwlock,
+           const struct timespec *__restrict
+           __abstime) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1, 2)));
+# 1004 "/usr/include/pthread.h" 3 4
+extern int pthread_rwlock_clockrdlock (pthread_rwlock_t *__restrict __rwlock,
+           clockid_t __clockid,
+           const struct timespec *__restrict
+           __abstime) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1, 3)));
+# 1023 "/usr/include/pthread.h" 3 4
+extern int pthread_rwlock_wrlock (pthread_rwlock_t *__rwlock)
+     __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_rwlock_trywrlock (pthread_rwlock_t *__rwlock)
+     __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+extern int pthread_rwlock_timedwrlock (pthread_rwlock_t *__restrict __rwlock,
+           const struct timespec *__restrict
+           __abstime) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1, 2)));
+# 1051 "/usr/include/pthread.h" 3 4
+extern int pthread_rwlock_clockwrlock (pthread_rwlock_t *__restrict __rwlock,
+           clockid_t __clockid,
+           const struct timespec *__restrict
+           __abstime) __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1, 3)));
+# 1071 "/usr/include/pthread.h" 3 4
+extern int pthread_rwlock_unlock (pthread_rwlock_t *__rwlock)
+     __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+extern int pthread_rwlockattr_init (pthread_rwlockattr_t *__attr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_rwlockattr_destroy (pthread_rwlockattr_t *__attr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_rwlockattr_getpshared (const pthread_rwlockattr_t *
+       __restrict __attr,
+       int *__restrict __pshared)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int pthread_rwlockattr_setpshared (pthread_rwlockattr_t *__attr,
+       int __pshared)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_rwlockattr_getkind_np (const pthread_rwlockattr_t *
+       __restrict __attr,
+       int *__restrict __pref)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int pthread_rwlockattr_setkind_np (pthread_rwlockattr_t *__attr,
+       int __pref) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+
+
+extern int pthread_cond_init (pthread_cond_t *__restrict __cond,
+         const pthread_condattr_t *__restrict __cond_attr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_cond_destroy (pthread_cond_t *__cond)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_cond_signal (pthread_cond_t *__cond)
+     __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_cond_broadcast (pthread_cond_t *__cond)
+     __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+
+extern int pthread_cond_wait (pthread_cond_t *__restrict __cond,
+         pthread_mutex_t *__restrict __mutex)
+     __attribute__ ((__nonnull__ (1, 2)));
+# 1145 "/usr/include/pthread.h" 3 4
+extern int pthread_cond_timedwait (pthread_cond_t *__restrict __cond,
+       pthread_mutex_t *__restrict __mutex,
+       const struct timespec *__restrict __abstime)
+     __attribute__ ((__nonnull__ (1, 2, 3)));
+# 1171 "/usr/include/pthread.h" 3 4
+extern int pthread_cond_clockwait (pthread_cond_t *__restrict __cond,
+       pthread_mutex_t *__restrict __mutex,
+       __clockid_t __clock_id,
+       const struct timespec *__restrict __abstime)
+     __attribute__ ((__nonnull__ (1, 2, 4)));
+# 1194 "/usr/include/pthread.h" 3 4
+extern int pthread_condattr_init (pthread_condattr_t *__attr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_condattr_destroy (pthread_condattr_t *__attr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_condattr_getpshared (const pthread_condattr_t *
+     __restrict __attr,
+     int *__restrict __pshared)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int pthread_condattr_setpshared (pthread_condattr_t *__attr,
+     int __pshared) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern int pthread_condattr_getclock (const pthread_condattr_t *
+          __restrict __attr,
+          __clockid_t *__restrict __clock_id)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int pthread_condattr_setclock (pthread_condattr_t *__attr,
+          __clockid_t __clock_id)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+# 1230 "/usr/include/pthread.h" 3 4
+extern int pthread_spin_init (pthread_spinlock_t *__lock, int __pshared)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_spin_destroy (pthread_spinlock_t *__lock)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_spin_lock (pthread_spinlock_t *__lock)
+     __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_spin_trylock (pthread_spinlock_t *__lock)
+     __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_spin_unlock (pthread_spinlock_t *__lock)
+     __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+
+extern int pthread_barrier_init (pthread_barrier_t *__restrict __barrier,
+     const pthread_barrierattr_t *__restrict
+     __attr, unsigned int __count)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_barrier_destroy (pthread_barrier_t *__barrier)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_barrier_wait (pthread_barrier_t *__barrier)
+     __attribute__ ((__nothrow__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+extern int pthread_barrierattr_init (pthread_barrierattr_t *__attr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_barrierattr_destroy (pthread_barrierattr_t *__attr)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_barrierattr_getpshared (const pthread_barrierattr_t *
+        __restrict __attr,
+        int *__restrict __pshared)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+extern int pthread_barrierattr_setpshared (pthread_barrierattr_t *__attr,
+        int __pshared)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+# 1297 "/usr/include/pthread.h" 3 4
+extern int pthread_key_create (pthread_key_t *__key,
+          void (*__destr_function) (void *))
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int pthread_key_delete (pthread_key_t __key) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern void *pthread_getspecific (pthread_key_t __key) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int pthread_setspecific (pthread_key_t __key,
+    const void *__pointer)
+  __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__access__ (__none__, 2)));
+
+
+
+
+extern int pthread_getcpuclockid (pthread_t __thread_id,
+      __clockid_t *__clock_id)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+# 1332 "/usr/include/pthread.h" 3 4
+extern int pthread_atfork (void (*__prepare) (void),
+      void (*__parent) (void),
+      void (*__child) (void)) __attribute__ ((__nothrow__ , __leaf__));
+# 1346 "/usr/include/pthread.h" 3 4
+
+# 129 "./MagickCore/studio.h" 2
+# 171 "./MagickCore/studio.h"
+
+# 171 "./MagickCore/studio.h"
+extern size_t strlcpy(char *,const char *,size_t);
+
+
+
+
+
+
+# 1 "./MagickCore/method-attribute.h" 1
+# 179 "./MagickCore/studio.h" 2
+# 197 "./MagickCore/studio.h"
+# 1 "/usr/include/dirent.h" 1 3 4
+# 27 "/usr/include/dirent.h" 3 4
+
+# 61 "/usr/include/dirent.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/dirent.h" 1 3 4
+# 22 "/usr/include/x86_64-linux-gnu/bits/dirent.h" 3 4
+
+# 22 "/usr/include/x86_64-linux-gnu/bits/dirent.h" 3 4
+struct dirent
+  {
+
+    __ino_t d_ino;
+    __off_t d_off;
+
+
+
+
+    unsigned short int d_reclen;
+    unsigned char d_type;
+    char d_name[256];
+  };
+
+
+struct dirent64
+  {
+    __ino64_t d_ino;
+    __off64_t d_off;
+    unsigned short int d_reclen;
+    unsigned char d_type;
+    char d_name[256];
+  };
+# 62 "/usr/include/dirent.h" 2 3 4
+# 97 "/usr/include/dirent.h" 3 4
+enum
+  {
+    DT_UNKNOWN = 0,
+
+    DT_FIFO = 1,
+
+    DT_CHR = 2,
+
+    DT_DIR = 4,
+
+    DT_BLK = 6,
+
+    DT_REG = 8,
+
+    DT_LNK = 10,
+
+    DT_SOCK = 12,
+
+    DT_WHT = 14
+
+  };
+# 127 "/usr/include/dirent.h" 3 4
+typedef struct __dirstream DIR;
+
+
+
+
+
+
+extern int closedir (DIR *__dirp) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+
+extern DIR *opendir (const char *__name) __attribute__ ((__nonnull__ (1)))
+ __attribute__ ((__malloc__)) __attribute__ ((__malloc__ (closedir, 1)));
+
+
+
+
+
+
+extern DIR *fdopendir (int __fd)
+ __attribute__ ((__malloc__)) __attribute__ ((__malloc__ (closedir, 1)));
+# 164 "/usr/include/dirent.h" 3 4
+extern struct dirent *readdir (DIR *__dirp) __attribute__ ((__nonnull__ (1)));
+# 175 "/usr/include/dirent.h" 3 4
+extern struct dirent64 *readdir64 (DIR *__dirp) __attribute__ ((__nonnull__ (1)));
+# 185 "/usr/include/dirent.h" 3 4
+extern int readdir_r (DIR *__restrict __dirp,
+        struct dirent *__restrict __entry,
+        struct dirent **__restrict __result)
+     __attribute__ ((__nonnull__ (1, 2, 3))) __attribute__ ((__deprecated__));
+# 203 "/usr/include/dirent.h" 3 4
+extern int readdir64_r (DIR *__restrict __dirp,
+   struct dirent64 *__restrict __entry,
+   struct dirent64 **__restrict __result)
+  __attribute__ ((__nonnull__ (1, 2, 3))) __attribute__ ((__deprecated__));
+
+
+
+
+extern void rewinddir (DIR *__dirp) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+extern void seekdir (DIR *__dirp, long int __pos) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern long int telldir (DIR *__dirp) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+extern int dirfd (DIR *__dirp) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+# 247 "/usr/include/dirent.h" 3 4
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 248 "/usr/include/dirent.h" 2 3 4
+# 257 "/usr/include/dirent.h" 3 4
+extern int scandir (const char *__restrict __dir,
+      struct dirent ***__restrict __namelist,
+      int (*__selector) (const struct dirent *),
+      int (*__cmp) (const struct dirent **,
+      const struct dirent **))
+     __attribute__ ((__nonnull__ (1, 2)));
+# 280 "/usr/include/dirent.h" 3 4
+extern int scandir64 (const char *__restrict __dir,
+        struct dirent64 ***__restrict __namelist,
+        int (*__selector) (const struct dirent64 *),
+        int (*__cmp) (const struct dirent64 **,
+        const struct dirent64 **))
+     __attribute__ ((__nonnull__ (1, 2)));
+# 295 "/usr/include/dirent.h" 3 4
+extern int scandirat (int __dfd, const char *__restrict __dir,
+        struct dirent ***__restrict __namelist,
+        int (*__selector) (const struct dirent *),
+        int (*__cmp) (const struct dirent **,
+        const struct dirent **))
+     __attribute__ ((__nonnull__ (2, 3)));
+# 317 "/usr/include/dirent.h" 3 4
+extern int scandirat64 (int __dfd, const char *__restrict __dir,
+   struct dirent64 ***__restrict __namelist,
+   int (*__selector) (const struct dirent64 *),
+   int (*__cmp) (const struct dirent64 **,
+          const struct dirent64 **))
+     __attribute__ ((__nonnull__ (2, 3)));
+
+
+
+
+extern int alphasort (const struct dirent **__e1,
+        const struct dirent **__e2)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+# 342 "/usr/include/dirent.h" 3 4
+extern int alphasort64 (const struct dirent64 **__e1,
+   const struct dirent64 **__e2)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+# 355 "/usr/include/dirent.h" 3 4
+extern __ssize_t getdirentries (int __fd, char *__restrict __buf,
+    size_t __nbytes,
+    __off_t *__restrict __basep)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2, 4)));
+# 372 "/usr/include/dirent.h" 3 4
+extern __ssize_t getdirentries64 (int __fd, char *__restrict __buf,
+      size_t __nbytes,
+      __off64_t *__restrict __basep)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2, 4)));
+
+
+
+
+
+
+extern int versionsort (const struct dirent **__e1,
+   const struct dirent **__e2)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+# 398 "/usr/include/dirent.h" 3 4
+extern int versionsort64 (const struct dirent64 **__e1,
+     const struct dirent64 **__e2)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__pure__)) __attribute__ ((__nonnull__ (1, 2)));
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/dirent_ext.h" 1 3 4
+# 23 "/usr/include/x86_64-linux-gnu/bits/dirent_ext.h" 3 4
+
+
+
+
+
+
+extern __ssize_t getdents64 (int __fd, void *__buffer, size_t __length)
+  __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+# 407 "/usr/include/dirent.h" 2 3 4
+# 198 "./MagickCore/studio.h" 2
+
+
+# 1 "/usr/include/x86_64-linux-gnu/sys/wait.h" 1 3 4
+# 27 "/usr/include/x86_64-linux-gnu/sys/wait.h" 3 4
+
+# 74 "/usr/include/x86_64-linux-gnu/sys/wait.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/idtype_t.h" 1 3 4
+
+
+
+
+typedef enum
+{
+  P_ALL,
+  P_PID,
+  P_PGID,
+  P_PIDFD,
+
+} idtype_t;
+# 75 "/usr/include/x86_64-linux-gnu/sys/wait.h" 2 3 4
+# 83 "/usr/include/x86_64-linux-gnu/sys/wait.h" 3 4
+extern __pid_t wait (int *__stat_loc);
+# 106 "/usr/include/x86_64-linux-gnu/sys/wait.h" 3 4
+extern __pid_t waitpid (__pid_t __pid, int *__stat_loc, int __options);
+# 127 "/usr/include/x86_64-linux-gnu/sys/wait.h" 3 4
+extern int waitid (idtype_t __idtype, __id_t __id, siginfo_t *__infop,
+     int __options);
+
+
+
+
+
+
+struct rusage;
+
+
+
+
+
+
+
+extern __pid_t wait3 (int *__stat_loc, int __options,
+        struct rusage * __usage) __attribute__ ((__nothrow__));
+# 159 "/usr/include/x86_64-linux-gnu/sys/wait.h" 3 4
+extern __pid_t wait4 (__pid_t __pid, int *__stat_loc, int __options,
+        struct rusage *__usage) __attribute__ ((__nothrow__));
+# 173 "/usr/include/x86_64-linux-gnu/sys/wait.h" 3 4
+
+# 201 "./MagickCore/studio.h" 2
+# 1 "/usr/include/pwd.h" 1 3 4
+# 27 "/usr/include/pwd.h" 3 4
+
+
+
+
+
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 33 "/usr/include/pwd.h" 2 3 4
+# 49 "/usr/include/pwd.h" 3 4
+struct passwd
+{
+  char *pw_name;
+  char *pw_passwd;
+
+  __uid_t pw_uid;
+  __gid_t pw_gid;
+  char *pw_gecos;
+  char *pw_dir;
+  char *pw_shell;
+};
+# 72 "/usr/include/pwd.h" 3 4
+extern void setpwent (void);
+
+
+
+
+
+extern void endpwent (void);
+
+
+
+
+
+extern struct passwd *getpwent (void);
+# 94 "/usr/include/pwd.h" 3 4
+extern struct passwd *fgetpwent (FILE *__stream) __attribute__ ((__nonnull__ (1)));
+
+
+
+
+
+
+
+extern int putpwent (const struct passwd *__restrict __p,
+       FILE *__restrict __f);
+
+
+
+
+
+
+extern struct passwd *getpwuid (__uid_t __uid);
+
+
+
+
+
+extern struct passwd *getpwnam (const char *__name) __attribute__ ((__nonnull__ (1)));
+# 139 "/usr/include/pwd.h" 3 4
+extern int getpwent_r (struct passwd *__restrict __resultbuf,
+         char *__restrict __buffer, size_t __buflen,
+         struct passwd **__restrict __result)
+    __attribute__ ((__nonnull__ (1, 2, 4)))
+    __attribute__ ((__access__ (__write_only__, 2, 3)));
+
+
+extern int getpwuid_r (__uid_t __uid,
+         struct passwd *__restrict __resultbuf,
+         char *__restrict __buffer, size_t __buflen,
+         struct passwd **__restrict __result)
+    __attribute__ ((__nonnull__ (2, 3, 5)))
+    __attribute__ ((__access__ (__write_only__, 3, 4)));
+
+extern int getpwnam_r (const char *__restrict __name,
+         struct passwd *__restrict __resultbuf,
+         char *__restrict __buffer, size_t __buflen,
+         struct passwd **__restrict __result)
+    __attribute__ ((__nonnull__ (1, 2, 3, 5)))
+    __attribute__ ((__access__ (__write_only__, 3, 4)));
+# 169 "/usr/include/pwd.h" 3 4
+extern int fgetpwent_r (FILE *__restrict __stream,
+   struct passwd *__restrict __resultbuf,
+   char *__restrict __buffer, size_t __buflen,
+   struct passwd **__restrict __result)
+    __attribute__ ((__nonnull__ (1, 2, 3, 5)))
+    __attribute__ ((__access__ (__write_only__, 3, 4)));
+# 188 "/usr/include/pwd.h" 3 4
+extern int getpw (__uid_t __uid, char *__buffer);
+
+
+
+# 202 "./MagickCore/studio.h" 2
+
+
+
+
+
+
+
+# 1 "./MagickCore/magick-type.h" 1
+# 46 "./MagickCore/magick-type.h"
+
+# 46 "./MagickCore/magick-type.h"
+typedef float MagickFloatType;
+# 57 "./MagickCore/magick-type.h"
+typedef double MagickDoubleType;
+# 82 "./MagickCore/magick-type.h"
+typedef MagickFloatType Quantum;
+# 124 "./MagickCore/magick-type.h"
+typedef MagickDoubleType MagickRealType;
+typedef unsigned int MagickStatusType;
+
+
+typedef long long MagickOffsetType;
+typedef unsigned long long MagickSizeType;
+# 146 "./MagickCore/magick-type.h"
+typedef uintptr_t MagickAddressType;
+
+
+
+
+
+typedef MagickSizeType QuantumAny;
+
+typedef enum
+{
+  UndefinedClass,
+  DirectClass,
+  PseudoClass
+} ClassType;
+
+typedef enum
+{
+  MagickFalse = 0,
+  MagickTrue = 1
+} MagickBooleanType;
+# 190 "./MagickCore/magick-type.h"
+typedef struct _BlobInfo BlobInfo;
+
+typedef struct _ExceptionInfo ExceptionInfo;
+
+typedef struct _Image Image;
+
+typedef struct _ImageInfo ImageInfo;
+# 210 "./MagickCore/studio.h" 2
+
+# 1 "/usr/include/x86_64-linux-gnu/sys/time.h" 1 3 4
+# 34 "/usr/include/x86_64-linux-gnu/sys/time.h" 3 4
+
+# 52 "/usr/include/x86_64-linux-gnu/sys/time.h" 3 4
+
+# 52 "/usr/include/x86_64-linux-gnu/sys/time.h" 3 4
+struct timezone
+  {
+    int tz_minuteswest;
+    int tz_dsttime;
+  };
+# 67 "/usr/include/x86_64-linux-gnu/sys/time.h" 3 4
+extern int gettimeofday (struct timeval *__restrict __tv,
+    void *__restrict __tz) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+# 86 "/usr/include/x86_64-linux-gnu/sys/time.h" 3 4
+extern int settimeofday (const struct timeval *__tv,
+    const struct timezone *__tz)
+     __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+extern int adjtime (const struct timeval *__delta,
+      struct timeval *__olddelta) __attribute__ ((__nothrow__ , __leaf__));
+# 114 "/usr/include/x86_64-linux-gnu/sys/time.h" 3 4
+enum __itimer_which
+  {
+
+    ITIMER_REAL = 0,
+
+
+    ITIMER_VIRTUAL = 1,
+
+
+
+    ITIMER_PROF = 2
+
+  };
+
+
+
+struct itimerval
+  {
+
+    struct timeval it_interval;
+
+    struct timeval it_value;
+  };
+
+
+
+
+typedef enum __itimer_which __itimer_which_t;
+
+
+
+
+
+
+
+extern int getitimer (__itimer_which_t __which,
+        struct itimerval *__value) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern int setitimer (__itimer_which_t __which,
+        const struct itimerval *__restrict __new,
+        struct itimerval *__restrict __old) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern int utimes (const char *__file, const struct timeval __tvp[2])
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+# 189 "/usr/include/x86_64-linux-gnu/sys/time.h" 3 4
+extern int lutimes (const char *__file, const struct timeval __tvp[2])
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+
+
+extern int futimes (int __fd, const struct timeval __tvp[2]) __attribute__ ((__nothrow__ , __leaf__));
+# 214 "/usr/include/x86_64-linux-gnu/sys/time.h" 3 4
+extern int futimesat (int __fd, const char *__file,
+        const struct timeval __tvp[2]) __attribute__ ((__nothrow__ , __leaf__));
+# 258 "/usr/include/x86_64-linux-gnu/sys/time.h" 3 4
+
+# 212 "./MagickCore/studio.h" 2
+
+# 1 "/usr/include/x86_64-linux-gnu/sys/times.h" 1 3 4
+# 29 "/usr/include/x86_64-linux-gnu/sys/times.h" 3 4
+
+
+
+struct tms
+  {
+    clock_t tms_utime;
+    clock_t tms_stime;
+
+    clock_t tms_cutime;
+    clock_t tms_cstime;
+  };
+
+
+
+
+
+
+extern clock_t times (struct tms *__buffer) __attribute__ ((__nothrow__ , __leaf__));
+
+
+# 214 "./MagickCore/studio.h" 2
+
+
+# 1 "/usr/include/x86_64-linux-gnu/sys/resource.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/sys/resource.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/resource.h" 1 3 4
+# 31 "/usr/include/x86_64-linux-gnu/bits/resource.h" 3 4
+enum __rlimit_resource
+{
+
+  RLIMIT_CPU = 0,
+
+
+
+  RLIMIT_FSIZE = 1,
+
+
+
+  RLIMIT_DATA = 2,
+
+
+
+  RLIMIT_STACK = 3,
+
+
+
+  RLIMIT_CORE = 4,
+
+
+
+
+
+
+  __RLIMIT_RSS = 5,
+
+
+
+  RLIMIT_NOFILE = 7,
+  __RLIMIT_OFILE = RLIMIT_NOFILE,
+
+
+
+
+  RLIMIT_AS = 9,
+
+
+
+  __RLIMIT_NPROC = 6,
+
+
+
+  __RLIMIT_MEMLOCK = 8,
+
+
+
+  __RLIMIT_LOCKS = 10,
+
+
+
+  __RLIMIT_SIGPENDING = 11,
+
+
+
+  __RLIMIT_MSGQUEUE = 12,
+
+
+
+
+
+  __RLIMIT_NICE = 13,
+
+
+
+
+  __RLIMIT_RTPRIO = 14,
+
+
+
+
+
+  __RLIMIT_RTTIME = 15,
+
+
+  __RLIMIT_NLIMITS = 16,
+  __RLIM_NLIMITS = __RLIMIT_NLIMITS
+
+
+};
+# 131 "/usr/include/x86_64-linux-gnu/bits/resource.h" 3 4
+typedef __rlim_t rlim_t;
+
+
+
+
+typedef __rlim64_t rlim64_t;
+
+
+struct rlimit
+  {
+
+    rlim_t rlim_cur;
+
+    rlim_t rlim_max;
+  };
+
+
+struct rlimit64
+  {
+
+    rlim64_t rlim_cur;
+
+    rlim64_t rlim_max;
+ };
+
+
+
+enum __rusage_who
+{
+
+  RUSAGE_SELF = 0,
+
+
+
+  RUSAGE_CHILDREN = -1
+
+
+
+  ,
+
+  RUSAGE_THREAD = 1
+
+
+
+
+};
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h" 1 3 4
+# 33 "/usr/include/x86_64-linux-gnu/bits/types/struct_rusage.h" 3 4
+struct rusage
+  {
+
+    struct timeval ru_utime;
+
+    struct timeval ru_stime;
+
+    __extension__ union
+      {
+ long int ru_maxrss;
+ __syscall_slong_t __ru_maxrss_word;
+      };
+
+
+    __extension__ union
+      {
+ long int ru_ixrss;
+ __syscall_slong_t __ru_ixrss_word;
+      };
+
+    __extension__ union
+      {
+ long int ru_idrss;
+ __syscall_slong_t __ru_idrss_word;
+      };
+
+    __extension__ union
+      {
+ long int ru_isrss;
+  __syscall_slong_t __ru_isrss_word;
+      };
+
+
+    __extension__ union
+      {
+ long int ru_minflt;
+ __syscall_slong_t __ru_minflt_word;
+      };
+
+    __extension__ union
+      {
+ long int ru_majflt;
+ __syscall_slong_t __ru_majflt_word;
+      };
+
+    __extension__ union
+      {
+ long int ru_nswap;
+ __syscall_slong_t __ru_nswap_word;
+      };
+
+
+    __extension__ union
+      {
+ long int ru_inblock;
+ __syscall_slong_t __ru_inblock_word;
+      };
+
+    __extension__ union
+      {
+ long int ru_oublock;
+ __syscall_slong_t __ru_oublock_word;
+      };
+
+    __extension__ union
+      {
+ long int ru_msgsnd;
+ __syscall_slong_t __ru_msgsnd_word;
+      };
+
+    __extension__ union
+      {
+ long int ru_msgrcv;
+ __syscall_slong_t __ru_msgrcv_word;
+      };
+
+    __extension__ union
+      {
+ long int ru_nsignals;
+ __syscall_slong_t __ru_nsignals_word;
+      };
+
+
+
+    __extension__ union
+      {
+ long int ru_nvcsw;
+ __syscall_slong_t __ru_nvcsw_word;
+      };
+
+
+    __extension__ union
+      {
+ long int ru_nivcsw;
+ __syscall_slong_t __ru_nivcsw_word;
+      };
+  };
+# 180 "/usr/include/x86_64-linux-gnu/bits/resource.h" 2 3 4
+
+
+
+
+
+
+
+enum __priority_which
+{
+  PRIO_PROCESS = 0,
+
+  PRIO_PGRP = 1,
+
+  PRIO_USER = 2
+
+};
+
+
+
+
+
+
+
+extern int prlimit (__pid_t __pid, enum __rlimit_resource __resource,
+      const struct rlimit *__new_limit,
+      struct rlimit *__old_limit) __attribute__ ((__nothrow__ , __leaf__));
+# 217 "/usr/include/x86_64-linux-gnu/bits/resource.h" 3 4
+extern int prlimit64 (__pid_t __pid, enum __rlimit_resource __resource,
+        const struct rlimit64 *__new_limit,
+        struct rlimit64 *__old_limit) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+# 25 "/usr/include/x86_64-linux-gnu/sys/resource.h" 2 3 4
+
+
+
+
+
+
+
+
+
+
+
+
+
+typedef enum __rlimit_resource __rlimit_resource_t;
+typedef enum __rusage_who __rusage_who_t;
+typedef enum __priority_which __priority_which_t;
+# 50 "/usr/include/x86_64-linux-gnu/sys/resource.h" 3 4
+extern int getrlimit (__rlimit_resource_t __resource,
+        struct rlimit *__rlimits) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+# 62 "/usr/include/x86_64-linux-gnu/sys/resource.h" 3 4
+extern int getrlimit64 (__rlimit_resource_t __resource,
+   struct rlimit64 *__rlimits) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+
+
+
+
+
+
+extern int setrlimit (__rlimit_resource_t __resource,
+        const struct rlimit *__rlimits) __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (2)));
+# 82 "/usr/include/x86_64-linux-gnu/sys/resource.h" 3 4
+extern int setrlimit64 (__rlimit_resource_t __resource,
+   const struct rlimit64 *__rlimits) __attribute__ ((__nothrow__ , __leaf__))
+   __attribute__ ((__nonnull__ (2)));
+
+
+
+
+extern int getrusage (__rusage_who_t __who, struct rusage *__usage) __attribute__ ((__nothrow__ , __leaf__));
+# 105 "/usr/include/x86_64-linux-gnu/sys/resource.h" 3 4
+extern int getpriority (__priority_which_t __which, id_t __who) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int setpriority (__priority_which_t __which, id_t __who, int __prio)
+     __attribute__ ((__nothrow__ , __leaf__));
+
+
+# 217 "./MagickCore/studio.h" 2
+
+
+# 1 "/usr/include/x86_64-linux-gnu/sys/mman.h" 1 3 4
+# 25 "/usr/include/x86_64-linux-gnu/sys/mman.h" 3 4
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 26 "/usr/include/x86_64-linux-gnu/sys/mman.h" 2 3 4
+# 41 "/usr/include/x86_64-linux-gnu/sys/mman.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mman.h" 1 3 4
+# 29 "/usr/include/x86_64-linux-gnu/bits/mman.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mman-map-flags-generic.h" 1 3 4
+# 30 "/usr/include/x86_64-linux-gnu/bits/mman.h" 2 3 4
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/mman-linux.h" 1 3 4
+# 116 "/usr/include/x86_64-linux-gnu/bits/mman-linux.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/mman-shared.h" 1 3 4
+# 51 "/usr/include/x86_64-linux-gnu/bits/mman-shared.h" 3 4
+
+
+
+
+int memfd_create (const char *__name, unsigned int __flags) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+int mlock2 (const void *__addr, size_t __length, unsigned int __flags) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+int pkey_alloc (unsigned int __flags, unsigned int __access_rights) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+int pkey_set (int __key, unsigned int __access_rights) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+int pkey_get (int __key) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+int pkey_free (int __key) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+int pkey_mprotect (void *__addr, size_t __len, int __prot, int __pkey) __attribute__ ((__nothrow__ , __leaf__));
+
+
+# 117 "/usr/include/x86_64-linux-gnu/bits/mman-linux.h" 2 3 4
+# 33 "/usr/include/x86_64-linux-gnu/bits/mman.h" 2 3 4
+# 42 "/usr/include/x86_64-linux-gnu/sys/mman.h" 2 3 4
+
+
+
+
+
+# 57 "/usr/include/x86_64-linux-gnu/sys/mman.h" 3 4
+extern void *mmap (void *__addr, size_t __len, int __prot,
+     int __flags, int __fd, __off_t __offset) __attribute__ ((__nothrow__ , __leaf__));
+# 70 "/usr/include/x86_64-linux-gnu/sys/mman.h" 3 4
+extern void *mmap64 (void *__addr, size_t __len, int __prot,
+       int __flags, int __fd, __off64_t __offset) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern int munmap (void *__addr, size_t __len) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern int mprotect (void *__addr, size_t __len, int __prot) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+extern int msync (void *__addr, size_t __len, int __flags);
+
+
+
+
+extern int madvise (void *__addr, size_t __len, int __advice) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int posix_madvise (void *__addr, size_t __len, int __advice) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern int mlock (const void *__addr, size_t __len) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int munlock (const void *__addr, size_t __len) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern int mlockall (int __flags) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int munlockall (void) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+extern int mincore (void *__start, size_t __len, unsigned char *__vec)
+     __attribute__ ((__nothrow__ , __leaf__));
+# 133 "/usr/include/x86_64-linux-gnu/sys/mman.h" 3 4
+extern void *mremap (void *__addr, size_t __old_len, size_t __new_len,
+       int __flags, ...) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+extern int remap_file_pages (void *__start, size_t __size, int __prot,
+        size_t __pgoff, int __flags) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern int shm_open (const char *__name, int __oflag, mode_t __mode);
+
+
+extern int shm_unlink (const char *__name);
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/mman_ext.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/mman_ext.h" 3 4
+struct iovec;
+extern __ssize_t process_madvise (int __pid_fd, const struct iovec *__iov,
+      size_t __count, int __advice,
+      unsigned __flags)
+  __attribute__ ((__nothrow__ , __leaf__));
+
+extern int process_mrelease (int pidfd, unsigned int flags) __attribute__ ((__nothrow__ , __leaf__));
+# 151 "/usr/include/x86_64-linux-gnu/sys/mman.h" 2 3 4
+
+
+# 220 "./MagickCore/studio.h" 2
+
+
+# 1 "/usr/include/x86_64-linux-gnu/sys/sendfile.h" 1 3 4
+# 25 "/usr/include/x86_64-linux-gnu/sys/sendfile.h" 3 4
+
+
+
+
+
+
+
+
+extern ssize_t sendfile (int __out_fd, int __in_fd, off_t *__offset,
+    size_t __count) __attribute__ ((__nothrow__ , __leaf__));
+# 45 "/usr/include/x86_64-linux-gnu/sys/sendfile.h" 3 4
+extern ssize_t sendfile64 (int __out_fd, int __in_fd, __off64_t *__offset,
+      size_t __count) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+# 223 "./MagickCore/studio.h" 2
+
+
+# 1 "/usr/include/x86_64-linux-gnu/sys/socket.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/sys/socket.h" 3 4
+
+
+
+
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 29 "/usr/include/x86_64-linux-gnu/sys/socket.h" 2 3 4
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/socket.h" 1 3 4
+# 27 "/usr/include/x86_64-linux-gnu/bits/socket.h" 3 4
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 28 "/usr/include/x86_64-linux-gnu/bits/socket.h" 2 3 4
+# 38 "/usr/include/x86_64-linux-gnu/bits/socket.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/socket_type.h" 1 3 4
+# 24 "/usr/include/x86_64-linux-gnu/bits/socket_type.h" 3 4
+enum __socket_type
+{
+  SOCK_STREAM = 1,
+
+
+  SOCK_DGRAM = 2,
+
+
+  SOCK_RAW = 3,
+
+  SOCK_RDM = 4,
+
+  SOCK_SEQPACKET = 5,
+
+
+  SOCK_DCCP = 6,
+
+  SOCK_PACKET = 10,
+
+
+
+
+
+
+
+  SOCK_CLOEXEC = 02000000,
+
+
+  SOCK_NONBLOCK = 00004000
+
+
+};
+# 39 "/usr/include/x86_64-linux-gnu/bits/socket.h" 2 3 4
+# 180 "/usr/include/x86_64-linux-gnu/bits/socket.h" 3 4
+# 1 "/usr/include/x86_64-linux-gnu/bits/sockaddr.h" 1 3 4
+# 28 "/usr/include/x86_64-linux-gnu/bits/sockaddr.h" 3 4
+typedef unsigned short int sa_family_t;
+# 181 "/usr/include/x86_64-linux-gnu/bits/socket.h" 2 3 4
+
+
+struct sockaddr
+  {
+    sa_family_t sa_family;
+    char sa_data[14];
+  };
+# 196 "/usr/include/x86_64-linux-gnu/bits/socket.h" 3 4
+struct sockaddr_storage
+  {
+    sa_family_t ss_family;
+    char __ss_padding[(128 - (sizeof (unsigned short int)) - sizeof (unsigned long int))];
+    unsigned long int __ss_align;
+  };
+
+
+
+enum
+  {
+    MSG_OOB = 0x01,
+
+    MSG_PEEK = 0x02,
+
+    MSG_DONTROUTE = 0x04,
+
+
+
+    MSG_TRYHARD = MSG_DONTROUTE,
+
+
+    MSG_CTRUNC = 0x08,
+
+    MSG_PROXY = 0x10,
+
+    MSG_TRUNC = 0x20,
+
+    MSG_DONTWAIT = 0x40,
+
+    MSG_EOR = 0x80,
+
+    MSG_WAITALL = 0x100,
+
+    MSG_FIN = 0x200,
+
+    MSG_SYN = 0x400,
+
+    MSG_CONFIRM = 0x800,
+
+    MSG_RST = 0x1000,
+
+    MSG_ERRQUEUE = 0x2000,
+
+    MSG_NOSIGNAL = 0x4000,
+
+    MSG_MORE = 0x8000,
+
+    MSG_WAITFORONE = 0x10000,
+
+    MSG_BATCH = 0x40000,
+
+    MSG_ZEROCOPY = 0x4000000,
+
+    MSG_FASTOPEN = 0x20000000,
+
+
+    MSG_CMSG_CLOEXEC = 0x40000000
+
+
+
+  };
+
+
+
+
+struct msghdr
+  {
+    void *msg_name;
+    socklen_t msg_namelen;
+
+    struct iovec *msg_iov;
+    size_t msg_iovlen;
+
+    void *msg_control;
+    size_t msg_controllen;
+
+
+
+
+    int msg_flags;
+  };
+
+
+struct cmsghdr
+  {
+    size_t cmsg_len;
+
+
+
+
+    int cmsg_level;
+    int cmsg_type;
+
+    __extension__ unsigned char __cmsg_data [];
+
+  };
+# 316 "/usr/include/x86_64-linux-gnu/bits/socket.h" 3 4
+extern struct cmsghdr *__cmsg_nxthdr (struct msghdr *__mhdr,
+          struct cmsghdr *__cmsg) __attribute__ ((__nothrow__ , __leaf__));
+# 363 "/usr/include/x86_64-linux-gnu/bits/socket.h" 3 4
+enum
+  {
+    SCM_RIGHTS = 0x01
+
+
+    , SCM_CREDENTIALS = 0x02
+
+
+  };
+
+
+
+struct ucred
+{
+  pid_t pid;
+  uid_t uid;
+  gid_t gid;
+};
+
+
+
+
+# 1 "/usr/lib/linux/uapi/x86/asm/socket.h" 1 3 4
+# 1 "/usr/include/asm-generic/socket.h" 1 3 4
+
+
+
+
+
+# 1 "/usr/lib/linux/uapi/x86/asm/sockios.h" 1 3 4
+# 1 "/usr/include/asm-generic/sockios.h" 1 3 4
+# 2 "/usr/lib/linux/uapi/x86/asm/sockios.h" 2 3 4
+# 7 "/usr/include/asm-generic/socket.h" 2 3 4
+# 2 "/usr/lib/linux/uapi/x86/asm/socket.h" 2 3 4
+# 386 "/usr/include/x86_64-linux-gnu/bits/socket.h" 2 3 4
+
+
+
+
+
+
+struct linger
+  {
+    int l_onoff;
+    int l_linger;
+  };
+# 34 "/usr/include/x86_64-linux-gnu/sys/socket.h" 2 3 4
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/types/struct_osockaddr.h" 1 3 4
+
+
+
+
+
+struct osockaddr
+{
+  unsigned short int sa_family;
+  unsigned char sa_data[14];
+};
+# 37 "/usr/include/x86_64-linux-gnu/sys/socket.h" 2 3 4
+
+
+
+
+enum
+{
+  SHUT_RD = 0,
+
+  SHUT_WR,
+
+  SHUT_RDWR
+
+};
+# 79 "/usr/include/x86_64-linux-gnu/sys/socket.h" 3 4
+typedef union { struct sockaddr *__restrict __sockaddr__; struct sockaddr_at *__restrict __sockaddr_at__; struct sockaddr_ax25 *__restrict __sockaddr_ax25__; struct sockaddr_dl *__restrict __sockaddr_dl__; struct sockaddr_eon *__restrict __sockaddr_eon__; struct sockaddr_in *__restrict __sockaddr_in__; struct sockaddr_in6 *__restrict __sockaddr_in6__; struct sockaddr_inarp *__restrict __sockaddr_inarp__; struct sockaddr_ipx *__restrict __sockaddr_ipx__; struct sockaddr_iso *__restrict __sockaddr_iso__; struct sockaddr_ns *__restrict __sockaddr_ns__; struct sockaddr_un *__restrict __sockaddr_un__; struct sockaddr_x25 *__restrict __sockaddr_x25__;
+       } __SOCKADDR_ARG __attribute__ ((__transparent_union__));
+
+
+typedef union { const struct sockaddr *__restrict __sockaddr__; const struct sockaddr_at *__restrict __sockaddr_at__; const struct sockaddr_ax25 *__restrict __sockaddr_ax25__; const struct sockaddr_dl *__restrict __sockaddr_dl__; const struct sockaddr_eon *__restrict __sockaddr_eon__; const struct sockaddr_in *__restrict __sockaddr_in__; const struct sockaddr_in6 *__restrict __sockaddr_in6__; const struct sockaddr_inarp *__restrict __sockaddr_inarp__; const struct sockaddr_ipx *__restrict __sockaddr_ipx__; const struct sockaddr_iso *__restrict __sockaddr_iso__; const struct sockaddr_ns *__restrict __sockaddr_ns__; const struct sockaddr_un *__restrict __sockaddr_un__; const struct sockaddr_x25 *__restrict __sockaddr_x25__;
+       } __CONST_SOCKADDR_ARG __attribute__ ((__transparent_union__));
+
+
+
+
+
+struct mmsghdr
+  {
+    struct msghdr msg_hdr;
+    unsigned int msg_len;
+
+  };
+
+
+
+
+
+
+extern int socket (int __domain, int __type, int __protocol) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+extern int socketpair (int __domain, int __type, int __protocol,
+         int __fds[2]) __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int bind (int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len)
+     __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern int getsockname (int __fd, __SOCKADDR_ARG __addr,
+   socklen_t *__restrict __len) __attribute__ ((__nothrow__ , __leaf__));
+# 126 "/usr/include/x86_64-linux-gnu/sys/socket.h" 3 4
+extern int connect (int __fd, __CONST_SOCKADDR_ARG __addr, socklen_t __len);
+
+
+
+extern int getpeername (int __fd, __SOCKADDR_ARG __addr,
+   socklen_t *__restrict __len) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+extern ssize_t send (int __fd, const void *__buf, size_t __n, int __flags);
+
+
+
+
+
+
+extern ssize_t recv (int __fd, void *__buf, size_t __n, int __flags);
+
+
+
+
+
+
+extern ssize_t sendto (int __fd, const void *__buf, size_t __n,
+         int __flags, __CONST_SOCKADDR_ARG __addr,
+         socklen_t __addr_len);
+# 163 "/usr/include/x86_64-linux-gnu/sys/socket.h" 3 4
+extern ssize_t recvfrom (int __fd, void *__restrict __buf, size_t __n,
+    int __flags, __SOCKADDR_ARG __addr,
+    socklen_t *__restrict __addr_len);
+# 174 "/usr/include/x86_64-linux-gnu/sys/socket.h" 3 4
+extern ssize_t sendmsg (int __fd, const struct msghdr *__message,
+   int __flags);
+# 195 "/usr/include/x86_64-linux-gnu/sys/socket.h" 3 4
+extern int sendmmsg (int __fd, struct mmsghdr *__vmessages,
+       unsigned int __vlen, int __flags);
+# 216 "/usr/include/x86_64-linux-gnu/sys/socket.h" 3 4
+extern ssize_t recvmsg (int __fd, struct msghdr *__message, int __flags);
+# 235 "/usr/include/x86_64-linux-gnu/sys/socket.h" 3 4
+extern int recvmmsg (int __fd, struct mmsghdr *__vmessages,
+       unsigned int __vlen, int __flags,
+       struct timespec *__tmo);
+# 255 "/usr/include/x86_64-linux-gnu/sys/socket.h" 3 4
+extern int getsockopt (int __fd, int __level, int __optname,
+         void *__restrict __optval,
+         socklen_t *__restrict __optlen) __attribute__ ((__nothrow__ , __leaf__));
+# 277 "/usr/include/x86_64-linux-gnu/sys/socket.h" 3 4
+extern int setsockopt (int __fd, int __level, int __optname,
+         const void *__optval, socklen_t __optlen) __attribute__ ((__nothrow__ , __leaf__));
+# 296 "/usr/include/x86_64-linux-gnu/sys/socket.h" 3 4
+extern int listen (int __fd, int __n) __attribute__ ((__nothrow__ , __leaf__));
+# 306 "/usr/include/x86_64-linux-gnu/sys/socket.h" 3 4
+extern int accept (int __fd, __SOCKADDR_ARG __addr,
+     socklen_t *__restrict __addr_len);
+
+
+
+
+
+
+extern int accept4 (int __fd, __SOCKADDR_ARG __addr,
+      socklen_t *__restrict __addr_len, int __flags);
+# 324 "/usr/include/x86_64-linux-gnu/sys/socket.h" 3 4
+extern int shutdown (int __fd, int __how) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+extern int sockatmark (int __fd) __attribute__ ((__nothrow__ , __leaf__));
+
+
+
+
+
+
+
+extern int isfdtype (int __fd, int __fdtype) __attribute__ ((__nothrow__ , __leaf__));
+# 346 "/usr/include/x86_64-linux-gnu/sys/socket.h" 3 4
+
+# 226 "./MagickCore/studio.h" 2
+
+
+# 1 "/usr/include/x86_64-linux-gnu/sys/uio.h" 1 3 4
+# 31 "/usr/include/x86_64-linux-gnu/sys/uio.h" 3 4
+
+# 41 "/usr/include/x86_64-linux-gnu/sys/uio.h" 3 4
+extern ssize_t readv (int __fd, const struct iovec *__iovec, int __count)
+  __attribute__ ((__access__ (__read_only__, 2, 3)));
+# 52 "/usr/include/x86_64-linux-gnu/sys/uio.h" 3 4
+extern ssize_t writev (int __fd, const struct iovec *__iovec, int __count)
+  __attribute__ ((__access__ (__read_only__, 2, 3)));
+# 67 "/usr/include/x86_64-linux-gnu/sys/uio.h" 3 4
+extern ssize_t preadv (int __fd, const struct iovec *__iovec, int __count,
+         __off_t __offset)
+  __attribute__ ((__access__ (__read_only__, 2, 3)));
+# 80 "/usr/include/x86_64-linux-gnu/sys/uio.h" 3 4
+extern ssize_t pwritev (int __fd, const struct iovec *__iovec, int __count,
+   __off_t __offset)
+  __attribute__ ((__access__ (__read_only__, 2, 3)));
+# 110 "/usr/include/x86_64-linux-gnu/sys/uio.h" 3 4
+extern ssize_t preadv64 (int __fd, const struct iovec *__iovec, int __count,
+    __off64_t __offset)
+  __attribute__ ((__access__ (__read_only__, 2, 3)));
+# 123 "/usr/include/x86_64-linux-gnu/sys/uio.h" 3 4
+extern ssize_t pwritev64 (int __fd, const struct iovec *__iovec, int __count,
+     __off64_t __offset)
+  __attribute__ ((__access__ (__read_only__, 2, 3)));
+
+
+
+
+
+
+
+extern ssize_t preadv2 (int __fp, const struct iovec *__iovec, int __count,
+   __off_t __offset, int ___flags)
+  __attribute__ ((__access__ (__read_only__, 2, 3)));
+
+
+extern ssize_t pwritev2 (int __fd, const struct iovec *__iodev, int __count,
+    __off_t __offset, int __flags) ;
+# 161 "/usr/include/x86_64-linux-gnu/sys/uio.h" 3 4
+extern ssize_t preadv64v2 (int __fp, const struct iovec *__iovec,
+      int __count, __off64_t __offset,
+      int ___flags)
+  __attribute__ ((__access__ (__read_only__, 2, 3)));
+
+
+extern ssize_t pwritev64v2 (int __fd, const struct iovec *__iodev,
+       int __count, __off64_t __offset,
+       int __flags)
+  __attribute__ ((__access__ (__read_only__, 2, 3)));
+
+
+
+
+
+
+
+
+# 1 "/usr/include/x86_64-linux-gnu/bits/uio-ext.h" 1 3 4
+# 26 "/usr/include/x86_64-linux-gnu/bits/uio-ext.h" 3 4
+
+
+
+extern ssize_t process_vm_readv (pid_t __pid, const struct iovec *__lvec,
+     unsigned long int __liovcnt,
+     const struct iovec *__rvec,
+     unsigned long int __riovcnt,
+     unsigned long int __flags)
+  __attribute__ ((__nothrow__ , __leaf__));
+
+
+extern ssize_t process_vm_writev (pid_t __pid, const struct iovec *__lvec,
+      unsigned long int __liovcnt,
+      const struct iovec *__rvec,
+      unsigned long int __riovcnt,
+      unsigned long int __flags)
+  __attribute__ ((__nothrow__ , __leaf__));
+# 51 "/usr/include/x86_64-linux-gnu/bits/uio-ext.h" 3 4
+
+# 180 "/usr/include/x86_64-linux-gnu/sys/uio.h" 2 3 4
+# 229 "./MagickCore/studio.h" 2
+# 48 "MagickCore/blob.c" 2
+# 1 "./MagickCore/blob.h" 1
+# 28 "./MagickCore/blob.h"
+
+# 28 "./MagickCore/blob.h"
+typedef enum
+{
+  ReadMode,
+  WriteMode,
+  IOMode,
+  PersistMode
+} MapMode;
+
+typedef ssize_t
+  (*CustomStreamHandler)(unsigned char *,const size_t,void *);
+
+typedef MagickOffsetType
+  (*CustomStreamSeeker)(const MagickOffsetType,const int,void *);
+
+typedef MagickOffsetType
+  (*CustomStreamTeller)(void *);
+
+typedef struct _CustomStreamInfo
+  CustomStreamInfo;
+
+# 1 "./MagickCore/image.h" 1
+# 28 "./MagickCore/image.h"
+typedef enum
+{
+  UndefinedType,
+  BilevelType,
+  GrayscaleType,
+  GrayscaleAlphaType,
+  PaletteType,
+  PaletteAlphaType,
+  TrueColorType,
+  TrueColorAlphaType,
+  ColorSeparationType,
+  ColorSeparationAlphaType,
+  OptimizeType,
+  PaletteBilevelAlphaType
+} ImageType;
+
+typedef enum
+{
+  UndefinedInterlace,
+  NoInterlace,
+  LineInterlace,
+  PlaneInterlace,
+  PartitionInterlace,
+  GIFInterlace,
+  JPEGInterlace,
+  PNGInterlace
+} InterlaceType;
+
+typedef enum
+{
+  UndefinedOrientation,
+  TopLeftOrientation,
+  TopRightOrientation,
+  BottomRightOrientation,
+  BottomLeftOrientation,
+  LeftTopOrientation,
+  RightTopOrientation,
+  RightBottomOrientation,
+  LeftBottomOrientation
+} OrientationType;
+
+typedef enum
+{
+  UndefinedResolution,
+  PixelsPerInchResolution,
+  PixelsPerCentimeterResolution
+} ResolutionType;
+
+typedef struct _PrimaryInfo
+{
+  double
+    x,
+    y,
+    z;
+} PrimaryInfo;
+
+typedef struct _SegmentInfo
+{
+  double
+    x1,
+    y1,
+    x2,
+    y2;
+} SegmentInfo;
+
+typedef enum
+{
+  UndefinedTransmitType,
+  FileTransmitType,
+  BlobTransmitType,
+  StreamTransmitType,
+  ImageTransmitType
+} TransmitType;
+
+typedef struct _ChromaticityInfo
+{
+  PrimaryInfo
+    red_primary,
+    green_primary,
+    blue_primary,
+    white_point;
+} ChromaticityInfo;
+
+# 1 "./MagickCore/blob.h" 1
+# 112 "./MagickCore/image.h" 2
+# 1 "./MagickCore/colorspace.h" 1
+# 25 "./MagickCore/colorspace.h"
+typedef enum
+{
+  UndefinedColorspace,
+  CMYColorspace,
+  CMYKColorspace,
+  GRAYColorspace,
+  HCLColorspace,
+  HCLpColorspace,
+  HSBColorspace,
+  HSIColorspace,
+  HSLColorspace,
+  HSVColorspace,
+  HWBColorspace,
+  LabColorspace,
+  LCHColorspace,
+  LCHabColorspace,
+  LCHuvColorspace,
+  LogColorspace,
+  LMSColorspace,
+  LuvColorspace,
+  OHTAColorspace,
+  Rec601YCbCrColorspace,
+  Rec709YCbCrColorspace,
+  RGBColorspace,
+  scRGBColorspace,
+  sRGBColorspace,
+  TransparentColorspace,
+  xyYColorspace,
+  XYZColorspace,
+  YCbCrColorspace,
+  YCCColorspace,
+  YDbDrColorspace,
+  YIQColorspace,
+  YPbPrColorspace,
+  YUVColorspace,
+  LinearGRAYColorspace,
+  JzazbzColorspace,
+  DisplayP3Colorspace,
+  Adobe98Colorspace,
+  ProPhotoColorspace,
+  OklabColorspace,
+  OklchColorspace
+} ColorspaceType;
+
+extern __attribute__ ((visibility ("default"))) ColorspaceType
+  GetImageColorspaceType(const Image *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  SetImageColorspace(Image *,const ColorspaceType,ExceptionInfo *),
+  SetImageGray(Image *,ExceptionInfo *),
+  SetImageMonochrome(Image *,ExceptionInfo *),
+  TransformImageColorspace(Image *,const ColorspaceType,ExceptionInfo *);
+# 113 "./MagickCore/image.h" 2
+# 1 "./MagickCore/cache-view.h" 1
+# 21 "./MagickCore/cache-view.h"
+# 1 "./MagickCore/pixel.h" 1
+# 36 "./MagickCore/pixel.h"
+typedef enum
+
+{
+  UndefinedChannel = 0x0000,
+  RedChannel = 0x0001,
+  GrayChannel = 0x0001,
+  CyanChannel = 0x0001,
+  LChannel = 0x0001,
+  GreenChannel = 0x0002,
+  MagentaChannel = 0x0002,
+  aChannel = 0x0002,
+  BlueChannel = 0x0004,
+  bChannel = 0x0002,
+  YellowChannel = 0x0004,
+  BlackChannel = 0x0008,
+  AlphaChannel = 0x0010,
+  OpacityChannel = 0x0010,
+  IndexChannel = 0x0020,
+  ReadMaskChannel = 0x0040,
+  WriteMaskChannel = 0x0080,
+  MetaChannel = 0x0100,
+  CompositeMaskChannel = 0x0200,
+  CompositeChannels = 0x001F,
+
+
+
+  AllChannels = 0X7FFFFFF,
+# 71 "./MagickCore/pixel.h"
+  TrueAlphaChannel = 0x0100,
+  RGBChannels = 0x0200,
+  GrayChannels = 0x0400,
+  SyncChannels = 0x20000,
+  DefaultChannels = AllChannels
+} ChannelType;
+
+typedef enum
+{
+  UndefinedPixelChannel = 0,
+  RedPixelChannel = 0,
+  CyanPixelChannel = 0,
+  GrayPixelChannel = 0,
+  LPixelChannel = 0,
+  LabelPixelChannel = 0,
+  YPixelChannel = 0,
+  aPixelChannel = 1,
+  GreenPixelChannel = 1,
+  MagentaPixelChannel = 1,
+  CbPixelChannel = 1,
+  bPixelChannel = 2,
+  BluePixelChannel = 2,
+  YellowPixelChannel = 2,
+  CrPixelChannel = 2,
+  BlackPixelChannel = 3,
+  AlphaPixelChannel = 4,
+  IndexPixelChannel = 5,
+  ReadMaskPixelChannel = 6,
+  WriteMaskPixelChannel = 7,
+  MetaPixelChannel = 8,
+  CompositeMaskPixelChannel = 9,
+  MetaPixelChannels = 10,
+  IntensityPixelChannel = 64,
+  CompositePixelChannel = 64,
+  SyncPixelChannel = 64 +1
+} PixelChannel;
+
+typedef enum
+{
+  UndefinedPixelIntensityMethod = 0,
+  AveragePixelIntensityMethod,
+  BrightnessPixelIntensityMethod,
+  LightnessPixelIntensityMethod,
+  MSPixelIntensityMethod,
+  Rec601LumaPixelIntensityMethod,
+  Rec601LuminancePixelIntensityMethod,
+  Rec709LumaPixelIntensityMethod,
+  Rec709LuminancePixelIntensityMethod,
+  RMSPixelIntensityMethod
+} PixelIntensityMethod;
+
+typedef enum
+{
+  UndefinedInterpolatePixel,
+  AverageInterpolatePixel,
+  Average9InterpolatePixel,
+  Average16InterpolatePixel,
+  BackgroundInterpolatePixel,
+  BilinearInterpolatePixel,
+  BlendInterpolatePixel,
+  CatromInterpolatePixel,
+  IntegerInterpolatePixel,
+  MeshInterpolatePixel,
+  NearestInterpolatePixel,
+  SplineInterpolatePixel
+} PixelInterpolateMethod;
+
+typedef enum
+{
+  UndefinedPixelMask = 0x000000,
+  ReadPixelMask = 0x000001,
+  WritePixelMask = 0x000002,
+  CompositePixelMask = 0x000004
+} PixelMask;
+
+typedef enum
+{
+  UndefinedPixelTrait = 0x000000,
+  CopyPixelTrait = 0x000001,
+  UpdatePixelTrait = 0x000002,
+  BlendPixelTrait = 0x000004
+} PixelTrait;
+
+typedef enum
+{
+  UndefinedPixel,
+  CharPixel,
+  DoublePixel,
+  FloatPixel,
+  LongPixel,
+  LongLongPixel,
+  QuantumPixel,
+  ShortPixel
+} StorageType;
+
+
+
+
+typedef struct _PixelChannelMap
+{
+  PixelChannel
+    channel;
+
+  PixelTrait
+    traits;
+
+  ssize_t
+    offset;
+} PixelChannelMap;
+
+typedef struct _PixelInfo
+{
+  ClassType
+    storage_class;
+
+  ColorspaceType
+    colorspace;
+
+  PixelTrait
+    alpha_trait;
+
+  double
+    fuzz;
+
+  size_t
+    depth;
+
+  MagickSizeType
+    count;
+
+  MagickRealType
+    red,
+    green,
+    blue,
+    black,
+    alpha,
+    index;
+} PixelInfo;
+
+typedef struct _PixelPacket
+{
+  unsigned int
+    red,
+    green,
+    blue,
+    alpha,
+    black;
+} PixelPacket;
+
+typedef struct _CacheView
+  CacheView_;
+
+
+
+
+extern __attribute__ ((visibility ("default"))) ChannelType
+  SetPixelChannelMask(Image *,const ChannelType);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  ExportImagePixels(const Image *,const ssize_t,const ssize_t,const size_t,
+    const size_t,const char *,const StorageType,void *,ExceptionInfo *),
+  ImportImagePixels(Image *,const ssize_t,const ssize_t,const size_t,
+    const size_t,const char *,const StorageType,const void *,ExceptionInfo *),
+  InterpolatePixelChannel(const Image *__restrict__,const CacheView_ *,
+    const PixelChannel,const PixelInterpolateMethod,const double,const double,
+    double *,ExceptionInfo *),
+  InterpolatePixelChannels(const Image *__restrict__,const CacheView_ *,
+    const Image * __restrict__,const PixelInterpolateMethod,const double,
+    const double,Quantum *,ExceptionInfo *),
+  InterpolatePixelInfo(const Image *,const CacheView_ *,
+    const PixelInterpolateMethod,const double,const double,PixelInfo *,
+    ExceptionInfo *),
+  IsFuzzyEquivalencePixel(const Image *,const Quantum *,const Image *,
+    const Quantum *) __attribute__((__pure__)),
+  IsFuzzyEquivalencePixelInfo(const PixelInfo *,const PixelInfo *)
+    __attribute__((__pure__)),
+  SetPixelMetaChannels(Image *,const size_t,ExceptionInfo *),
+  SortImagePixels(Image *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickRealType
+  GetPixelInfoIntensity(const Image *__restrict__,
+    const PixelInfo *__restrict__) __attribute__((__hot__)),
+  GetPixelIntensity(const Image *__restrict__,
+    const Quantum *__restrict__) __attribute__((__hot__));
+
+extern __attribute__ ((visibility ("default"))) PixelChannelMap
+  *AcquirePixelChannelMap(void),
+  *ClonePixelChannelMap(PixelChannelMap *),
+  *DestroyPixelChannelMap(PixelChannelMap *);
+
+extern __attribute__ ((visibility ("default"))) PixelInfo
+  *ClonePixelInfo(const PixelInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickRealType
+  DecodePixelGamma(const MagickRealType) __attribute__((__hot__)),
+  EncodePixelGamma(const MagickRealType) __attribute__((__hot__));
+
+extern __attribute__ ((visibility ("default"))) void
+  ConformPixelInfo(Image *,const PixelInfo *,PixelInfo *,ExceptionInfo *),
+  GetPixelInfo(const Image *,PixelInfo *),
+  InitializePixelChannelMap(Image *);
+# 22 "./MagickCore/cache-view.h" 2
+
+
+
+
+
+typedef enum
+{
+  UndefinedVirtualPixelMethod,
+  BackgroundVirtualPixelMethod,
+  DitherVirtualPixelMethod,
+  EdgeVirtualPixelMethod,
+  MirrorVirtualPixelMethod,
+  RandomVirtualPixelMethod,
+  TileVirtualPixelMethod,
+  TransparentVirtualPixelMethod,
+  MaskVirtualPixelMethod,
+  BlackVirtualPixelMethod,
+  GrayVirtualPixelMethod,
+  WhiteVirtualPixelMethod,
+  HorizontalTileVirtualPixelMethod,
+  VerticalTileVirtualPixelMethod,
+  HorizontalTileEdgeVirtualPixelMethod,
+  VerticalTileEdgeVirtualPixelMethod,
+  CheckerTileVirtualPixelMethod
+} VirtualPixelMethod;
+
+typedef struct _CacheView
+  CacheView;
+
+extern __attribute__ ((visibility ("default"))) CacheView
+  *AcquireAuthenticCacheView(const Image *,ExceptionInfo *),
+  *AcquireVirtualCacheView(const Image *,ExceptionInfo *),
+  *CloneCacheView(const CacheView *),
+  *DestroyCacheView(CacheView *);
+
+extern __attribute__ ((visibility ("default"))) ClassType
+  GetCacheViewStorageClass(const CacheView *) __attribute__((__pure__));
+
+extern __attribute__ ((visibility ("default"))) ColorspaceType
+  GetCacheViewColorspace(const CacheView *) __attribute__((__pure__));
+
+extern __attribute__ ((visibility ("default"))) const Image
+  *GetCacheViewImage(const CacheView *) __attribute__((__pure__));
+
+extern __attribute__ ((visibility ("default"))) const Quantum
+  *GetCacheViewVirtualPixels(const CacheView *,const ssize_t,const ssize_t,
+    const size_t,const size_t,ExceptionInfo *) __attribute__((__hot__)),
+  *GetCacheViewVirtualPixelQueue(const CacheView *) __attribute__((__hot__));
+
+extern __attribute__ ((visibility ("default"))) const void
+  *GetCacheViewVirtualMetacontent(const CacheView *)
+    __attribute__((__pure__));
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  GetOneCacheViewAuthenticPixel(const CacheView *,const ssize_t,const ssize_t,
+    Quantum *,ExceptionInfo *),
+  GetOneCacheViewVirtualMethodPixel(const CacheView *,const VirtualPixelMethod,
+    const ssize_t,const ssize_t,Quantum *,ExceptionInfo *),
+  GetOneCacheViewVirtualPixel(const CacheView *,const ssize_t,const ssize_t,
+    Quantum *,ExceptionInfo *),
+  GetOneCacheViewVirtualPixelInfo(const CacheView *,const ssize_t,const ssize_t,
+    PixelInfo *,ExceptionInfo *),
+  SetCacheViewStorageClass(CacheView *,const ClassType,ExceptionInfo *),
+  SetCacheViewVirtualPixelMethod(CacheView *__restrict__,
+    const VirtualPixelMethod),
+  SyncCacheViewAuthenticPixels(CacheView *__restrict__,ExceptionInfo *)
+    __attribute__((__hot__));
+
+extern __attribute__ ((visibility ("default"))) MagickSizeType
+  GetCacheViewExtent(const CacheView *) __attribute__((__pure__));
+
+extern __attribute__ ((visibility ("default"))) Quantum
+  *GetCacheViewAuthenticPixelQueue(CacheView *) __attribute__((__hot__)),
+  *GetCacheViewAuthenticPixels(CacheView *,const ssize_t,const ssize_t,
+    const size_t,const size_t,ExceptionInfo *) __attribute__((__hot__)),
+  *QueueCacheViewAuthenticPixels(CacheView *,const ssize_t,const ssize_t,
+    const size_t,const size_t,ExceptionInfo *) __attribute__((__hot__));
+
+extern __attribute__ ((visibility ("default"))) void
+  *GetCacheViewAuthenticMetacontent(CacheView *);
+# 114 "./MagickCore/image.h" 2
+# 1 "./MagickCore/color.h" 1
+# 22 "./MagickCore/color.h"
+# 1 "./MagickCore/exception.h" 1
+# 21 "./MagickCore/exception.h"
+# 1 "./MagickCore/semaphore.h" 1
+# 25 "./MagickCore/semaphore.h"
+typedef struct SemaphoreInfo
+  SemaphoreInfo;
+
+extern __attribute__ ((visibility ("default"))) SemaphoreInfo
+  *AcquireSemaphoreInfo(void);
+
+extern __attribute__ ((visibility ("default"))) void
+  ActivateSemaphoreInfo(SemaphoreInfo **),
+  LockSemaphoreInfo(SemaphoreInfo *),
+  RelinquishSemaphoreInfo(SemaphoreInfo **),
+  UnlockSemaphoreInfo(SemaphoreInfo *);
+# 22 "./MagickCore/exception.h" 2
+
+
+
+
+
+typedef enum
+{
+  UndefinedException,
+  WarningException = 300,
+  ResourceLimitWarning = 300,
+  TypeWarning = 305,
+  OptionWarning = 310,
+  DelegateWarning = 315,
+  MissingDelegateWarning = 320,
+  CorruptImageWarning = 325,
+  FileOpenWarning = 330,
+  BlobWarning = 335,
+  StreamWarning = 340,
+  CacheWarning = 345,
+  CoderWarning = 350,
+  FilterWarning = 352,
+  ModuleWarning = 355,
+  DrawWarning = 360,
+  ImageWarning = 365,
+  WandWarning = 370,
+  RandomWarning = 375,
+  XServerWarning = 380,
+  MonitorWarning = 385,
+  RegistryWarning = 390,
+  ConfigureWarning = 395,
+  PolicyWarning = 399,
+  ErrorException = 400,
+  ResourceLimitError = 400,
+  TypeError = 405,
+  OptionError = 410,
+  DelegateError = 415,
+  MissingDelegateError = 420,
+  CorruptImageError = 425,
+  FileOpenError = 430,
+  BlobError = 435,
+  StreamError = 440,
+  CacheError = 445,
+  CoderError = 450,
+  FilterError = 452,
+  ModuleError = 455,
+  DrawError = 460,
+  ImageError = 465,
+  WandError = 470,
+  RandomError = 475,
+  XServerError = 480,
+  MonitorError = 485,
+  RegistryError = 490,
+  ConfigureError = 495,
+  PolicyError = 499,
+  FatalErrorException = 700,
+  ResourceLimitFatalError = 700,
+  TypeFatalError = 705,
+  OptionFatalError = 710,
+  DelegateFatalError = 715,
+  MissingDelegateFatalError = 720,
+  CorruptImageFatalError = 725,
+  FileOpenFatalError = 730,
+  BlobFatalError = 735,
+  StreamFatalError = 740,
+  CacheFatalError = 745,
+  CoderFatalError = 750,
+  FilterFatalError = 752,
+  ModuleFatalError = 755,
+  DrawFatalError = 760,
+  ImageFatalError = 765,
+  WandFatalError = 770,
+  RandomFatalError = 775,
+  XServerFatalError = 780,
+  MonitorFatalError = 785,
+  RegistryFatalError = 790,
+  ConfigureFatalError = 795,
+  PolicyFatalError = 799
+} ExceptionType;
+
+struct _ExceptionInfo
+{
+  ExceptionType
+    severity;
+
+  int
+    error_number;
+
+  char
+    *reason,
+    *description;
+
+  void
+    *exceptions;
+
+  MagickBooleanType
+    relinquish;
+
+  SemaphoreInfo
+    *semaphore;
+
+  size_t
+    signature;
+};
+
+typedef void
+  (*ErrorHandler)(const ExceptionType,const char *,const char *);
+
+typedef void
+  (*FatalErrorHandler)(const ExceptionType,const char *,const char *)
+    __attribute__((__noreturn__));
+
+typedef void
+  (*WarningHandler)(const ExceptionType,const char *,const char *);
+
+extern __attribute__ ((visibility ("default"))) char
+  *GetExceptionMessage(const int);
+
+extern __attribute__ ((visibility ("default"))) const char
+  *GetLocaleExceptionMessage(const ExceptionType,const char *);
+
+extern __attribute__ ((visibility ("default"))) ErrorHandler
+  SetErrorHandler(ErrorHandler);
+
+extern __attribute__ ((visibility ("default"))) ExceptionInfo
+  *AcquireExceptionInfo(void),
+  *CloneExceptionInfo(ExceptionInfo *),
+  *DestroyExceptionInfo(ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) FatalErrorHandler
+  SetFatalErrorHandler(FatalErrorHandler);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  ThrowException(ExceptionInfo *,const ExceptionType,const char *,
+    const char *),
+  ThrowMagickExceptionList(ExceptionInfo *,const char *,const char *,
+    const size_t,const ExceptionType,const char *,const char *,va_list),
+  ThrowMagickException(ExceptionInfo *,const char *,const char *,const size_t,
+    const ExceptionType,const char *,const char *,...)
+    __attribute__((__format__ (__printf__,7,8)));
+
+extern __attribute__ ((visibility ("default"))) void
+  CatchException(ExceptionInfo *),
+  ClearMagickException(ExceptionInfo *),
+  InheritException(ExceptionInfo *,const ExceptionInfo *),
+  MagickError(const ExceptionType,const char *,const char *),
+  MagickFatalError(const ExceptionType,const char *,const char *)
+    __attribute__((__noreturn__)),
+  MagickWarning(const ExceptionType,const char *,const char *);
+
+extern __attribute__ ((visibility ("default"))) WarningHandler
+  SetWarningHandler(WarningHandler);
+# 23 "./MagickCore/color.h" 2
+
+
+
+
+
+typedef enum
+{
+  UndefinedCompliance,
+  NoCompliance = 0x0000,
+  CSSCompliance = 0x0001,
+  SVGCompliance = 0x0001,
+  X11Compliance = 0x0002,
+  XPMCompliance = 0x0004,
+  MVGCompliance = 0x0008,
+  AllCompliance = 0x7fffffff
+} ComplianceType;
+
+typedef enum
+{
+  UndefinedIlluminant = 5,
+  AIlluminant = 0,
+  BIlluminant = 1,
+  CIlluminant = 2,
+  D50Illuminant = 3,
+  D55Illuminant = 4,
+  D65Illuminant = 5,
+  D75Illuminant = 6,
+  EIlluminant = 7,
+  F2Illuminant = 8,
+  F7Illuminant = 9,
+  F11Illuminant = 10
+} IlluminantType;
+
+typedef struct _ColorInfo
+{
+  char
+    *path,
+    *name;
+
+  ComplianceType
+    compliance;
+
+  PixelInfo
+    color;
+
+  MagickBooleanType
+    exempt,
+    stealth;
+
+  size_t
+    signature;
+} ColorInfo;
+
+typedef struct _ErrorInfo
+{
+  double
+    mean_error_per_pixel,
+    normalized_mean_error,
+    normalized_maximum_error;
+} ErrorInfo;
+
+extern __attribute__ ((visibility ("default"))) char
+  **GetColorList(const char *,size_t *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) const ColorInfo
+  *GetColorInfo(const char *,ExceptionInfo *),
+  **GetColorInfoList(const char *,size_t *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  IsEquivalentImage(const Image *,const Image *,ssize_t *x,ssize_t *y,
+    ExceptionInfo *),
+  ListColorInfo(FILE *,ExceptionInfo *),
+  QueryColorCompliance(const char *,const ComplianceType,PixelInfo *,
+    ExceptionInfo *),
+  QueryColorname(const Image *,const PixelInfo *,const ComplianceType,
+    char *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) void
+  ConcatenateColorComponent(const PixelInfo *,const PixelChannel,
+    const ComplianceType,char *),
+  GetColorTuple(const PixelInfo *,const MagickBooleanType,char *);
+# 115 "./MagickCore/image.h" 2
+# 1 "./MagickCore/composite.h" 1
+# 25 "./MagickCore/composite.h"
+typedef enum
+{
+  UndefinedCompositeOp,
+  AlphaCompositeOp,
+  AtopCompositeOp,
+  BlendCompositeOp,
+  BlurCompositeOp,
+  BumpmapCompositeOp,
+  ChangeMaskCompositeOp,
+  ClearCompositeOp,
+  ColorBurnCompositeOp,
+  ColorDodgeCompositeOp,
+  ColorizeCompositeOp,
+  CopyBlackCompositeOp,
+  CopyBlueCompositeOp,
+  CopyCompositeOp,
+  CopyCyanCompositeOp,
+  CopyGreenCompositeOp,
+  CopyMagentaCompositeOp,
+  CopyAlphaCompositeOp,
+  CopyRedCompositeOp,
+  CopyYellowCompositeOp,
+  DarkenCompositeOp,
+  DarkenIntensityCompositeOp,
+  DifferenceCompositeOp,
+  DisplaceCompositeOp,
+  DissolveCompositeOp,
+  DistortCompositeOp,
+  DivideDstCompositeOp,
+  DivideSrcCompositeOp,
+  DstAtopCompositeOp,
+  DstCompositeOp,
+  DstInCompositeOp,
+  DstOutCompositeOp,
+  DstOverCompositeOp,
+  ExclusionCompositeOp,
+  HardLightCompositeOp,
+  HardMixCompositeOp,
+  HueCompositeOp,
+  InCompositeOp,
+  IntensityCompositeOp,
+  LightenCompositeOp,
+  LightenIntensityCompositeOp,
+  LinearBurnCompositeOp,
+  LinearDodgeCompositeOp,
+  LinearLightCompositeOp,
+  LuminizeCompositeOp,
+  MathematicsCompositeOp,
+  MinusDstCompositeOp,
+  MinusSrcCompositeOp,
+  ModulateCompositeOp,
+  ModulusAddCompositeOp,
+  ModulusSubtractCompositeOp,
+  MultiplyCompositeOp,
+  NoCompositeOp,
+  OutCompositeOp,
+  OverCompositeOp,
+  OverlayCompositeOp,
+  PegtopLightCompositeOp,
+  PinLightCompositeOp,
+  PlusCompositeOp,
+  ReplaceCompositeOp,
+  SaturateCompositeOp,
+  ScreenCompositeOp,
+  SoftLightCompositeOp,
+  SrcAtopCompositeOp,
+  SrcCompositeOp,
+  SrcInCompositeOp,
+  SrcOutCompositeOp,
+  SrcOverCompositeOp,
+  ThresholdCompositeOp,
+  VividLightCompositeOp,
+  XorCompositeOp,
+  StereoCompositeOp,
+  FreezeCompositeOp,
+  InterpolateCompositeOp,
+  NegateCompositeOp,
+  ReflectCompositeOp,
+  SoftBurnCompositeOp,
+  SoftDodgeCompositeOp,
+  StampCompositeOp,
+  RMSECompositeOp,
+  SaliencyBlendCompositeOp,
+  SeamlessBlendCompositeOp
+} CompositeOperator;
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  CompositeImage(Image *,const Image *,const CompositeOperator,
+    const MagickBooleanType,const ssize_t,const ssize_t,ExceptionInfo *),
+  TextureImage(Image *,const Image *,ExceptionInfo *);
+# 116 "./MagickCore/image.h" 2
+# 1 "./MagickCore/compress.h" 1
+# 25 "./MagickCore/compress.h"
+typedef enum
+{
+  UndefinedCompression,
+  B44ACompression,
+  B44Compression,
+  BZipCompression,
+  DXT1Compression,
+  DXT3Compression,
+  DXT5Compression,
+  FaxCompression,
+  Group4Compression,
+  JBIG1Compression,
+  JBIG2Compression,
+  JPEG2000Compression,
+  JPEGCompression,
+  LosslessJPEGCompression,
+  LZMACompression,
+  LZWCompression,
+  NoCompression,
+  PizCompression,
+  Pxr24Compression,
+  RLECompression,
+  ZipCompression,
+  ZipSCompression,
+  ZstdCompression,
+  WebPCompression,
+  DWAACompression,
+  DWABCompression,
+  BC7Compression,
+  BC5Compression,
+  LERCCompression
+} CompressionType;
+
+typedef struct _Ascii85Info
+  Ascii85Info;
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  HuffmanDecodeImage(Image *,ExceptionInfo *),
+  HuffmanEncodeImage(const ImageInfo *,Image *,Image *,ExceptionInfo *),
+  LZWEncodeImage(Image *,const size_t,unsigned char *__restrict__,
+    ExceptionInfo *),
+  PackbitsEncodeImage(Image *,const size_t,unsigned char *__restrict__,
+    ExceptionInfo *),
+  ZLIBEncodeImage(Image *,const size_t,unsigned char *__restrict__,
+    ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) void
+  Ascii85Encode(Image *,const unsigned char),
+  Ascii85Flush(Image *),
+  Ascii85Initialize(Image *);
+# 117 "./MagickCore/image.h" 2
+# 1 "./MagickCore/effect.h" 1
+# 21 "./MagickCore/effect.h"
+# 1 "./MagickCore/morphology.h" 1
+# 21 "./MagickCore/morphology.h"
+# 1 "./MagickCore/geometry.h" 1
+# 25 "./MagickCore/geometry.h"
+typedef enum
+{
+
+  NoValue = 0x0000,
+
+  XValue = 0x0001,
+  XiValue = 0x0001,
+
+  YValue = 0x0002,
+  PsiValue = 0x0002,
+
+  WidthValue = 0x0004,
+  RhoValue = 0x0004,
+
+  HeightValue = 0x0008,
+  SigmaValue = 0x0008,
+  ChiValue = 0x0010,
+  XiNegative = 0x0020,
+
+  XNegative = 0x0020,
+  PsiNegative = 0x0040,
+
+  YNegative = 0x0040,
+  ChiNegative = 0x0080,
+  PercentValue = 0x1000,
+  AspectValue = 0x2000,
+  NormalizeValue = 0x2000,
+  LessValue = 0x4000,
+  GreaterValue = 0x8000,
+  MinimumValue = 0x10000,
+  CorrelateNormalizeValue = 0x10000,
+  AreaValue = 0x20000,
+  DecimalValue = 0x40000,
+  SeparatorValue = 0x80000,
+  AspectRatioValue = 0x100000,
+  AlphaValue = 0x200000,
+  MaximumValue = 0x400000,
+
+  AllValues = 0x7fffffff
+} GeometryFlags;
+# 79 "./MagickCore/geometry.h"
+typedef enum
+{
+  UndefinedGravity,
+  ForgetGravity = 0,
+  NorthWestGravity = 1,
+  NorthGravity = 2,
+  NorthEastGravity = 3,
+  WestGravity = 4,
+  CenterGravity = 5,
+  EastGravity = 6,
+  SouthWestGravity = 7,
+  SouthGravity = 8,
+  SouthEastGravity = 9
+} GravityType;
+
+typedef struct _AffineMatrix
+{
+  double
+    sx,
+    rx,
+    ry,
+    sy,
+    tx,
+    ty;
+} AffineMatrix;
+
+typedef struct _GeometryInfo
+{
+  double
+    rho,
+    sigma,
+    xi,
+    psi,
+    chi;
+} GeometryInfo;
+
+typedef struct _OffsetInfo
+{
+  ssize_t
+    x,
+    y;
+} OffsetInfo;
+
+typedef struct _PointInfo
+{
+  double
+    x,
+    y;
+} PointInfo;
+
+typedef struct _RectangleInfo
+{
+  size_t
+    width,
+    height;
+
+  ssize_t
+    x,
+    y;
+} RectangleInfo;
+
+extern __attribute__ ((visibility ("default"))) char
+  *GetPageGeometry(const char *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  IsGeometry(const char *),
+  IsSceneGeometry(const char *,const MagickBooleanType);
+
+extern __attribute__ ((visibility ("default"))) MagickStatusType
+  GetGeometry(const char *,ssize_t *,ssize_t *,size_t *,size_t *),
+  ParseAbsoluteGeometry(const char *,RectangleInfo *),
+  ParseAffineGeometry(const char *,AffineMatrix *,ExceptionInfo *),
+  ParseGeometry(const char *,GeometryInfo *),
+  ParseGravityGeometry(const Image *,const char *,RectangleInfo *,
+    ExceptionInfo *),
+  ParseMetaGeometry(const char *,ssize_t *,ssize_t *,size_t *,size_t *),
+  ParsePageGeometry(const Image *,const char *,RectangleInfo *,ExceptionInfo *),
+  ParseRegionGeometry(const Image *,const char *,RectangleInfo *,
+    ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) void
+  GravityAdjustGeometry(const size_t,const size_t,const GravityType,
+    RectangleInfo *),
+  SetGeometry(const Image *,RectangleInfo *),
+  SetGeometryInfo(GeometryInfo *);
+# 22 "./MagickCore/morphology.h" 2
+
+
+
+
+
+typedef enum
+{
+  UndefinedKernel,
+  UnityKernel,
+  GaussianKernel,
+  DoGKernel,
+  LoGKernel,
+  BlurKernel,
+  CometKernel,
+  BinomialKernel,
+  LaplacianKernel,
+  SobelKernel,
+  FreiChenKernel,
+  RobertsKernel,
+  PrewittKernel,
+  CompassKernel,
+  KirschKernel,
+  DiamondKernel,
+  SquareKernel,
+  RectangleKernel,
+  OctagonKernel,
+  DiskKernel,
+  PlusKernel,
+  CrossKernel,
+  RingKernel,
+  PeaksKernel,
+  EdgesKernel,
+  CornersKernel,
+  DiagonalsKernel,
+  LineEndsKernel,
+  LineJunctionsKernel,
+  RidgesKernel,
+  ConvexHullKernel,
+  ThinSEKernel,
+  SkeletonKernel,
+  ChebyshevKernel,
+  ManhattanKernel,
+  OctagonalKernel,
+  EuclideanKernel,
+  UserDefinedKernel
+} KernelInfoType;
+
+typedef enum
+{
+  UndefinedMorphology,
+
+  ConvolveMorphology,
+  CorrelateMorphology,
+
+  ErodeMorphology,
+  DilateMorphology,
+  ErodeIntensityMorphology,
+  DilateIntensityMorphology,
+  IterativeDistanceMorphology,
+
+  OpenMorphology,
+  CloseMorphology,
+  OpenIntensityMorphology,
+  CloseIntensityMorphology,
+  SmoothMorphology,
+
+  EdgeInMorphology,
+  EdgeOutMorphology,
+  EdgeMorphology,
+  TopHatMorphology,
+  BottomHatMorphology,
+
+  HitAndMissMorphology,
+  ThinningMorphology,
+  ThickenMorphology,
+
+  DistanceMorphology,
+  VoronoiMorphology
+} MorphologyMethod;
+
+typedef struct _KernelInfo
+{
+  KernelInfoType
+    type;
+
+  size_t
+    width,
+    height;
+
+  ssize_t
+    x,
+    y;
+
+  MagickRealType
+    *values;
+
+  double
+    minimum,
+    maximum,
+    negative_range,
+    positive_range,
+    angle;
+
+  struct _KernelInfo
+    *next;
+
+  size_t
+    signature;
+} KernelInfo;
+
+extern __attribute__ ((visibility ("default"))) KernelInfo
+  *AcquireKernelInfo(const char *,ExceptionInfo *),
+  *AcquireKernelBuiltIn(const KernelInfoType,const GeometryInfo *,
+    ExceptionInfo *),
+  *CloneKernelInfo(const KernelInfo *),
+  *DestroyKernelInfo(KernelInfo *);
+
+extern __attribute__ ((visibility ("default"))) Image
+  *MorphologyImage(const Image *,const MorphologyMethod,const ssize_t,
+    const KernelInfo *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) void
+  ScaleGeometryKernelInfo(KernelInfo *,const char *),
+  ScaleKernelInfo(KernelInfo *,const double,const GeometryFlags),
+  UnityAddKernelInfo(KernelInfo *,const double);
+# 22 "./MagickCore/effect.h" 2
+
+
+
+
+
+typedef enum
+{
+  UndefinedPreview,
+  RotatePreview,
+  ShearPreview,
+  RollPreview,
+  HuePreview,
+  SaturationPreview,
+  BrightnessPreview,
+  GammaPreview,
+  SpiffPreview,
+  DullPreview,
+  GrayscalePreview,
+  QuantizePreview,
+  DespecklePreview,
+  ReduceNoisePreview,
+  AddNoisePreview,
+  SharpenPreview,
+  BlurPreview,
+  ThresholdPreview,
+  EdgeDetectPreview,
+  SpreadPreview,
+  SolarizePreview,
+  ShadePreview,
+  RaisePreview,
+  SegmentPreview,
+  SwirlPreview,
+  ImplodePreview,
+  WavePreview,
+  OilPaintPreview,
+  CharcoalDrawingPreview,
+  JPEGPreview
+} PreviewType;
+
+extern __attribute__ ((visibility ("default"))) Image
+  *AdaptiveBlurImage(const Image *,const double,const double,ExceptionInfo *),
+  *AdaptiveSharpenImage(const Image *,const double,const double,
+     ExceptionInfo *),
+  *BilateralBlurImage(const Image *,const size_t,const size_t,
+    const double,const double,ExceptionInfo *),
+  *BlurImage(const Image *,const double,const double,ExceptionInfo *),
+  *ConvolveImage(const Image *,const KernelInfo *,ExceptionInfo *),
+  *DespeckleImage(const Image *,ExceptionInfo *),
+  *EdgeImage(const Image *,const double,ExceptionInfo *),
+  *EmbossImage(const Image *,const double,const double,ExceptionInfo *),
+  *GaussianBlurImage(const Image *,const double,const double,ExceptionInfo *),
+  *KuwaharaImage(const Image *,const double,const double,ExceptionInfo *),
+  *LocalContrastImage(const Image *,const double,const double,ExceptionInfo *),
+  *MotionBlurImage(const Image *,const double,const double,const double,
+    ExceptionInfo *),
+  *PreviewImage(const Image *,const PreviewType,ExceptionInfo *),
+  *RotationalBlurImage(const Image *,const double,ExceptionInfo *),
+  *SelectiveBlurImage(const Image *,const double,const double,const double,
+    ExceptionInfo *),
+  *ShadeImage(const Image *,const MagickBooleanType,const double,const double,
+    ExceptionInfo *),
+  *SharpenImage(const Image *,const double,const double,ExceptionInfo *),
+  *SpreadImage(const Image *,const PixelInterpolateMethod,const double,
+    ExceptionInfo *),
+  *UnsharpMaskImage(const Image *,const double,const double,const double,
+    const double,ExceptionInfo *);
+# 118 "./MagickCore/image.h" 2
+
+# 1 "./MagickCore/layer.h" 1
+# 27 "./MagickCore/layer.h"
+typedef enum
+{
+  UnrecognizedDispose,
+  UndefinedDispose = 0,
+  NoneDispose = 1,
+  BackgroundDispose = 2,
+  PreviousDispose = 3
+} DisposeType;
+
+typedef enum
+{
+  UndefinedLayer,
+  CoalesceLayer,
+  CompareAnyLayer,
+  CompareClearLayer,
+  CompareOverlayLayer,
+  DisposeLayer,
+  OptimizeLayer,
+  OptimizeImageLayer,
+  OptimizePlusLayer,
+  OptimizeTransLayer,
+  RemoveDupsLayer,
+  RemoveZeroLayer,
+  CompositeLayer,
+  MergeLayer,
+  FlattenLayer,
+  MosaicLayer,
+  TrimBoundsLayer
+} LayerMethod;
+
+extern __attribute__ ((visibility ("default"))) Image
+  *CoalesceImages(const Image *,ExceptionInfo *),
+  *DisposeImages(const Image *,ExceptionInfo *),
+  *CompareImagesLayers(const Image *,const LayerMethod,ExceptionInfo *),
+  *MergeImageLayers(Image *,const LayerMethod,ExceptionInfo *),
+  *OptimizeImageLayers(const Image *,ExceptionInfo *),
+  *OptimizePlusImageLayers(const Image *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) void
+  CompositeLayers(Image *,const CompositeOperator,Image *,const ssize_t,
+    const ssize_t,ExceptionInfo *),
+  OptimizeImageTransparency(const Image *,ExceptionInfo *),
+  RemoveDuplicateLayers(Image **,ExceptionInfo *),
+  RemoveZeroDelayLayers(Image **,ExceptionInfo *);
+# 120 "./MagickCore/image.h" 2
+# 1 "./MagickCore/locale_.h" 1
+# 21 "./MagickCore/locale_.h"
+# 1 "./MagickCore/linked-list.h" 1
+# 25 "./MagickCore/linked-list.h"
+typedef struct _LinkedListInfo
+  LinkedListInfo;
+
+extern __attribute__ ((visibility ("default"))) LinkedListInfo
+  *DestroyLinkedList(LinkedListInfo *,void *(*)(void *)),
+  *NewLinkedList(const size_t);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  AppendValueToLinkedList(LinkedListInfo *,const void *),
+  InsertValueInLinkedList(LinkedListInfo *,const size_t,const void *),
+  InsertValueInSortedLinkedList(LinkedListInfo *,
+    int (*)(const void *,const void *),void **,const void *),
+  IsLinkedListEmpty(const LinkedListInfo *),
+  LinkedListToArray(LinkedListInfo *,void **);
+
+extern __attribute__ ((visibility ("default"))) size_t
+  GetNumberOfElementsInLinkedList(const LinkedListInfo *);
+
+extern __attribute__ ((visibility ("default"))) void
+  ClearLinkedList(LinkedListInfo *,void *(*)(void *)),
+  *GetLastValueInLinkedList(LinkedListInfo *),
+  *GetNextValueInLinkedList(LinkedListInfo *),
+  *GetValueFromLinkedList(LinkedListInfo *,const size_t),
+  *RemoveElementByValueFromLinkedList(LinkedListInfo *,const void *),
+  *RemoveElementFromLinkedList(LinkedListInfo *,const size_t),
+  *RemoveLastElementFromLinkedList(LinkedListInfo *),
+  ResetLinkedListIterator(LinkedListInfo *);
+# 22 "./MagickCore/locale_.h" 2
+
+
+
+
+
+typedef struct _LocaleInfo
+{
+  char
+    *path,
+    *tag,
+    *message;
+
+  MagickBooleanType
+    stealth;
+
+  size_t
+    signature;
+} LocaleInfo;
+
+extern __attribute__ ((visibility ("default"))) char
+  **GetLocaleList(const char *,size_t *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) const char
+  *GetLocaleMessage(const char *);
+
+extern __attribute__ ((visibility ("default"))) const LocaleInfo
+  *GetLocaleInfo_(const char *,ExceptionInfo *),
+  **GetLocaleInfoList(const char *,size_t *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) double
+  InterpretLocaleValue(const char *__restrict__,char *__restrict__ *);
+
+extern __attribute__ ((visibility ("default"))) int
+  LocaleCompare(const char *,const char *) __attribute__((__pure__)),
+  LocaleLowercase(const int),
+  LocaleNCompare(const char *,const char *,const size_t)
+    __attribute__((__pure__)),
+  LocaleUppercase(const int);
+
+extern __attribute__ ((visibility ("default"))) LinkedListInfo
+  *DestroyLocaleOptions(LinkedListInfo *),
+  *GetLocaleOptions(const char *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  ListLocaleInfo(FILE *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) ssize_t
+  FormatLocaleFile(FILE *,const char *__restrict__,...)
+    __attribute__((__format__ (__printf__,2,3))),
+  FormatLocaleString(char *__restrict__,const size_t,
+    const char *__restrict__,...)
+    __attribute__((__format__ (__printf__,3,4)));
+
+extern __attribute__ ((visibility ("default"))) void
+  LocaleLower(char *),
+  LocaleUpper(char *);
+# 121 "./MagickCore/image.h" 2
+# 1 "./MagickCore/monitor.h" 1
+# 25 "./MagickCore/monitor.h"
+typedef MagickBooleanType
+  (*MagickProgressMonitor)(const char *,const MagickOffsetType,
+    const MagickSizeType,void *);
+
+__attribute__ ((visibility ("default"))) MagickBooleanType
+  SetImageProgress(const Image *,const char *,const MagickOffsetType,
+    const MagickSizeType);
+
+__attribute__ ((visibility ("default"))) MagickProgressMonitor
+  SetImageProgressMonitor(Image *,const MagickProgressMonitor,void *),
+  SetImageInfoProgressMonitor(ImageInfo *,const MagickProgressMonitor,void *);
+
+static inline MagickBooleanType QuantumTick(const MagickOffsetType offset,
+  const MagickSizeType span)
+{
+  if (span <= 100)
+    return(MagickTrue);
+  if (offset == (MagickOffsetType) (span-1))
+    return(MagickTrue);
+  if ((offset % (MagickOffsetType) (span/100)) == 0)
+    return(MagickTrue);
+  return(MagickFalse);
+}
+# 122 "./MagickCore/image.h" 2
+
+# 1 "./MagickCore/profile.h" 1
+# 21 "./MagickCore/profile.h"
+# 1 "./MagickCore/string_.h" 1
+# 27 "./MagickCore/string_.h"
+typedef struct _StringInfo
+{
+  char
+    *path;
+
+  unsigned char
+    *datum;
+
+  size_t
+    length,
+    signature;
+
+  char
+    *name;
+} StringInfo;
+
+extern __attribute__ ((visibility ("default"))) char
+  *AcquireString(const char *),
+  *CloneString(char **,const char *),
+  *ConstantString(const char *),
+  *DestroyString(char *),
+  **DestroyStringList(char **),
+  *EscapeString(const char *,const char),
+  *FileToString(const char *,const size_t,ExceptionInfo *),
+  *GetEnvironmentValue(const char *),
+  *SanitizeString(const char *),
+  *StringInfoToDigest(const StringInfo *),
+  *StringInfoToHexString(const StringInfo *),
+  *StringInfoToString(const StringInfo *),
+  **StringToArgv(const char *,int *),
+  *StringToken(const char *,char **),
+  **StringToList(const char *),
+  **StringToStrings(const char *,size_t *);
+
+extern __attribute__ ((visibility ("default"))) const char
+  *GetStringInfoName(const StringInfo *),
+  *GetStringInfoPath(const StringInfo *);
+
+extern __attribute__ ((visibility ("default"))) double
+  InterpretSiPrefixValue(const char *__restrict__,char **__restrict__),
+  *StringToArrayOfDoubles(const char *,ssize_t *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) int
+  CompareStringInfo(const StringInfo *,const StringInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  ConcatenateString(char **__restrict__,const char *__restrict__),
+  IsStringTrue(const char *) __attribute__((__pure__)),
+  IsStringFalse(const char *) __attribute__((__pure__)),
+  SubstituteString(char **,const char *,const char *);
+
+extern __attribute__ ((visibility ("default"))) size_t
+  ConcatenateMagickString(char *__restrict__,const char *__restrict__,
+    const size_t) __attribute__((__nonnull__)),
+  CopyMagickString(char *__restrict__,const char *__restrict__,
+    const size_t) __attribute__((__nonnull__)),
+  GetStringInfoLength(const StringInfo *),
+  StripMagickString(char *);
+
+extern __attribute__ ((visibility ("default"))) ssize_t
+  FormatMagickSize(const MagickSizeType,const MagickBooleanType,const char *,
+    const size_t,char *);
+
+extern __attribute__ ((visibility ("default"))) StringInfo
+  *AcquireStringInfo(const size_t),
+  *BlobToStringInfo(const void *,const size_t),
+  *CloneStringInfo(const StringInfo *),
+  *ConfigureFileToStringInfo(const char *),
+  *DestroyStringInfo(StringInfo *),
+  *FileToStringInfo(const char *,const size_t,ExceptionInfo *),
+  *SplitStringInfo(StringInfo *,const size_t),
+  *StringToStringInfo(const char *);
+
+extern __attribute__ ((visibility ("default"))) unsigned char
+  *GetStringInfoDatum(const StringInfo *);
+
+extern __attribute__ ((visibility ("default"))) void
+  ConcatenateStringInfo(StringInfo *,const StringInfo *)
+    __attribute__((__nonnull__)),
+  PrintStringInfo(FILE *file,const char *,const StringInfo *),
+  ResetStringInfo(StringInfo *),
+  SetStringInfo(StringInfo *,const StringInfo *),
+  SetStringInfoDatum(StringInfo *,const unsigned char *),
+  SetStringInfoLength(StringInfo *,const size_t),
+  SetStringInfoName(StringInfo *,const char *),
+  SetStringInfoPath(StringInfo *,const char *),
+  StripString(char *);
+# 22 "./MagickCore/profile.h" 2
+
+
+
+
+
+typedef struct _ProfileInfo
+  ProfileInfo;
+
+typedef enum
+{
+  UndefinedIntent,
+  SaturationIntent,
+  PerceptualIntent,
+  AbsoluteIntent,
+  RelativeIntent
+} RenderingIntent;
+
+extern __attribute__ ((visibility ("default"))) char
+  *GetNextImageProfile(const Image *);
+
+extern __attribute__ ((visibility ("default"))) const StringInfo
+  *GetImageProfile(const Image *,const char *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  CloneImageProfiles(Image *,const Image *),
+  DeleteImageProfile(Image *,const char *),
+  ProfileImage(Image *,const char *,const void *,const size_t,ExceptionInfo *),
+  SetImageProfile(Image *,const char *,const StringInfo *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) StringInfo
+  *RemoveImageProfile(Image *,const char *);
+
+extern __attribute__ ((visibility ("default"))) void
+  DestroyImageProfiles(Image *),
+  ResetImageProfileIterator(const Image *);
+# 124 "./MagickCore/image.h" 2
+# 1 "./MagickCore/quantum.h" 1
+# 21 "./MagickCore/quantum.h"
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/float.h" 1 3 4
+# 22 "./MagickCore/quantum.h" 2
+# 1 "./MagickCore/image.h" 1
+# 23 "./MagickCore/quantum.h" 2
+
+
+
+
+
+
+typedef enum
+{
+  UndefinedEndian,
+  LSBEndian,
+  MSBEndian
+} EndianType;
+
+typedef enum
+{
+  UndefinedQuantumAlpha,
+  AssociatedQuantumAlpha,
+  DisassociatedQuantumAlpha
+} QuantumAlphaType;
+
+typedef enum
+{
+  UndefinedQuantumFormat,
+  FloatingPointQuantumFormat,
+  SignedQuantumFormat,
+  UnsignedQuantumFormat
+} QuantumFormatType;
+
+typedef enum
+{
+  UndefinedQuantum,
+  AlphaQuantum,
+  BGRAQuantum,
+  BGROQuantum,
+  BGRQuantum,
+  BlackQuantum,
+  BlueQuantum,
+  CbYCrAQuantum,
+  CbYCrQuantum,
+  CbYCrYQuantum,
+  CMYKAQuantum,
+  CMYKOQuantum,
+  CMYKQuantum,
+  CyanQuantum,
+  GrayAlphaQuantum,
+  GrayQuantum,
+  GreenQuantum,
+  IndexAlphaQuantum,
+  IndexQuantum,
+  MagentaQuantum,
+  OpacityQuantum,
+  RedQuantum,
+  RGBAQuantum,
+  RGBOQuantum,
+  RGBPadQuantum,
+  RGBQuantum,
+  YellowQuantum,
+  MultispectralQuantum
+} QuantumType;
+
+typedef struct _QuantumInfo
+  QuantumInfo;
+
+static inline Quantum ClampToQuantum(const MagickRealType quantum)
+{
+
+  return((Quantum) quantum);
+
+
+
+
+
+
+
+}
+# 113 "./MagickCore/quantum.h"
+static inline unsigned char ScaleQuantumToChar(const Quantum quantum)
+{
+
+
+
+  if ((
+# 118 "./MagickCore/quantum.h" 3 4
+      __builtin_isnan (
+# 118 "./MagickCore/quantum.h"
+      quantum
+# 118 "./MagickCore/quantum.h" 3 4
+      ) 
+# 118 "./MagickCore/quantum.h"
+                     != 0) || (quantum <= 0.0f))
+    return(0);
+  if ((quantum/257.0f) >= 255.0f)
+    return(255);
+  return((unsigned char) (quantum/257.0f+0.5f));
+
+}
+# 154 "./MagickCore/quantum.h"
+extern __attribute__ ((visibility ("default"))) EndianType
+  GetQuantumEndian(const QuantumInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  SetQuantumDepth(const Image *,QuantumInfo *,const size_t),
+  SetQuantumEndian(const Image *,QuantumInfo *,const EndianType),
+  SetQuantumFormat(const Image *,QuantumInfo *,const QuantumFormatType),
+  SetQuantumPad(const Image *,QuantumInfo *,const size_t);
+
+extern __attribute__ ((visibility ("default"))) QuantumFormatType
+  GetQuantumFormat(const QuantumInfo *);
+
+extern __attribute__ ((visibility ("default"))) QuantumInfo
+  *AcquireQuantumInfo(const ImageInfo *,Image *),
+  *DestroyQuantumInfo(QuantumInfo *);
+
+extern __attribute__ ((visibility ("default"))) QuantumType
+  GetQuantumType(Image *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) size_t
+  ExportQuantumPixels(const Image *,CacheView *,QuantumInfo *,const QuantumType,
+    unsigned char *__restrict__,ExceptionInfo *),
+  GetQuantumExtent(const Image *,const QuantumInfo *,const QuantumType),
+  ImportQuantumPixels(const Image *,CacheView *,QuantumInfo *,const QuantumType,
+    const unsigned char *__restrict__,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) unsigned char
+  *GetQuantumPixels(const QuantumInfo *);
+
+extern __attribute__ ((visibility ("default"))) void
+  GetQuantumInfo(const ImageInfo *,QuantumInfo *),
+  SetQuantumAlphaType(QuantumInfo *,const QuantumAlphaType),
+  SetQuantumImageType(Image *,const QuantumType),
+  SetQuantumMinIsWhite(QuantumInfo *,const MagickBooleanType),
+  SetQuantumPack(QuantumInfo *,const MagickBooleanType),
+  SetQuantumQuantum(QuantumInfo *,const size_t),
+  SetQuantumScale(QuantumInfo *,const double);
+# 125 "./MagickCore/image.h" 2
+# 1 "./MagickCore/resample.h" 1
+# 32 "./MagickCore/resample.h"
+typedef enum
+{
+  UndefinedFilter,
+  PointFilter,
+  BoxFilter,
+  TriangleFilter,
+  HermiteFilter,
+  HannFilter,
+  HammingFilter,
+  BlackmanFilter,
+  GaussianFilter,
+  QuadraticFilter,
+  CubicFilter,
+  CatromFilter,
+  MitchellFilter,
+  JincFilter,
+  SincFilter,
+  SincFastFilter,
+  KaiserFilter,
+  WelchFilter,
+  ParzenFilter,
+  BohmanFilter,
+  BartlettFilter,
+  LagrangeFilter,
+  LanczosFilter,
+  LanczosSharpFilter,
+  Lanczos2Filter,
+  Lanczos2SharpFilter,
+  RobidouxFilter,
+  RobidouxSharpFilter,
+  CosineFilter,
+  SplineFilter,
+  LanczosRadiusFilter,
+  CubicSplineFilter,
+  SentinelFilter
+} FilterType;
+# 80 "./MagickCore/resample.h"
+typedef struct _ResampleFilter
+  ResampleFilter;
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  ResamplePixelColor(ResampleFilter *,const double,const double,
+    PixelInfo *,ExceptionInfo *),
+  SetResampleFilterInterpolateMethod(ResampleFilter *,
+    const PixelInterpolateMethod),
+  SetResampleFilterVirtualPixelMethod(ResampleFilter *,
+    const VirtualPixelMethod);
+
+extern __attribute__ ((visibility ("default"))) ResampleFilter
+  *AcquireResampleFilter(const Image *,ExceptionInfo *),
+  *DestroyResampleFilter(ResampleFilter *);
+
+extern __attribute__ ((visibility ("default"))) void
+  ScaleResampleFilter(ResampleFilter *,const double,const double,const double,
+    const double),
+  SetResampleFilter(ResampleFilter *,const FilterType);
+# 126 "./MagickCore/image.h" 2
+# 1 "./MagickCore/resize.h" 1
+# 25 "./MagickCore/resize.h"
+typedef struct _ResizeFilter
+  ResizeFilter;
+
+extern __attribute__ ((visibility ("default"))) Image
+  *AdaptiveResizeImage(const Image *,const size_t,const size_t,ExceptionInfo *),
+  *InterpolativeResizeImage(const Image *,const size_t,const size_t,
+    const PixelInterpolateMethod,ExceptionInfo *),
+  *LiquidRescaleImage(const Image *,const size_t,const size_t,const double,
+    const double,ExceptionInfo *),
+  *MagnifyImage(const Image *,ExceptionInfo *),
+  *MinifyImage(const Image *,ExceptionInfo *),
+  *ResampleImage(const Image *,const double,const double,const FilterType,
+    ExceptionInfo *),
+  *ResizeImage(const Image *,const size_t,const size_t,const FilterType,
+    ExceptionInfo *),
+  *SampleImage(const Image *,const size_t,const size_t,ExceptionInfo *),
+  *ScaleImage(const Image *,const size_t,const size_t,ExceptionInfo *),
+  *ThumbnailImage(const Image *,const size_t,const size_t,ExceptionInfo *);
+# 127 "./MagickCore/image.h" 2
+
+# 1 "./MagickCore/stream.h" 1
+# 27 "./MagickCore/stream.h"
+typedef struct _StreamInfo
+  StreamInfo;
+
+typedef size_t
+  (*StreamHandler)(const Image *,const void *,const size_t);
+
+extern __attribute__ ((visibility ("default"))) Image
+  *ReadStream(const ImageInfo *,StreamHandler,ExceptionInfo *),
+  *StreamImage(const ImageInfo *,StreamInfo *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  OpenStream(const ImageInfo *,StreamInfo *,const char *,ExceptionInfo *),
+  WriteStream(const ImageInfo *,Image *,StreamHandler,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) StreamInfo
+  *AcquireStreamInfo(const ImageInfo *,ExceptionInfo *),
+  *DestroyStreamInfo(StreamInfo *);
+
+extern __attribute__ ((visibility ("default"))) void
+  SetStreamInfoMap(StreamInfo *,const char *),
+  SetStreamInfoStorageType(StreamInfo *,const StorageType);
+# 129 "./MagickCore/image.h" 2
+# 1 "./MagickCore/timer.h" 1
+# 25 "./MagickCore/timer.h"
+typedef enum
+{
+  UndefinedTimerState,
+  StoppedTimerState,
+  RunningTimerState
+} TimerState;
+
+typedef struct _Timer
+{
+  double
+    start,
+    stop,
+    total;
+} Timer;
+
+typedef struct _TimerInfo
+{
+  Timer
+    user,
+    elapsed;
+
+  TimerState
+    state;
+
+  size_t
+    signature;
+} TimerInfo;
+
+extern __attribute__ ((visibility ("default"))) double
+  GetElapsedTime(TimerInfo *),
+  GetUserTime(TimerInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  ContinueTimer(TimerInfo *);
+
+extern __attribute__ ((visibility ("default"))) ssize_t
+  FormatMagickTime(const time_t,const size_t,char *);
+
+extern __attribute__ ((visibility ("default"))) TimerInfo
+  *AcquireTimerInfo(void),
+  *DestroyTimerInfo(TimerInfo *);
+
+extern __attribute__ ((visibility ("default"))) void
+  GetTimerInfo(TimerInfo *),
+  ResetTimer(TimerInfo *),
+  StartTimer(TimerInfo *,const MagickBooleanType);
+# 130 "./MagickCore/image.h" 2
+
+struct _Image
+{
+  ClassType
+    storage_class;
+
+  ColorspaceType
+    colorspace;
+
+  CompressionType
+    compression;
+
+  size_t
+    quality;
+
+  OrientationType
+    orientation;
+
+  MagickBooleanType
+    taint;
+
+  size_t
+    columns,
+    rows,
+    depth,
+    colors;
+
+
+  PixelInfo
+    *colormap,
+    alpha_color,
+    background_color,
+    border_color,
+    transparent_color;
+
+  double
+    gamma;
+
+  ChromaticityInfo
+    chromaticity;
+
+  RenderingIntent
+    rendering_intent;
+
+  void
+    *profiles;
+
+  ResolutionType
+    units;
+
+  char
+    *montage,
+    *directory,
+    *geometry;
+
+  ssize_t
+    offset;
+
+  PointInfo
+    resolution;
+
+  RectangleInfo
+    page,
+    extract_info;
+
+  double
+    fuzz;
+
+  FilterType
+    filter;
+
+  PixelIntensityMethod
+    intensity;
+
+  InterlaceType
+    interlace;
+
+  EndianType
+    endian;
+
+  GravityType
+    gravity;
+
+  CompositeOperator
+    compose;
+
+  DisposeType
+    dispose;
+
+  size_t
+    scene,
+    delay,
+    duration;
+
+  ssize_t
+    ticks_per_second;
+
+  size_t
+    iterations,
+    total_colors;
+
+  ssize_t
+    start_loop;
+
+  PixelInterpolateMethod
+    interpolate;
+
+  MagickBooleanType
+    black_point_compensation;
+
+  RectangleInfo
+    tile_offset;
+
+  ImageType
+    type;
+
+  MagickBooleanType
+    dither;
+
+  MagickSizeType
+    extent;
+
+  MagickBooleanType
+    ping;
+
+  MagickBooleanType
+    read_mask,
+    write_mask;
+
+  PixelTrait
+    alpha_trait;
+
+  size_t
+    number_channels,
+    number_meta_channels,
+    metacontent_extent;
+
+  ChannelType
+    channel_mask;
+
+  PixelChannelMap
+    *channel_map;
+
+  void
+    *cache;
+
+  ErrorInfo
+    error;
+
+  TimerInfo
+    timer;
+
+  MagickProgressMonitor
+    progress_monitor;
+
+  void
+    *client_data;
+
+  Ascii85Info
+    *ascii85;
+
+  ProfileInfo
+    *generic_profile;
+
+  void
+    *properties,
+    *artifacts;
+
+  char
+    filename[4096],
+    magick_filename[4096],
+    magick[4096];
+
+  size_t
+    magick_columns,
+    magick_rows;
+
+  BlobInfo
+    *blob;
+
+  time_t
+    timestamp;
+
+  MagickBooleanType
+    debug;
+
+  ssize_t
+    reference_count;
+
+  SemaphoreInfo
+    *semaphore;
+
+  struct _ImageInfo
+    *image_info;
+
+
+
+
+  struct _Image
+    *list,
+    *previous,
+    *next;
+
+  size_t
+    signature;
+
+  PixelInfo
+    matte_color;
+
+  MagickBooleanType
+    composite_mask;
+
+  PixelTrait
+    mask_trait;
+
+  ChannelType
+    channels;
+
+  time_t
+    ttl;
+};
+
+
+
+
+
+
+
+struct _ImageInfo
+{
+  CompressionType
+    compression;
+
+  OrientationType
+    orientation;
+
+  MagickBooleanType
+    temporary,
+    adjoin,
+    affirm,
+    antialias;
+
+  char
+    *size,
+    *extract,
+    *page,
+    *scenes;
+
+  size_t
+    scene,
+    number_scenes,
+    depth;
+
+  InterlaceType
+    interlace;
+
+  EndianType
+    endian;
+
+  ResolutionType
+    units;
+
+  size_t
+    quality;
+
+  char
+    *sampling_factor,
+    *server_name,
+    *font,
+    *texture,
+    *density;
+
+  double
+    pointsize,
+    fuzz;
+
+  PixelInfo
+    alpha_color,
+    background_color,
+    border_color,
+    transparent_color;
+
+
+
+  MagickBooleanType
+    dither,
+    monochrome;
+
+  ColorspaceType
+    colorspace;
+
+  CompositeOperator
+    compose;
+
+  ImageType
+    type;
+
+  MagickBooleanType
+    ping,
+    verbose;
+
+  ChannelType
+    channel;
+
+  void
+    *options;
+
+  void
+    *profile;
+
+  MagickBooleanType
+    synchronize;
+
+  MagickProgressMonitor
+    progress_monitor;
+
+  void
+    *client_data,
+    *cache;
+
+  StreamHandler
+    stream;
+
+  FILE
+    *file;
+
+  void
+    *blob;
+
+  size_t
+    length;
+
+  char
+    magick[4096],
+    unique[4096],
+    filename[4096];
+
+  MagickBooleanType
+    debug;
+
+  size_t
+    signature;
+
+  CustomStreamInfo
+    *custom_stream;
+
+  PixelInfo
+    matte_color;
+};
+
+extern __attribute__ ((visibility ("default"))) ChannelType
+  SetImageChannelMask(Image *,const ChannelType);
+
+extern __attribute__ ((visibility ("default"))) ExceptionType
+  CatchImageException(Image *);
+
+extern __attribute__ ((visibility ("default"))) FILE
+  *GetImageInfoFile(const ImageInfo *);
+
+extern __attribute__ ((visibility ("default"))) Image
+  *AcquireImage(const ImageInfo *,ExceptionInfo *),
+  *AppendImages(const Image *,const MagickBooleanType,ExceptionInfo *),
+  *CloneImage(const Image *,const size_t,const size_t,const MagickBooleanType,
+    ExceptionInfo *),
+  *DestroyImage(Image *),
+  *GetImageMask(const Image *,const PixelMask,ExceptionInfo *),
+  *NewMagickImage(const ImageInfo *,const size_t,const size_t,const PixelInfo *,
+    ExceptionInfo *),
+  *ReferenceImage(Image *),
+  *SmushImages(const Image *,const MagickBooleanType,const ssize_t,
+    ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) ImageInfo
+  *AcquireImageInfo(void),
+  *CloneImageInfo(const ImageInfo *),
+  *DestroyImageInfo(ImageInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  ClipImage(Image *,ExceptionInfo *),
+  ClipImagePath(Image *,const char *,const MagickBooleanType,ExceptionInfo *),
+  CopyImagePixels(Image *,const Image *,const RectangleInfo *,
+    const OffsetInfo *,ExceptionInfo *),
+  IsTaintImage(const Image *),
+  IsHighDynamicRangeImage(const Image *,ExceptionInfo *),
+  IsImageObject(const Image *),
+  ListMagickInfo(FILE *,ExceptionInfo *),
+  ModifyImage(Image **,ExceptionInfo *),
+  ResetImagePage(Image *,const char *),
+  ResetImagePixels(Image *,ExceptionInfo *),
+  SetImageAlpha(Image *,const Quantum,ExceptionInfo *),
+  SetImageBackgroundColor(Image *,ExceptionInfo *),
+  SetImageColor(Image *,const PixelInfo *,ExceptionInfo *),
+  SetImageExtent(Image *,const size_t,const size_t,ExceptionInfo *),
+  SetImageInfo(ImageInfo *,const unsigned int,ExceptionInfo *),
+  SetImageMask(Image *,const PixelMask type,const Image *,ExceptionInfo *),
+  SetImageRegionMask(Image *,const PixelMask type,const RectangleInfo *,
+    ExceptionInfo *),
+  SetImageStorageClass(Image *,const ClassType,ExceptionInfo *),
+  StripImage(Image *,ExceptionInfo *),
+  SyncImage(Image *,ExceptionInfo *),
+  SyncImageSettings(const ImageInfo *,Image *,ExceptionInfo *),
+  SyncImagesSettings(ImageInfo *,Image *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) size_t
+  InterpretImageFilename(const ImageInfo *,Image *,const char *,int,char *,
+    ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) ssize_t
+  GetImageReferenceCount(Image *);
+
+extern __attribute__ ((visibility ("default"))) VirtualPixelMethod
+  GetImageVirtualPixelMethod(const Image *),
+  SetImageVirtualPixelMethod(Image *,const VirtualPixelMethod,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) void
+  AcquireNextImage(const ImageInfo *,Image *,ExceptionInfo *),
+  DestroyImagePixels(Image *),
+  DisassociateImageStream(Image *),
+  GetImageInfo(ImageInfo *),
+  SetImageInfoBlob(ImageInfo *,const void *,const size_t),
+  SetImageInfoFile(ImageInfo *,FILE *),
+  SetImageInfoCustomStream(ImageInfo *,CustomStreamInfo *);
+# 49 "./MagickCore/blob.h" 2
+
+
+extern __attribute__ ((visibility ("default"))) CustomStreamInfo
+  *AcquireCustomStreamInfo(ExceptionInfo *),
+  *DestroyCustomStreamInfo(CustomStreamInfo *);
+
+extern __attribute__ ((visibility ("default"))) FILE
+  *GetBlobFileHandle(const Image *) __attribute__((__pure__));
+
+extern __attribute__ ((visibility ("default"))) Image
+  *BlobToImage(const ImageInfo *,const void *,const size_t,ExceptionInfo *),
+  *PingBlob(const ImageInfo *,const void *,const size_t,ExceptionInfo *),
+  *CustomStreamToImage(const ImageInfo *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  BlobToFile(char *,const void *,const size_t,ExceptionInfo *),
+  FileToImage(Image *,const char *,ExceptionInfo *),
+  GetBlobError(const Image *) __attribute__((__pure__)),
+  ImageToFile(Image *,char *,ExceptionInfo *),
+  InjectImageBlob(const ImageInfo *,Image *,Image *,const char *,
+    ExceptionInfo *),
+  IsBlobExempt(const Image *) __attribute__((__pure__)),
+  IsBlobSeekable(const Image *) __attribute__((__pure__)),
+  IsBlobTemporary(const Image *) __attribute__((__pure__));
+
+extern __attribute__ ((visibility ("default"))) MagickSizeType
+  GetBlobSize(const Image *);
+
+extern __attribute__ ((visibility ("default"))) StreamHandler
+  GetBlobStreamHandler(const Image *) __attribute__((__pure__));
+
+extern __attribute__ ((visibility ("default"))) void
+  *GetBlobStreamData(const Image *) __attribute__((__pure__)),
+  DestroyBlob(Image *),
+  DuplicateBlob(Image *,const Image *),
+  *FileToBlob(const char *,const size_t,size_t *,ExceptionInfo *),
+  *ImageToBlob(const ImageInfo *,Image *,size_t *,ExceptionInfo *),
+  ImageToCustomStream(const ImageInfo *,Image *,ExceptionInfo *),
+  *ImagesToBlob(const ImageInfo *,Image *,size_t *,ExceptionInfo *),
+  ImagesToCustomStream(const ImageInfo *,Image *,ExceptionInfo *),
+  SetBlobExempt(Image *,const MagickBooleanType),
+  SetCustomStreamData(CustomStreamInfo *,void *),
+  SetCustomStreamReader(CustomStreamInfo *,CustomStreamHandler),
+  SetCustomStreamSeeker(CustomStreamInfo *,CustomStreamSeeker),
+  SetCustomStreamTeller(CustomStreamInfo *,CustomStreamTeller),
+  SetCustomStreamWriter(CustomStreamInfo *,CustomStreamHandler);
+# 49 "MagickCore/blob.c" 2
+# 1 "./MagickCore/blob-private.h" 1
+# 23 "./MagickCore/blob-private.h"
+# 1 "./MagickCore/nt-base-private.h" 1
+# 21 "./MagickCore/nt-base-private.h"
+# 1 "./MagickCore/delegate.h" 1
+# 28 "./MagickCore/delegate.h"
+typedef struct _DelegateInfo
+{
+  char
+    *path,
+    *decode,
+    *encode,
+    *commands;
+
+  ssize_t
+    mode;
+
+  MagickBooleanType
+    thread_support,
+    spawn,
+    stealth;
+
+  SemaphoreInfo
+    *semaphore;
+
+  size_t
+    signature;
+} DelegateInfo;
+
+extern __attribute__ ((visibility ("default"))) char
+  *GetDelegateCommand(const ImageInfo *,Image *,const char *,const char *,
+    ExceptionInfo *),
+  **GetDelegateList(const char *,size_t *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) const char
+  *GetDelegateCommands(const DelegateInfo *);
+
+extern __attribute__ ((visibility ("default"))) const DelegateInfo
+  *GetDelegateInfo(const char *,const char *,ExceptionInfo *exception),
+  **GetDelegateInfoList(const char *,size_t *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) int
+  ExternalDelegateCommand(const MagickBooleanType,const MagickBooleanType,
+    const char *,char *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) ssize_t
+  GetDelegateMode(const DelegateInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  GetDelegateThreadSupport(const DelegateInfo *),
+  InvokeDelegate(ImageInfo *,Image *,const char *,const char *,ExceptionInfo *),
+  ListDelegateInfo(FILE *,ExceptionInfo *);
+# 22 "./MagickCore/nt-base-private.h" 2
+# 1 "./MagickCore/delegate-private.h" 1
+# 28 "./MagickCore/delegate-private.h"
+typedef struct gsapi_revision_s
+{
+  const char *product;
+  const char *copyright;
+  long revision;
+  long revisiondate;
+} gsapi_revision_t;
+# 43 "./MagickCore/delegate-private.h"
+typedef struct gs_main_instance_s
+  gs_main_instance;
+# 55 "./MagickCore/delegate-private.h"
+typedef struct _GhostInfo
+{
+  void
+    ( *delete_instance)(gs_main_instance *);
+
+  int
+    ( *exit)(gs_main_instance *);
+
+  int
+    ( *init_with_args)(gs_main_instance *,int,char **);
+
+  int
+    ( *new_instance)(gs_main_instance **,void *);
+
+  int
+    ( *run_string)(gs_main_instance *,const char *,int,int *);
+
+  int
+    (* set_arg_encoding)(gs_main_instance*, int);
+
+  int
+    ( *set_stdio)(gs_main_instance *,int( *)(void *,
+      char *,int),int( *)(void *,const char *,int),
+      int( *)(void *,const char *,int));
+
+  int
+    ( *revision)(gsapi_revision_t *, int);
+} GhostInfo;
+
+static inline char *SanitizeDelegateString(const char *source)
+{
+  char
+    *sanitize_source;
+
+  const char
+    *q;
+
+  char
+    *p;
+
+  static char
+
+
+
+
+
+    allowlist[] =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 "
+      "$-_.+!;*(),{}|\\^~[]`\"><#%/?:@&=";
+
+
+  sanitize_source=AcquireString(source);
+  p=sanitize_source;
+  q=sanitize_source+strlen(sanitize_source);
+  for (p+=strspn(p,allowlist); p != q; p+=strspn(p,allowlist))
+    *p='_';
+  return(sanitize_source);
+}
+# 128 "./MagickCore/delegate-private.h"
+static inline void FormatSanitizedDelegateOption(char *string,
+  const size_t length,const char *magick_unused_windows_format __attribute__((unused)),
+  const char *non_windows_format,const char *option)
+{
+  char
+    *sanitized_option;
+
+  ;
+  sanitized_option=SanitizeDelegateString(option);
+  (void) FormatLocaleString(string,length,non_windows_format,sanitized_option);
+  sanitized_option=DestroyString(sanitized_option);
+}
+
+
+extern __attribute__ ((visibility ("hidden"))) MagickBooleanType
+  DelegateComponentGenesis(void);
+
+extern __attribute__ ((visibility ("hidden"))) void
+  DelegateComponentTerminus(void);
+# 23 "./MagickCore/nt-base-private.h" 2
+
+# 1 "./MagickCore/memory_.h" 1
+# 27 "./MagickCore/memory_.h"
+typedef struct _MemoryInfo
+  MemoryInfo;
+
+typedef void
+  *(*AcquireMemoryHandler)(size_t) __attribute__((__alloc_size__(1))),
+  (*DestroyMemoryHandler)(void *),
+  *(*ResizeMemoryHandler)(void *,size_t) __attribute__((__alloc_size__(2))),
+  *(*AcquireAlignedMemoryHandler)(const size_t,const size_t),
+  (*RelinquishAlignedMemoryHandler)(void *);
+
+extern __attribute__ ((visibility ("default"))) MemoryInfo
+  *AcquireVirtualMemory(const size_t,const size_t) __attribute__((__alloc_size__(1,2))),
+  *RelinquishVirtualMemory(MemoryInfo *);
+
+extern __attribute__ ((visibility ("default"))) size_t
+  GetMaxMemoryRequest(void);
+
+extern __attribute__ ((visibility ("default"))) void
+  *AcquireAlignedMemory(const size_t,const size_t)
+    __attribute__((__malloc__)) __attribute__((__alloc_size__(1,2))),
+  *AcquireMagickMemory(const size_t) __attribute__((__malloc__))
+    __attribute__((__alloc_size__(1))),
+  *AcquireCriticalMemory(const size_t),
+  *AcquireQuantumMemory(const size_t,const size_t)
+    __attribute__((__malloc__)) __attribute__((__alloc_size__(1,2))),
+  *CopyMagickMemory(void *__restrict__,const void *__restrict__,
+    const size_t) __attribute__((__nonnull__)),
+  DestroyMagickMemory(void),
+  GetMagickMemoryMethods(AcquireMemoryHandler *,ResizeMemoryHandler *,
+    DestroyMemoryHandler *),
+  *GetVirtualMemoryBlob(const MemoryInfo *),
+  *RelinquishAlignedMemory(void *),
+  *RelinquishMagickMemory(void *),
+  *ResetMagickMemory(void *,int,const size_t),
+  *ResizeMagickMemory(void *,const size_t)
+    __attribute__((__malloc__)) __attribute__((__alloc_size__(2))),
+  *ResizeQuantumMemory(void *,const size_t,const size_t)
+    __attribute__((__malloc__)) __attribute__((__alloc_size__(2,3))),
+  SetMagickAlignedMemoryMethods(AcquireAlignedMemoryHandler,
+    RelinquishAlignedMemoryHandler),
+  SetMagickMemoryMethods(AcquireMemoryHandler,ResizeMemoryHandler,
+    DestroyMemoryHandler);
+
+static inline MagickBooleanType HeapOverflowSanityCheck(
+  const size_t count,const size_t quantum)
+{
+  if ((count == 0) || (quantum == 0))
+    return(MagickTrue);
+  if (quantum != ((count*quantum)/count))
+    {
+      
+# 77 "./MagickCore/memory_.h" 3 4
+     (*__errno_location ())
+# 77 "./MagickCore/memory_.h"
+          =
+# 77 "./MagickCore/memory_.h" 3 4
+           12
+# 77 "./MagickCore/memory_.h"
+                 ;
+      return(MagickTrue);
+    }
+  return(MagickFalse);
+}
+
+static inline MagickBooleanType HeapOverflowSanityCheckGetSize(
+  const size_t count,const size_t quantum,size_t *const extent)
+{
+  size_t
+    length;
+
+  if ((count == 0) || (quantum == 0))
+    return(MagickTrue);
+  length=count*quantum;
+  if (quantum != (length/count))
+    {
+      
+# 94 "./MagickCore/memory_.h" 3 4
+     (*__errno_location ())
+# 94 "./MagickCore/memory_.h"
+          =
+# 94 "./MagickCore/memory_.h" 3 4
+           12
+# 94 "./MagickCore/memory_.h"
+                 ;
+      return(MagickTrue);
+    }
+  if (extent != 
+# 97 "./MagickCore/memory_.h" 3 4
+               ((void *)0)
+# 97 "./MagickCore/memory_.h"
+                   )
+    *extent=length;
+  return(MagickFalse);
+}
+# 25 "./MagickCore/nt-base-private.h" 2
+# 1 "./MagickCore/splay-tree.h" 1
+# 25 "./MagickCore/splay-tree.h"
+typedef struct _SplayTreeInfo
+  SplayTreeInfo;
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  AddValueToSplayTree(SplayTreeInfo *,const void *,const void *),
+  DeleteNodeByValueFromSplayTree(SplayTreeInfo *,const void *),
+  DeleteNodeFromSplayTree(SplayTreeInfo *,const void *);
+
+extern __attribute__ ((visibility ("default"))) const void
+  *GetNextKeyInSplayTree(SplayTreeInfo *),
+  *GetNextValueInSplayTree(SplayTreeInfo *),
+  *GetRootValueFromSplayTree(SplayTreeInfo *),
+  *GetValueFromSplayTree(SplayTreeInfo *,const void *);
+
+extern __attribute__ ((visibility ("default"))) int
+  CompareSplayTreeString(const void *,const void *),
+  CompareSplayTreeStringInfo(const void *,const void *);
+
+extern __attribute__ ((visibility ("default"))) SplayTreeInfo
+  *CloneSplayTree(SplayTreeInfo *,void *(*)(void *),void *(*)(void *)),
+  *DestroySplayTree(SplayTreeInfo *),
+  *NewSplayTree(int (*)(const void *,const void *),void *(*)(void *),
+    void *(*)(void *));
+
+extern __attribute__ ((visibility ("default"))) size_t
+  GetNumberOfNodesInSplayTree(const SplayTreeInfo *);
+
+extern __attribute__ ((visibility ("default"))) void
+  *RemoveNodeByValueFromSplayTree(SplayTreeInfo *,const void *),
+  *RemoveNodeFromSplayTree(SplayTreeInfo *,const void *),
+  ResetSplayTree(SplayTreeInfo *),
+  ResetSplayTreeIterator(SplayTreeInfo *);
+# 26 "./MagickCore/nt-base-private.h" 2
+# 24 "./MagickCore/blob-private.h" 2
+# 35 "./MagickCore/blob-private.h"
+typedef enum
+{
+  UndefinedBlobMode,
+  ReadBlobMode,
+  ReadBinaryBlobMode,
+  WriteBlobMode,
+  WriteBinaryBlobMode,
+  AppendBlobMode,
+  AppendBinaryBlobMode
+} BlobMode;
+
+typedef enum
+{
+  UndefinedStream,
+  FileStream,
+  StandardStream,
+  PipeStream,
+  ZipStream,
+  BZipStream,
+  FifoStream,
+  BlobStream,
+  CustomStream
+} StreamType;
+
+extern __attribute__ ((visibility ("default"))) BlobInfo
+  *CloneBlobInfo(const BlobInfo *),
+  *ReferenceBlob(BlobInfo *);
+
+extern __attribute__ ((visibility ("default"))) char
+  *ReadBlobString(Image *,char *);
+
+extern __attribute__ ((visibility ("default"))) const struct stat
+  *GetBlobProperties(const Image *);
+
+extern __attribute__ ((visibility ("default"))) const void
+  *ReadBlobStream(Image *,const size_t,void *__restrict__ ,ssize_t *)
+    __attribute__((__hot__));
+
+extern __attribute__ ((visibility ("default"))) double
+  ReadBlobDouble(Image *);
+
+extern __attribute__ ((visibility ("default"))) float
+  ReadBlobFloat(Image *);
+
+extern __attribute__ ((visibility ("default"))) int
+  EOFBlob(const Image *),
+  ErrorBlob(const Image *),
+  ReadBlobByte(Image *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  CloseBlob(Image *),
+  DiscardBlobBytes(Image *,const MagickSizeType),
+  OpenBlob(const ImageInfo *,Image *,const BlobMode,ExceptionInfo *),
+  SetBlobExtent(Image *,const MagickSizeType),
+  UnmapBlob(void *,const size_t);
+
+extern __attribute__ ((visibility ("default"))) MagickOffsetType
+  SeekBlob(Image *,const MagickOffsetType,const int),
+  TellBlob(const Image *);
+
+extern __attribute__ ((visibility ("default"))) MagickSizeType
+  ReadBlobLongLong(Image *),
+  ReadBlobMSBLongLong(Image *);
+
+extern __attribute__ ((visibility ("default"))) signed int
+  ReadBlobLSBSignedLong(Image *),
+  ReadBlobMSBSignedLong(Image *),
+  ReadBlobSignedLong(Image *);
+
+extern __attribute__ ((visibility ("default"))) signed short
+  ReadBlobLSBSignedShort(Image *),
+  ReadBlobMSBSignedShort(Image *),
+  ReadBlobSignedShort(Image *);
+
+extern __attribute__ ((visibility ("default"))) ssize_t
+  ReadBlob(Image *,const size_t,void *),
+  WriteBlob(Image *,const size_t,const void *),
+  WriteBlobByte(Image *,const unsigned char),
+  WriteBlobFloat(Image *,const float),
+  WriteBlobLong(Image *,const unsigned int),
+  WriteBlobLongLong(Image *,const MagickSizeType),
+  WriteBlobShort(Image *,const unsigned short),
+  WriteBlobSignedLong(Image *,const signed int),
+  WriteBlobLSBLong(Image *,const unsigned int),
+  WriteBlobLSBShort(Image *,const unsigned short),
+  WriteBlobLSBSignedLong(Image *,const signed int),
+  WriteBlobLSBSignedShort(Image *,const signed short),
+  WriteBlobMSBLong(Image *,const unsigned int),
+  WriteBlobMSBShort(Image *,const unsigned short),
+  WriteBlobMSBSignedShort(Image *,const signed short),
+  WriteBlobString(Image *,const char *);
+
+extern __attribute__ ((visibility ("default"))) unsigned int
+  ReadBlobLong(Image *),
+  ReadBlobLSBLong(Image *),
+  ReadBlobMSBLong(Image *);
+
+extern __attribute__ ((visibility ("default"))) unsigned short
+  ReadBlobShort(Image *),
+  ReadBlobLSBShort(Image *),
+  ReadBlobMSBShort(Image *);
+
+extern __attribute__ ((visibility ("default"))) void
+  AttachBlob(BlobInfo *,const void *,const size_t),
+  AttachCustomStream(BlobInfo *,CustomStreamInfo *),
+  *DetachBlob(BlobInfo *),
+  DisassociateBlob(Image *),
+  GetBlobInfo(BlobInfo *),
+  *MapBlob(int,const MapMode,const MagickOffsetType,const size_t),
+  MSBOrderLong(unsigned char *,const size_t),
+  MSBOrderShort(unsigned char *,const size_t);
+# 50 "MagickCore/blob.c" 2
+# 1 "./MagickCore/cache.h" 1
+# 27 "./MagickCore/cache.h"
+typedef enum
+{
+  UndefinedCache,
+  DiskCache,
+  DistributedCache,
+  MapCache,
+  MemoryCache,
+  PingCache
+} CacheType;
+
+extern __attribute__ ((visibility ("default"))) CacheType
+  GetImagePixelCacheType(const Image *);
+
+extern __attribute__ ((visibility ("default"))) const char
+  *GetPixelCacheFilename(const Image *);
+
+extern __attribute__ ((visibility ("default"))) const Quantum
+  *GetVirtualPixels(const Image *,const ssize_t,const ssize_t,const size_t,
+    const size_t,ExceptionInfo *) __attribute__((__hot__)),
+  *GetVirtualPixelQueue(const Image *) __attribute__((__hot__));
+
+extern __attribute__ ((visibility ("default"))) const void
+  *GetVirtualMetacontent(const Image *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  GetOneAuthenticPixel(Image *,const ssize_t,const ssize_t,Quantum *,
+    ExceptionInfo *),
+  GetOneVirtualPixel(const Image *,const ssize_t,const ssize_t,Quantum *,
+    ExceptionInfo *),
+  GetOneVirtualPixelInfo(const Image *,const VirtualPixelMethod,
+    const ssize_t,const ssize_t,PixelInfo *,ExceptionInfo *),
+  PersistPixelCache(Image *,const char *,const MagickBooleanType,
+    MagickOffsetType *,ExceptionInfo *),
+  ReshapePixelCache(Image *,const size_t,const size_t,ExceptionInfo *),
+  SyncAuthenticPixels(Image *,ExceptionInfo *) __attribute__((__hot__));
+
+extern __attribute__ ((visibility ("default"))) MagickSizeType
+  GetImageExtent(const Image *);
+
+extern __attribute__ ((visibility ("default"))) Quantum
+  *GetAuthenticPixels(Image *,const ssize_t,const ssize_t,const size_t,
+    const size_t,ExceptionInfo *) __attribute__((__hot__)),
+  *GetAuthenticPixelQueue(const Image *) __attribute__((__hot__)),
+  *QueueAuthenticPixels(Image *,const ssize_t,const ssize_t,const size_t,
+    const size_t,ExceptionInfo *) __attribute__((__hot__));
+
+extern __attribute__ ((visibility ("default"))) void
+  *AcquirePixelCachePixels(const Image *,size_t *,ExceptionInfo *),
+  *GetAuthenticMetacontent(const Image *),
+  *GetPixelCachePixels(Image *,MagickSizeType *,ExceptionInfo *);
+# 51 "MagickCore/blob.c" 2
+# 1 "./MagickCore/client.h" 1
+# 25 "./MagickCore/client.h"
+extern __attribute__ ((visibility ("default"))) const char
+  *GetClientPath(void) __attribute__((__const__)),
+  *GetClientName(void) __attribute__((__const__)),
+  *SetClientName(const char *),
+  *SetClientPath(const char *);
+# 52 "MagickCore/blob.c" 2
+# 1 "./MagickCore/constitute.h" 1
+# 27 "./MagickCore/constitute.h"
+extern __attribute__ ((visibility ("default"))) Image
+  *ConstituteImage(const size_t,const size_t,const char *,const StorageType,
+    const void *,ExceptionInfo *),
+  *PingImage(const ImageInfo *,ExceptionInfo *),
+  *PingImages(ImageInfo *,const char *,ExceptionInfo *),
+  *ReadImage(const ImageInfo *,ExceptionInfo *),
+  *ReadImages(ImageInfo *,const char *,ExceptionInfo *),
+  *ReadInlineImage(const ImageInfo *,const char *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  WriteImage(const ImageInfo *,Image *,ExceptionInfo *),
+  WriteImages(const ImageInfo *,Image *,const char *,ExceptionInfo *);
+# 53 "MagickCore/blob.c" 2
+
+
+# 1 "./MagickCore/exception-private.h" 1
+# 21 "./MagickCore/exception-private.h"
+# 1 "./MagickCore/log.h" 1
+# 33 "./MagickCore/log.h"
+typedef enum
+{
+  UndefinedEvents = 0x000000,
+  NoEvents = 0x00000,
+  AccelerateEvent = 0x00001,
+  AnnotateEvent = 0x00002,
+  BlobEvent = 0x00004,
+  CacheEvent = 0x00008,
+  CoderEvent = 0x00010,
+  ConfigureEvent = 0x00020,
+  DeprecateEvent = 0x00040,
+  DrawEvent = 0x00080,
+  ExceptionEvent = 0x00100,
+  ImageEvent = 0x00200,
+  LocaleEvent = 0x00400,
+  ModuleEvent = 0x00800,
+  PixelEvent = 0x01000,
+  PolicyEvent = 0x02000,
+  ResourceEvent = 0x04000,
+  TraceEvent = 0x08000,
+  TransformEvent = 0x10000,
+  UserEvent = 0x20000,
+  WandEvent = 0x40000,
+  X11Event = 0x80000,
+  CommandEvent = 0x100000,
+  AllEvents = 0x7fffffff
+} LogEventType;
+
+typedef struct _LogInfo
+  LogInfo;
+
+typedef void
+  (*MagickLogMethod)(const LogEventType,const char *);
+
+extern __attribute__ ((visibility ("default"))) char
+  **GetLogList(const char *,size_t *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) const char
+  *GetLogName(void) __attribute__((__pure__)),
+  *SetLogName(const char *);
+
+extern __attribute__ ((visibility ("default"))) LogEventType
+  GetLogEventMask(void) __attribute__((__pure__));
+
+extern __attribute__ ((visibility ("default"))) const LogInfo
+  **GetLogInfoList(const char *,size_t *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) LogEventType
+  SetLogEventMask(const char *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  IsEventLogging(void) __attribute__((__pure__)),
+  ListLogInfo(FILE *,ExceptionInfo *),
+  LogMagickEvent(const LogEventType,const char *,const char *,const size_t,
+    const char *,...) __attribute__((__format__ (__printf__,5,6))),
+  LogMagickEventList(const LogEventType,const char *,const char *,const size_t,
+    const char *,va_list) __attribute__((__format__ (__printf__,5,0)));
+
+extern __attribute__ ((visibility ("default"))) void
+  CloseMagickLog(void),
+  SetLogFormat(const char *),
+  SetLogMethod(MagickLogMethod);
+# 22 "./MagickCore/exception-private.h" 2
+# 1 "./MagickCore/magick.h" 1
+# 34 "./MagickCore/magick.h"
+typedef enum
+{
+  UndefinedFormatType,
+  ImplicitFormatType,
+  ExplicitFormatType
+} MagickFormatType;
+
+typedef enum
+{
+  CoderNoFlag = 0x0000,
+  CoderAdjoinFlag = 0x0001,
+  CoderBlobSupportFlag = 0x0002,
+  CoderDecoderThreadSupportFlag = 0x0004,
+  CoderEncoderThreadSupportFlag = 0x0008,
+  CoderEndianSupportFlag = 0x0010,
+  CoderRawSupportFlag = 0x0020,
+  CoderSeekableStreamFlag = 0x0040,
+  CoderStealthFlag = 0x0080,
+  CoderUseExtensionFlag = 0x0100,
+  CoderDecoderSeekableStreamFlag = 0x0200,
+  CoderEncoderSeekableStreamFlag = 0x0400
+} MagickInfoFlag;
+
+typedef Image
+  *DecodeImageHandler(const ImageInfo *,ExceptionInfo *);
+
+typedef MagickBooleanType
+  EncodeImageHandler(const ImageInfo *,Image *,ExceptionInfo *);
+
+typedef MagickBooleanType
+  IsImageFormatHandler(const unsigned char *,const size_t);
+
+typedef struct _MagickInfo
+{
+  char
+    *name,
+    *description,
+    *version,
+    *mime_type,
+    *note,
+    *module;
+
+  DecodeImageHandler
+    *decoder;
+
+  EncodeImageHandler
+    *encoder;
+
+  ImageInfo
+    *image_info;
+
+  IsImageFormatHandler
+    *magick;
+
+  MagickFormatType
+    format_type;
+
+  MagickStatusType
+    flags;
+
+  SemaphoreInfo
+    *semaphore;
+
+  size_t
+    signature;
+
+  void
+    *client_data;
+} MagickInfo;
+
+extern __attribute__ ((visibility ("default"))) char
+  **GetMagickList(const char *,size_t *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) const char
+  *GetMagickDescription(const MagickInfo *),
+  *GetMagickMimeType(const MagickInfo *),
+  *GetMagickModuleName(const MagickInfo *),
+  *GetMagickName(const MagickInfo *);
+
+extern __attribute__ ((visibility ("default"))) DecodeImageHandler
+  *GetImageDecoder(const MagickInfo *) __attribute__((__pure__));
+
+extern __attribute__ ((visibility ("default"))) EncodeImageHandler
+  *GetImageEncoder(const MagickInfo *) __attribute__((__pure__));
+
+extern __attribute__ ((visibility ("default"))) int
+  GetMagickPrecision(void),
+  SetMagickPrecision(const int);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  GetImageMagick(const unsigned char *,const size_t,char *),
+  GetMagickAdjoin(const MagickInfo *) __attribute__((__pure__)),
+  GetMagickBlobSupport(const MagickInfo *) __attribute__((__pure__)),
+  GetMagickDecoderSeekableStream(const MagickInfo *)
+    __attribute__((__pure__)),
+  GetMagickDecoderThreadSupport(const MagickInfo *)
+    __attribute__((__pure__)),
+  GetMagickEncoderSeekableStream(const MagickInfo *)
+     __attribute__((__pure__)),
+  GetMagickEncoderThreadSupport(const MagickInfo *)
+    __attribute__((__pure__)),
+  GetMagickEndianSupport(const MagickInfo *) __attribute__((__pure__)),
+  GetMagickRawSupport(const MagickInfo *) __attribute__((__pure__)),
+  GetMagickStealth(const MagickInfo *) __attribute__((__pure__)),
+  GetMagickUseExtension(const MagickInfo *) __attribute__((__pure__)),
+  IsMagickCoreInstantiated(void) __attribute__((__pure__)),
+  RegisterMagickInfo(MagickInfo *),
+  UnregisterMagickInfo(const char *);
+
+extern const __attribute__ ((visibility ("default"))) MagickInfo
+  *GetMagickInfo(const char *,ExceptionInfo *),
+  **GetMagickInfoList(const char *,size_t *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickInfo
+  *AcquireMagickInfo(const char *, const char *, const char *);
+
+extern __attribute__ ((visibility ("default"))) void
+  MagickCoreGenesis(const char *,const MagickBooleanType),
+  MagickCoreTerminus(void);
+# 23 "./MagickCore/exception-private.h" 2
+# 91 "./MagickCore/exception-private.h"
+extern __attribute__ ((visibility ("hidden"))) void
+  ExceptionComponentTerminus(void),
+  InitializeExceptionInfo(ExceptionInfo *);
+
+extern __attribute__ ((visibility ("hidden"))) MagickBooleanType
+  ExceptionComponentGenesis(void);
+# 56 "MagickCore/blob.c" 2
+
+# 1 "./MagickCore/image-private.h" 1
+# 28 "./MagickCore/image-private.h"
+# 1 "./MagickCore/pixel-accessor.h" 1
+# 25 "./MagickCore/pixel-accessor.h"
+# 1 "./MagickCore/gem.h" 1
+# 21 "./MagickCore/gem.h"
+# 1 "./MagickCore/fx.h" 1
+# 21 "./MagickCore/fx.h"
+# 1 "./MagickCore/draw.h" 1
+# 24 "./MagickCore/draw.h"
+# 1 "./MagickCore/type.h" 1
+# 25 "./MagickCore/type.h"
+typedef enum
+{
+  UndefinedStretch,
+  NormalStretch,
+  UltraCondensedStretch,
+  ExtraCondensedStretch,
+  CondensedStretch,
+  SemiCondensedStretch,
+  SemiExpandedStretch,
+  ExpandedStretch,
+  ExtraExpandedStretch,
+  UltraExpandedStretch,
+  AnyStretch
+} StretchType;
+
+typedef enum
+{
+  UndefinedStyle,
+  NormalStyle,
+  ItalicStyle,
+  ObliqueStyle,
+  AnyStyle,
+  BoldStyle
+} StyleType;
+
+typedef struct _TypeInfo
+{
+  size_t
+    face;
+
+  char
+    *path,
+    *name,
+    *description,
+    *family;
+
+  StyleType
+    style;
+
+  StretchType
+    stretch;
+
+  size_t
+    weight;
+
+  char
+    *encoding,
+    *foundry,
+    *format,
+    *metrics,
+    *glyphs;
+
+  MagickBooleanType
+    stealth;
+
+  size_t
+    signature;
+} TypeInfo;
+
+extern __attribute__ ((visibility ("default"))) char
+  **GetTypeList(const char *,size_t *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  ListTypeInfo(FILE *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) const TypeInfo
+  *GetTypeInfo(const char *,ExceptionInfo *),
+  *GetTypeInfoByFamily(const char *,const StyleType,const StretchType,
+    const size_t,ExceptionInfo *),
+  **GetTypeInfoList(const char *,size_t *,ExceptionInfo *);
+# 25 "./MagickCore/draw.h" 2
+
+
+
+
+
+
+typedef enum
+{
+  UndefinedAlign,
+  LeftAlign,
+  CenterAlign,
+  RightAlign
+} AlignType;
+
+typedef enum
+{
+  UndefinedPathUnits,
+  UserSpace,
+  UserSpaceOnUse,
+  ObjectBoundingBox
+} ClipPathUnits;
+
+typedef enum
+{
+  UndefinedDecoration,
+  NoDecoration,
+  UnderlineDecoration,
+  OverlineDecoration,
+  LineThroughDecoration
+} DecorationType;
+
+typedef enum
+{
+  UndefinedDirection,
+  RightToLeftDirection,
+  LeftToRightDirection,
+  TopToBottomDirection
+} DirectionType;
+
+typedef enum
+{
+  UndefinedRule,
+
+  EvenOddRule,
+  NonZeroRule
+} FillRule;
+
+typedef enum
+{
+  UndefinedGradient,
+  LinearGradient,
+  RadialGradient
+} GradientType;
+
+typedef enum
+{
+  UndefinedCap,
+  ButtCap,
+  RoundCap,
+  SquareCap
+} LineCap;
+
+typedef enum
+{
+  UndefinedJoin,
+  MiterJoin,
+  RoundJoin,
+  BevelJoin
+} LineJoin;
+
+typedef enum
+{
+  UndefinedMethod,
+  PointMethod,
+  ReplaceMethod,
+  FloodfillMethod,
+  FillToBorderMethod,
+  ResetMethod
+} PaintMethod;
+
+typedef enum
+{
+  UndefinedPrimitive,
+  AlphaPrimitive,
+  ArcPrimitive,
+  BezierPrimitive,
+  CirclePrimitive,
+  ColorPrimitive,
+  EllipsePrimitive,
+  ImagePrimitive,
+  LinePrimitive,
+  PathPrimitive,
+  PointPrimitive,
+  PolygonPrimitive,
+  PolylinePrimitive,
+  RectanglePrimitive,
+  RoundRectanglePrimitive,
+  TextPrimitive
+} PrimitiveType;
+
+typedef enum
+{
+  UndefinedReference,
+  GradientReference
+} ReferenceType;
+
+typedef enum
+{
+  UndefinedSpread,
+  PadSpread,
+  ReflectSpread,
+  RepeatSpread
+} SpreadMethod;
+
+typedef enum
+{
+  UndefinedWordBreakType,
+  NormalWordBreakType,
+  BreakWordBreakType
+} WordBreakType;
+
+typedef struct _StopInfo
+{
+  PixelInfo
+    color;
+
+  double
+    offset;
+} StopInfo;
+
+typedef struct _GradientInfo
+{
+  GradientType
+    type;
+
+  RectangleInfo
+    bounding_box;
+
+  SegmentInfo
+    gradient_vector;
+
+  StopInfo
+    *stops;
+
+  size_t
+    number_stops;
+
+  SpreadMethod
+    spread;
+
+  MagickBooleanType
+    debug;
+
+  PointInfo
+    center,
+    radii;
+
+  double
+    radius,
+    angle;
+
+  size_t
+    signature;
+} GradientInfo;
+
+typedef struct _ElementReference
+{
+  char
+    *id;
+
+  ReferenceType
+    type;
+
+  GradientInfo
+    gradient;
+
+  struct _ElementReference
+    *previous,
+    *next;
+
+  size_t
+    signature;
+} ElementReference;
+
+typedef struct _DrawInfo
+{
+  char
+    *primitive,
+    *geometry;
+
+  RectangleInfo
+    viewbox;
+
+  AffineMatrix
+    affine;
+
+  PixelInfo
+    fill,
+    stroke,
+    undercolor,
+    border_color;
+
+  Image
+    *fill_pattern,
+    *stroke_pattern;
+
+  double
+    stroke_width;
+
+  GradientInfo
+    gradient;
+
+  MagickBooleanType
+    stroke_antialias,
+    text_antialias;
+
+  FillRule
+    fill_rule;
+
+  LineCap
+    linecap;
+
+  LineJoin
+    linejoin;
+
+  size_t
+    miterlimit;
+
+  double
+    dash_offset;
+
+  DecorationType
+    decorate;
+
+  CompositeOperator
+    compose;
+
+  char
+    *text,
+    *font,
+    *metrics,
+    *family;
+
+  size_t
+    face;
+
+  StyleType
+    style;
+
+  StretchType
+    stretch;
+
+  size_t
+    weight;
+
+  char
+    *encoding;
+
+  double
+    pointsize;
+
+  char
+    *density;
+
+  AlignType
+    align;
+
+  GravityType
+    gravity;
+
+  char
+    *server_name;
+
+  double
+    *dash_pattern;
+
+  char
+    *clip_mask;
+
+  SegmentInfo
+    bounds;
+
+  ClipPathUnits
+    clip_units;
+
+  Quantum
+    alpha;
+
+  MagickBooleanType
+    render;
+
+  ElementReference
+    element_reference;
+
+  double
+    kerning,
+    interword_spacing,
+    interline_spacing;
+
+  DirectionType
+    direction;
+
+  MagickBooleanType
+    debug;
+
+  size_t
+    signature;
+
+  double
+    fill_alpha,
+    stroke_alpha;
+
+  MagickBooleanType
+    clip_path;
+
+  Image
+    *clipping_mask;
+
+  ComplianceType
+    compliance;
+
+  Image
+    *composite_mask;
+
+  char
+    *id;
+
+  WordBreakType
+    word_break;
+
+  ImageInfo
+    *image_info;
+} DrawInfo;
+
+typedef struct _PrimitiveInfo
+{
+  PointInfo
+    point;
+
+  size_t
+    coordinates;
+
+  PrimitiveType
+    primitive;
+
+  PaintMethod
+    method;
+
+  char
+    *text;
+
+  MagickBooleanType
+    closed_subpath;
+} PrimitiveInfo;
+
+typedef struct _TypeMetric
+{
+  PointInfo
+    pixels_per_em;
+
+  double
+    ascent,
+    descent,
+    width,
+    height,
+    max_advance,
+    underline_position,
+    underline_thickness;
+
+  SegmentInfo
+    bounds;
+
+  PointInfo
+    origin;
+} TypeMetric;
+
+extern __attribute__ ((visibility ("default"))) DrawInfo
+  *AcquireDrawInfo(void),
+  *CloneDrawInfo(const ImageInfo *,const DrawInfo *),
+  *DestroyDrawInfo(DrawInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  DrawAffineImage(Image *,const Image *,const AffineMatrix *,ExceptionInfo *),
+  DrawClipPath(Image *,const DrawInfo *,const char *,ExceptionInfo *),
+  DrawGradientImage(Image *,const DrawInfo *,ExceptionInfo *),
+  DrawImage(Image *,const DrawInfo *,ExceptionInfo *),
+  DrawPatternPath(Image *,const DrawInfo *,const char *,Image **,
+    ExceptionInfo *),
+  DrawPrimitive(Image *,const DrawInfo *,const PrimitiveInfo *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) void
+  GetAffineMatrix(AffineMatrix *),
+  GetDrawInfo(const ImageInfo *,DrawInfo *);
+# 22 "./MagickCore/fx.h" 2
+
+
+
+
+
+extern __attribute__ ((visibility ("default"))) Image
+  *FxImage(const Image *,const char *,ExceptionInfo *);
+# 22 "./MagickCore/gem.h" 2
+# 1 "./MagickCore/random_.h" 1
+# 30 "./MagickCore/random_.h"
+typedef struct _RandomInfo
+  RandomInfo;
+
+
+
+
+extern __attribute__ ((visibility ("default"))) double
+  GetRandomValue(RandomInfo *),
+  GetPseudoRandomValue(RandomInfo *__restrict__);
+
+extern __attribute__ ((visibility ("default"))) RandomInfo
+  *AcquireRandomInfo(void),
+  *DestroyRandomInfo(RandomInfo *);
+
+extern __attribute__ ((visibility ("default"))) StringInfo
+  *GetRandomKey(RandomInfo *,const size_t);
+
+extern __attribute__ ((visibility ("default"))) unsigned long
+  GetRandomSecretKey(const RandomInfo *);
+
+extern __attribute__ ((visibility ("default"))) void
+  SetRandomKey(RandomInfo *,const size_t,unsigned char *),
+  SetRandomSecretKey(const unsigned long),
+  SetRandomTrueRandom(const MagickBooleanType);
+# 23 "./MagickCore/gem.h" 2
+
+
+
+
+
+extern __attribute__ ((visibility ("default"))) double
+  ExpandAffine(const AffineMatrix *) __attribute__((__pure__));
+
+extern __attribute__ ((visibility ("default"))) void
+  ConvertHSLToRGB(const double,const double,const double,double *,double *,
+    double *),
+  ConvertRGBToHSL(const double,const double,const double,double *,double *,
+    double *);
+# 26 "./MagickCore/pixel-accessor.h" 2
+# 35 "./MagickCore/pixel-accessor.h"
+static inline Quantum ClampPixel(const MagickRealType pixel)
+{
+  if (pixel < 0.0)
+    return((Quantum) 0);
+  if (pixel >= (MagickRealType) ((Quantum) 65535.0))
+    return((Quantum) ((Quantum) 65535.0));
+
+
+
+  return((Quantum) pixel);
+
+}
+
+static inline Quantum GetPixela(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  return(pixel[image->channel_map[aPixelChannel].offset]);
+}
+
+static inline Quantum GetPixelAlpha(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[AlphaPixelChannel].traits == UndefinedPixelTrait)
+    return(((Quantum) ((Quantum) 65535.0)));
+  return(pixel[image->channel_map[AlphaPixelChannel].offset]);
+}
+
+static inline PixelTrait GetPixelAlphaTraits(const Image *__restrict__ image)
+{
+  return(image->channel_map[AlphaPixelChannel].traits);
+}
+
+static inline Quantum GetPixelb(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  return(pixel[image->channel_map[bPixelChannel].offset]);
+}
+
+static inline Quantum GetPixelBlack(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[BlackPixelChannel].traits == UndefinedPixelTrait)
+    return((Quantum) 0);
+  return(pixel[image->channel_map[BlackPixelChannel].offset]);
+}
+
+static inline PixelTrait GetPixelBlackTraits(const Image *__restrict__ image)
+{
+  return(image->channel_map[BlackPixelChannel].traits);
+}
+
+static inline Quantum GetPixelBlue(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  return(pixel[image->channel_map[BluePixelChannel].offset]);
+}
+
+static inline PixelTrait GetPixelBlueTraits(const Image *__restrict__ image)
+{
+  return(image->channel_map[BluePixelChannel].traits);
+}
+
+static inline Quantum GetPixelCb(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  return(pixel[image->channel_map[CbPixelChannel].offset]);
+}
+
+static inline PixelTrait GetPixelCbTraits(const Image *__restrict__ image)
+{
+  return(image->channel_map[CbPixelChannel].traits);
+}
+
+static inline Quantum GetPixelChannel(const Image *__restrict__ image,
+  const PixelChannel channel,const Quantum *__restrict__ pixel)
+{
+  if ((size_t) channel >= 64)
+    return((Quantum) 0);
+  if (image->channel_map[channel].traits == UndefinedPixelTrait)
+    return((Quantum) 0);
+  return(pixel[image->channel_map[channel].offset]);
+}
+
+static inline PixelChannel GetPixelChannelChannel(
+  const Image *__restrict__ image,const ssize_t offset)
+{
+  if ((offset < 0) || (offset >= 64))
+    return(UndefinedPixelChannel);
+  return(image->channel_map[offset].channel);
+}
+
+static inline ssize_t GetPixelChannelOffset(const Image *__restrict__ image,
+  const PixelChannel channel)
+{
+  return(image->channel_map[channel].offset);
+}
+
+static inline PixelTrait GetPixelChannelTraits(
+  const Image *__restrict__ image,const PixelChannel channel)
+{
+  if ((size_t) channel >= 64)
+    return(UndefinedPixelTrait);
+  return(image->channel_map[channel].traits);
+}
+
+static inline size_t GetPixelChannels(const Image *__restrict__ image)
+{
+  return(image->number_channels);
+}
+
+static inline Quantum GetPixelCompositeMask(
+  const Image *__restrict__ image,const Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[CompositeMaskPixelChannel].traits == UndefinedPixelTrait)
+    return((Quantum) ((Quantum) 65535.0));
+  return(pixel[image->channel_map[CompositeMaskPixelChannel].offset]);
+}
+
+static inline PixelTrait GetPixelCompositeMaskTraits(
+  const Image *__restrict__ image)
+{
+  return(image->channel_map[CompositeMaskPixelChannel].traits);
+}
+
+static inline Quantum GetPixelCr(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  return(pixel[image->channel_map[CrPixelChannel].offset]);
+}
+
+static inline PixelTrait GetPixelCrTraits(const Image *__restrict__ image)
+{
+  return(image->channel_map[CrPixelChannel].traits);
+}
+
+static inline Quantum GetPixelCyan(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  return(pixel[image->channel_map[CyanPixelChannel].offset]);
+}
+
+static inline PixelTrait GetPixelCyanTraits(const Image *__restrict__ image)
+{
+  return(image->channel_map[CyanPixelChannel].traits);
+}
+
+static inline Quantum GetPixelGray(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  return(pixel[image->channel_map[GrayPixelChannel].offset]);
+}
+
+static inline PixelTrait GetPixelGrayTraits(const Image *__restrict__ image)
+{
+  return(image->channel_map[GrayPixelChannel].traits);
+}
+
+static inline Quantum GetPixelGreen(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  return(pixel[image->channel_map[GreenPixelChannel].offset]);
+}
+
+static inline PixelTrait GetPixelGreenTraits(const Image *__restrict__ image)
+{
+  return(image->channel_map[GreenPixelChannel].traits);
+}
+
+static inline Quantum GetPixelIndex(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[IndexPixelChannel].traits == UndefinedPixelTrait)
+    return((Quantum) 0);
+  return(pixel[image->channel_map[IndexPixelChannel].offset]);
+}
+
+static inline PixelTrait GetPixelIndexTraits(const Image *__restrict__ image)
+{
+  return(image->channel_map[IndexPixelChannel].traits);
+}
+
+static inline MagickRealType GetPixelInfoChannel(
+  const PixelInfo *__restrict__ pixel_info,const PixelChannel channel)
+{
+  switch (channel)
+  {
+    case RedPixelChannel: return(pixel_info->red);
+    case GreenPixelChannel: return(pixel_info->green);
+    case BluePixelChannel: return(pixel_info->blue);
+    case BlackPixelChannel:
+    {
+      if (pixel_info->colorspace != CMYKColorspace)
+        return(0.0);
+      return(pixel_info->black);
+    }
+    case AlphaPixelChannel:
+    {
+      if (pixel_info->alpha_trait == UndefinedPixelTrait)
+        return(((Quantum) ((Quantum) 65535.0)));
+      return(pixel_info->alpha);
+    }
+    case IndexPixelChannel: return(pixel_info->index);
+    default: break;
+  }
+  return((MagickRealType) 0.0);
+}
+
+static inline double PerceptibleReciprocal(const double x)
+{
+  double
+    sign;
+
+
+
+
+  sign=x < 0.0 ? -1.0 : 1.0;
+  if ((sign*x) >= 1.0e-12)
+    return(1.0/x);
+  return(sign/1.0e-12);
+}
+
+static inline MagickRealType GetPixelInfoLuma(
+  const PixelInfo *__restrict__ pixel)
+{
+  MagickRealType
+    intensity;
+
+  if (pixel->colorspace == sRGBColorspace)
+    {
+      intensity=(MagickRealType) (0.212656*pixel->red+0.715158*pixel->green+
+        0.072186*pixel->blue);
+      return(intensity);
+    }
+  intensity=(MagickRealType) (0.212656*EncodePixelGamma(pixel->red)+
+    0.715158*EncodePixelGamma(pixel->green)+
+    0.072186*EncodePixelGamma(pixel->blue));
+  return(intensity);
+}
+
+static inline MagickRealType GetPixelInfoLuminance(
+  const PixelInfo *__restrict__ pixel)
+{
+  MagickRealType
+    intensity;
+
+  if (pixel->colorspace != sRGBColorspace)
+    {
+      intensity=(MagickRealType) (0.212656*pixel->red+0.715158*pixel->green+
+        0.072186*pixel->blue);
+      return(intensity);
+    }
+  intensity=(MagickRealType) (0.212656*DecodePixelGamma(pixel->red)+
+    0.715158*DecodePixelGamma(pixel->green)+
+    0.072186*DecodePixelGamma(pixel->blue));
+  return(intensity);
+}
+
+static inline Quantum GetPixelL(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  return(pixel[image->channel_map[LPixelChannel].offset]);
+}
+
+static inline ssize_t GetPixelLabel(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  return((ssize_t) pixel[image->channel_map[LabelPixelChannel].offset]);
+}
+
+static inline MagickRealType GetPixelLuma(
+  const Image *__restrict__ image,const Quantum *__restrict__ pixel)
+{
+  MagickRealType
+    intensity;
+
+  intensity=
+    0.212656*(MagickRealType) pixel[image->channel_map[RedPixelChannel].offset]+
+    0.715158*(MagickRealType) pixel[image->channel_map[GreenPixelChannel].offset]+
+    0.072186*(MagickRealType) pixel[image->channel_map[BluePixelChannel].offset];
+  return(intensity);
+}
+
+static inline MagickRealType GetPixelLuminance(
+  const Image *__restrict__ image,const Quantum *__restrict__ pixel)
+{
+  MagickRealType
+    intensity;
+
+  if (image->colorspace != sRGBColorspace)
+    {
+      intensity=
+        0.212656*(MagickRealType) pixel[image->channel_map[RedPixelChannel].offset]+
+        0.715158*(MagickRealType) pixel[image->channel_map[GreenPixelChannel].offset]+
+        0.072186*(MagickRealType) pixel[image->channel_map[BluePixelChannel].offset];
+      return(intensity);
+    }
+  intensity=(MagickRealType) (0.212656*DecodePixelGamma((MagickRealType)
+    pixel[image->channel_map[RedPixelChannel].offset])+0.715158*
+    DecodePixelGamma((MagickRealType)
+    pixel[image->channel_map[GreenPixelChannel].offset])+0.072186*
+    DecodePixelGamma((MagickRealType)
+    pixel[image->channel_map[BluePixelChannel].offset]));
+  return(intensity);
+}
+
+static inline Quantum GetPixelMagenta(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  return(pixel[image->channel_map[MagentaPixelChannel].offset]);
+}
+
+static inline PixelTrait GetPixelMagentaTraits(
+  const Image *__restrict__ image)
+{
+  return(image->channel_map[MagentaPixelChannel].traits);
+}
+
+static inline Quantum GetPixelMeta(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[MetaPixelChannels].traits == UndefinedPixelTrait)
+    return(((Quantum) ((Quantum) 65535.0)));
+  return(pixel[image->channel_map[MetaPixelChannels].offset]);
+}
+
+static inline PixelTrait GetPixelMetaTraits(const Image *__restrict__ image)
+{
+  return(image->channel_map[MetaPixelChannels].traits);
+}
+
+static inline Quantum GetPixelReadMask(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[ReadMaskPixelChannel].traits == UndefinedPixelTrait)
+    return((Quantum) ((Quantum) 65535.0));
+  return(pixel[image->channel_map[ReadMaskPixelChannel].offset]);
+}
+
+static inline void GetPixelInfoRGBA(const Quantum red,const Quantum green,
+  const Quantum blue,const Quantum alpha,PixelInfo *__restrict__ pixel)
+{
+  GetPixelInfo((Image *) 
+# 376 "./MagickCore/pixel-accessor.h" 3 4
+                        ((void *)0)
+# 376 "./MagickCore/pixel-accessor.h"
+                            ,pixel);
+  pixel->red=red;
+  pixel->green=green;
+  pixel->blue=blue;
+  pixel->alpha=alpha;
+}
+
+static inline Quantum GetPixelWriteMask(
+  const Image *__restrict__ image,const Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[WriteMaskPixelChannel].traits == UndefinedPixelTrait)
+    return((Quantum) ((Quantum) 65535.0));
+  return(pixel[image->channel_map[WriteMaskPixelChannel].offset]);
+}
+
+static inline PixelTrait GetPixelReadMaskTraits(
+  const Image *__restrict__ image)
+{
+  return(image->channel_map[ReadMaskPixelChannel].traits);
+}
+
+static inline size_t GetPixelMetaChannels(const Image *__restrict__ image)
+{
+  return(image->number_meta_channels);
+}
+
+static inline size_t GetPixelMetacontentExtent(
+  const Image *__restrict__ image)
+{
+  return(image->metacontent_extent);
+}
+
+static inline Quantum GetPixelOpacity(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[AlphaPixelChannel].traits != BlendPixelTrait)
+    return(((Quantum) 65535.0)-((Quantum) ((Quantum) 65535.0)));
+  return(((Quantum) 65535.0)-pixel[image->channel_map[AlphaPixelChannel].offset]);
+}
+
+static inline Quantum GetPixelRed(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  return(pixel[image->channel_map[RedPixelChannel].offset]);
+}
+
+static inline PixelTrait GetPixelRedTraits(const Image *__restrict__ image)
+{
+  return(image->channel_map[RedPixelChannel].traits);
+}
+
+static inline void GetPixelInfoPixel(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel,PixelInfo *__restrict__ pixel_info)
+{
+  (void) ResetMagickMemory(pixel_info,0,sizeof(*pixel_info));
+  pixel_info->storage_class=DirectClass;
+  pixel_info->colorspace=sRGBColorspace;
+  pixel_info->depth=16;
+  pixel_info->alpha_trait=UndefinedPixelTrait;
+  pixel_info->alpha=(MagickRealType) ((Quantum) ((Quantum) 65535.0));
+  if (image != (Image *) 
+# 436 "./MagickCore/pixel-accessor.h" 3 4
+                        ((void *)0)
+# 436 "./MagickCore/pixel-accessor.h"
+                            )
+    {
+      pixel_info->storage_class=image->storage_class;
+      pixel_info->colorspace=image->colorspace;
+      pixel_info->fuzz=image->fuzz;
+      pixel_info->depth=image->depth;
+      pixel_info->alpha_trait=image->alpha_trait;
+      if (pixel != (Quantum *) 
+# 443 "./MagickCore/pixel-accessor.h" 3 4
+                              ((void *)0)
+# 443 "./MagickCore/pixel-accessor.h"
+                                  )
+        {
+          pixel_info->red=(MagickRealType)
+            pixel[image->channel_map[RedPixelChannel].offset];
+          pixel_info->green=(MagickRealType)
+            pixel[image->channel_map[GreenPixelChannel].offset];
+          pixel_info->blue=(MagickRealType)
+            pixel[image->channel_map[BluePixelChannel].offset];
+          if (image->channel_map[BlackPixelChannel].traits != UndefinedPixelTrait)
+            pixel_info->black=(MagickRealType)
+              pixel[image->channel_map[BlackPixelChannel].offset];
+          if (image->channel_map[AlphaPixelChannel].traits != UndefinedPixelTrait)
+            pixel_info->alpha=(MagickRealType)
+              pixel[image->channel_map[AlphaPixelChannel].offset];
+          if (image->channel_map[IndexPixelChannel].traits != UndefinedPixelTrait)
+            pixel_info->index=(MagickRealType)
+              pixel[image->channel_map[IndexPixelChannel].offset];
+        }
+    }
+}
+
+static inline PixelTrait GetPixelTraits(const Image *__restrict__ image,
+  const PixelChannel channel)
+{
+  if ((size_t) channel >= 64)
+    return(UndefinedPixelTrait);
+  return(image->channel_map[channel].traits);
+}
+
+static inline PixelTrait GetPixelWriteMaskTraits(
+  const Image *__restrict__ image)
+{
+  return(image->channel_map[WriteMaskPixelChannel].traits);
+}
+
+static inline Quantum GetPixelY(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  return(pixel[image->channel_map[YPixelChannel].offset]);
+}
+
+static inline PixelTrait GetPixelYTraits(const Image *__restrict__ image)
+{
+  return(image->channel_map[YPixelChannel].traits);
+}
+
+static inline Quantum GetPixelYellow(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  return(pixel[image->channel_map[YellowPixelChannel].offset]);
+}
+
+static inline PixelTrait GetPixelYellowTraits(
+  const Image *__restrict__ image)
+{
+  return(image->channel_map[YellowPixelChannel].traits);
+}
+
+static inline MagickRealType AbsolutePixelValue(const MagickRealType x)
+{
+  return(x < 0.0 ? -x : x);
+}
+
+static inline MagickBooleanType IsPixelAtDepth(const Quantum pixel,
+  const QuantumAny range)
+{
+  Quantum
+    quantum;
+
+  if (range == 0)
+    return(MagickTrue);
+
+
+
+
+  quantum=(Quantum) (((double) ((Quantum) 65535.0)*((QuantumAny) (((double) range*
+    (double) pixel)/(double) ((Quantum) 65535.0)+0.5)))/(double) range);
+
+  return(pixel == quantum ? MagickTrue : MagickFalse);
+}
+
+static inline MagickBooleanType IsPixelEquivalent(
+  const Image *__restrict__ image,const Quantum *__restrict__ p,
+  const PixelInfo *__restrict__ q)
+{
+  MagickRealType
+    alpha,
+    beta,
+    color;
+
+  color=(MagickRealType) p[image->channel_map[AlphaPixelChannel].offset];
+  alpha=image->alpha_trait == UndefinedPixelTrait ? (MagickRealType)
+    ((Quantum) ((Quantum) 65535.0)) : color;
+  beta=q->alpha_trait == UndefinedPixelTrait ? (MagickRealType) ((Quantum) ((Quantum) 65535.0)) :
+    q->alpha;
+  if (AbsolutePixelValue(alpha-beta) >= 1.0e-12)
+    return(MagickFalse);
+  if ((AbsolutePixelValue(alpha-(MagickRealType) ((Quantum) 0)) < 1.0e-12) ||
+      (AbsolutePixelValue(beta-(MagickRealType) ((Quantum) 0)) < 1.0e-12))
+    return(MagickTrue);
+  color=(MagickRealType) p[image->channel_map[RedPixelChannel].offset];
+  if (AbsolutePixelValue(color-q->red) >= 1.0e-12)
+    return(MagickFalse);
+  color=(MagickRealType) p[image->channel_map[GreenPixelChannel].offset];
+  if (AbsolutePixelValue(color-q->green) >= 1.0e-12)
+    return(MagickFalse);
+  color=(MagickRealType) p[image->channel_map[BluePixelChannel].offset];
+  if (AbsolutePixelValue(color-q->blue) >= 1.0e-12)
+    return(MagickFalse);
+  if (image->colorspace == CMYKColorspace)
+    {
+      color=(MagickRealType) p[image->channel_map[BlackPixelChannel].offset];
+      if (AbsolutePixelValue(color-q->black) >= 1.0e-12)
+        return(MagickFalse);
+    }
+  return(MagickTrue);
+}
+
+static inline MagickBooleanType IsPixelGray(const Image *__restrict__ image,
+  const Quantum *__restrict__ pixel)
+{
+  MagickRealType
+    green_blue,
+    red_green;
+
+  red_green=
+    (MagickRealType) pixel[image->channel_map[RedPixelChannel].offset]-
+    (MagickRealType) pixel[image->channel_map[GreenPixelChannel].offset];
+  green_blue=
+    (MagickRealType) pixel[image->channel_map[GreenPixelChannel].offset]-
+    (MagickRealType) pixel[image->channel_map[BluePixelChannel].offset];
+  if ((AbsolutePixelValue(red_green) < 1.0e-12) &&
+      (AbsolutePixelValue(green_blue) < 1.0e-12))
+    return(MagickTrue);
+  return(MagickFalse);
+}
+
+static inline MagickBooleanType IsPixelInfoEquivalent(
+  const PixelInfo *__restrict__ p,const PixelInfo *__restrict__ q)
+{
+  MagickRealType
+    alpha,
+    beta;
+
+  alpha=p->alpha_trait == UndefinedPixelTrait ? (MagickRealType) ((Quantum) ((Quantum) 65535.0)) :
+    p->alpha;
+  beta=q->alpha_trait == UndefinedPixelTrait ? (MagickRealType) ((Quantum) ((Quantum) 65535.0)) :
+    q->alpha;
+  if (AbsolutePixelValue(alpha-beta) >= 1.0e-12)
+    return(MagickFalse);
+  if ((AbsolutePixelValue(alpha-(MagickRealType) ((Quantum) 0)) < 1.0e-12) ||
+      (AbsolutePixelValue(beta-(MagickRealType) ((Quantum) 0)) < 1.0e-12))
+    return(MagickTrue);
+  if (AbsolutePixelValue(p->red-q->red) >= 1.0e-12)
+    return(MagickFalse);
+  if (AbsolutePixelValue(p->green-q->green) >= 1.0e-12)
+    return(MagickFalse);
+  if (AbsolutePixelValue(p->blue-q->blue) >= 1.0e-12)
+    return(MagickFalse);
+  if (p->colorspace == CMYKColorspace)
+    {
+      if (AbsolutePixelValue(p->black-q->black) >= 1.0e-12)
+        return(MagickFalse);
+    }
+  return(MagickTrue);
+}
+
+static inline MagickBooleanType IsPixelMonochrome(
+  const Image *__restrict__ image,const Quantum *__restrict__ pixel)
+{
+  MagickRealType
+    green_blue,
+    red,
+    red_green;
+
+  red=(MagickRealType) pixel[image->channel_map[RedPixelChannel].offset];
+  if ((AbsolutePixelValue(red) >= 1.0e-12) &&
+      (AbsolutePixelValue(red-(MagickRealType) ((Quantum) 65535.0)) >= 1.0e-12))
+    return(MagickFalse);
+  red_green=
+    (MagickRealType) pixel[image->channel_map[RedPixelChannel].offset]-
+    (MagickRealType) pixel[image->channel_map[GreenPixelChannel].offset];
+  green_blue=
+    (MagickRealType) pixel[image->channel_map[GreenPixelChannel].offset]-
+    (MagickRealType) pixel[image->channel_map[BluePixelChannel].offset];
+  if ((AbsolutePixelValue(red_green) < 1.0e-12) &&
+      (AbsolutePixelValue(green_blue) < 1.0e-12))
+    return(MagickTrue);
+  return(MagickFalse);
+}
+
+static inline MagickBooleanType IsPixelInfoGray(
+  const PixelInfo *__restrict__ pixel)
+{
+  if ((AbsolutePixelValue(pixel->red-pixel->green) < 1.0e-12) &&
+      (AbsolutePixelValue(pixel->green-pixel->blue) < 1.0e-12))
+    return(MagickTrue);
+  return(MagickFalse);
+}
+
+static inline MagickBooleanType IsPixelInfoMonochrome(
+  const PixelInfo *__restrict__ pixel_info)
+{
+  MagickRealType
+    green_blue,
+    red_green;
+
+  if ((AbsolutePixelValue(pixel_info->red) >= 1.0e-12) ||
+      (AbsolutePixelValue(pixel_info->red-(MagickRealType) ((Quantum) 65535.0)) >= 1.0e-12))
+    return(MagickFalse);
+  red_green=pixel_info->red-pixel_info->green;
+  green_blue=pixel_info->green-pixel_info->blue;
+  if ((AbsolutePixelValue(red_green) < 1.0e-12) &&
+      (AbsolutePixelValue(green_blue) < 1.0e-12))
+    return(MagickTrue);
+  return(MagickFalse);
+}
+
+static inline void SetPixela(const Image *__restrict__ image,
+  const Quantum a,Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[aPixelChannel].traits != UndefinedPixelTrait)
+    pixel[image->channel_map[aPixelChannel].offset]=a;
+}
+
+static inline void SetPixelAlpha(const Image *__restrict__ image,
+  const Quantum alpha,Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[AlphaPixelChannel].traits != UndefinedPixelTrait)
+    pixel[image->channel_map[AlphaPixelChannel].offset]=alpha;
+}
+
+static inline void SetPixelAlphaTraits(Image *image,const PixelTrait traits)
+{
+  image->channel_map[AlphaPixelChannel].traits=traits;
+}
+
+static inline void SetPixelb(const Image *__restrict__ image,
+  const Quantum b,Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[bPixelChannel].traits != UndefinedPixelTrait)
+    pixel[image->channel_map[bPixelChannel].offset]=b;
+}
+
+static inline void SetPixelBackgroundColor(const Image *__restrict__ image,
+  Quantum *__restrict__ pixel)
+{
+  ssize_t
+    i;
+
+  for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
+    pixel[i]=(Quantum) 0;
+  pixel[image->channel_map[RedPixelChannel].offset]=
+    ClampToQuantum(image->background_color.red);
+  pixel[image->channel_map[GreenPixelChannel].offset]=
+    ClampToQuantum(image->background_color.green);
+  pixel[image->channel_map[BluePixelChannel].offset]=
+    ClampToQuantum(image->background_color.blue);
+  if (image->channel_map[BlackPixelChannel].traits != UndefinedPixelTrait)
+    pixel[image->channel_map[BlackPixelChannel].offset]=
+      ClampToQuantum(image->background_color.black);
+  if (image->channel_map[AlphaPixelChannel].traits != UndefinedPixelTrait)
+    pixel[image->channel_map[AlphaPixelChannel].offset]=
+      image->background_color.alpha_trait == UndefinedPixelTrait ? ((Quantum) ((Quantum) 65535.0)) :
+      ClampToQuantum(image->background_color.alpha);
+}
+
+static inline void SetPixelBackgoundColor(const Image *__restrict__ image,
+  Quantum *__restrict__ pixel) __attribute__((deprecated));
+
+static inline void SetPixelBackgoundColor(const Image *__restrict__ image,
+  Quantum *__restrict__ pixel)
+{
+  SetPixelBackgroundColor(image,pixel);
+}
+
+static inline void SetPixelBlack(const Image *__restrict__ image,
+  const Quantum black,Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[BlackPixelChannel].traits != UndefinedPixelTrait)
+    pixel[image->channel_map[BlackPixelChannel].offset]=black;
+}
+
+static inline void SetPixelBlackTraits(Image *image,const PixelTrait traits)
+{
+  image->channel_map[BlackPixelChannel].traits=traits;
+}
+
+static inline void SetPixelBlue(const Image *__restrict__ image,
+  const Quantum blue,Quantum *__restrict__ pixel)
+{
+  pixel[image->channel_map[BluePixelChannel].offset]=blue;
+}
+
+static inline void SetPixelBlueTraits(Image *image,const PixelTrait traits)
+{
+  image->channel_map[BluePixelChannel].traits=traits;
+}
+
+static inline void SetPixelCb(const Image *__restrict__ image,
+  const Quantum cb,Quantum *__restrict__ pixel)
+{
+  pixel[image->channel_map[CbPixelChannel].offset]=cb;
+}
+
+static inline void SetPixelCbTraits(Image *image,const PixelTrait traits)
+{
+  image->channel_map[CbPixelChannel].traits=traits;
+}
+
+static inline void SetPixelChannel(const Image *__restrict__ image,
+  const PixelChannel channel,const Quantum quantum,
+  Quantum *__restrict__ pixel)
+{
+  if ((size_t) channel >= 64)
+    return;
+  if (image->channel_map[channel].traits != UndefinedPixelTrait)
+    pixel[image->channel_map[channel].offset]=quantum;
+}
+
+static inline void SetPixelChannelAttributes(
+  const Image *__restrict__ image,const PixelChannel channel,
+  const PixelTrait traits,const ssize_t offset)
+{
+  if ((offset < 0) || (offset >= 64))
+    return;
+  if ((size_t) channel >= 64)
+    return;
+  image->channel_map[offset].channel=channel;
+  image->channel_map[channel].offset=offset;
+  image->channel_map[channel].traits=traits;
+}
+
+static inline void SetPixelChannelChannel(const Image *__restrict__ image,
+  const PixelChannel channel,const ssize_t offset)
+{
+  if ((offset < 0) || (offset >= 64))
+    return;
+  if ((size_t) channel >= 64)
+    return;
+  image->channel_map[offset].channel=channel;
+  image->channel_map[channel].offset=offset;
+}
+
+static inline void SetPixelChannels(Image *image,const size_t number_channels)
+{
+  image->number_channels=number_channels;
+}
+
+static inline void SetPixelChannelTraits(Image *image,
+  const PixelChannel channel,const PixelTrait traits)
+{
+  if ((size_t) channel >= 64)
+    return;
+  image->channel_map[channel].traits=traits;
+}
+
+static inline void SetPixelCompositeMask(const Image *__restrict__ image,
+  const Quantum mask,Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[CompositeMaskPixelChannel].traits != UndefinedPixelTrait)
+    pixel[image->channel_map[CompositeMaskPixelChannel].offset]=mask;
+}
+
+static inline void SetPixelCr(const Image *__restrict__ image,
+  const Quantum cr,Quantum *__restrict__ pixel)
+{
+  pixel[image->channel_map[CrPixelChannel].offset]=cr;
+}
+
+static inline void SetPixelCrTraits(Image *image,const PixelTrait traits)
+{
+  image->channel_map[CrPixelChannel].traits=traits;
+}
+
+static inline void SetPixelCyan(const Image *__restrict__ image,
+  const Quantum cyan,Quantum *__restrict__ pixel)
+{
+  pixel[image->channel_map[CyanPixelChannel].offset]=cyan;
+}
+
+static inline void SetPixelGray(const Image *__restrict__ image,
+  const Quantum gray,Quantum *__restrict__ pixel)
+{
+  pixel[image->channel_map[GrayPixelChannel].offset]=gray;
+}
+
+static inline void SetPixelGrayTraits(Image *image,const PixelTrait traits)
+{
+  image->channel_map[GrayPixelChannel].traits=traits;
+}
+
+static inline void SetPixelGreen(const Image *__restrict__ image,
+  const Quantum green,Quantum *__restrict__ pixel)
+{
+  pixel[image->channel_map[GreenPixelChannel].offset]=green;
+}
+
+static inline void SetPixelGreenTraits(Image *image,const PixelTrait traits)
+{
+  image->channel_map[GreenPixelChannel].traits=traits;
+}
+
+static inline void SetPixelIndex(const Image *__restrict__ image,
+  const Quantum index,Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[IndexPixelChannel].traits != UndefinedPixelTrait)
+    pixel[image->channel_map[IndexPixelChannel].offset]=index;
+}
+
+static inline void SetPixelIndexTraits(Image *image,const PixelTrait traits)
+{
+  image->channel_map[IndexPixelChannel].traits=traits;
+}
+
+static inline void SetPixelViaPixelInfo(const Image *__restrict__ image,
+  const PixelInfo *__restrict__ pixel_info,Quantum *__restrict__ pixel)
+{
+  pixel[image->channel_map[RedPixelChannel].offset]=
+    ClampToQuantum(pixel_info->red);
+  pixel[image->channel_map[GreenPixelChannel].offset]=
+    ClampToQuantum(pixel_info->green);
+  pixel[image->channel_map[BluePixelChannel].offset]=
+    ClampToQuantum(pixel_info->blue);
+  if (image->channel_map[BlackPixelChannel].traits != UndefinedPixelTrait)
+    pixel[image->channel_map[BlackPixelChannel].offset]=
+      ClampToQuantum(pixel_info->black);
+  if (image->channel_map[AlphaPixelChannel].traits != UndefinedPixelTrait)
+    pixel[image->channel_map[AlphaPixelChannel].offset]=
+      pixel_info->alpha_trait == UndefinedPixelTrait ? ((Quantum) ((Quantum) 65535.0)) :
+      ClampToQuantum(pixel_info->alpha);
+}
+
+static inline void SetPixelL(const Image *__restrict__ image,const Quantum L,
+  Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[LPixelChannel].traits != UndefinedPixelTrait)
+    pixel[image->channel_map[LPixelChannel].offset]=L;
+}
+
+static inline void SetPixelMagenta(const Image *__restrict__ image,
+  const Quantum magenta,Quantum *__restrict__ pixel)
+{
+  pixel[image->channel_map[MagentaPixelChannel].offset]=magenta;
+}
+
+static inline void SetPixelMagentaTraits(Image *image,const PixelTrait traits)
+{
+  image->channel_map[MagentaPixelChannel].traits=traits;
+}
+
+static inline void SetPixelMeta(const Image *__restrict__ image,
+  const Quantum red,Quantum *__restrict__ pixel)
+{
+  pixel[image->channel_map[MetaPixelChannels].offset]=red;
+}
+
+static inline void SetPixelMetaTraits(Image *image,const PixelTrait traits)
+{
+  image->channel_map[MetaPixelChannels].traits=traits;
+}
+
+static inline void SetPixelReadMask(const Image *__restrict__ image,
+  const Quantum mask,Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[ReadMaskPixelChannel].traits != UndefinedPixelTrait)
+    pixel[image->channel_map[ReadMaskPixelChannel].offset]=mask;
+}
+
+static inline void SetPixelMetacontentExtent(Image *image,const size_t extent)
+{
+  image->metacontent_extent=extent;
+}
+
+static inline void SetPixelOpacity(const Image *__restrict__ image,
+  const Quantum alpha,Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[AlphaPixelChannel].traits != UndefinedPixelTrait)
+    pixel[image->channel_map[AlphaPixelChannel].offset]=((Quantum) 65535.0)-alpha;
+}
+
+static inline void SetPixelRed(const Image *__restrict__ image,
+  const Quantum red,Quantum *__restrict__ pixel)
+{
+  pixel[image->channel_map[RedPixelChannel].offset]=red;
+}
+
+static inline void SetPixelRedTraits(Image *image,const PixelTrait traits)
+{
+  image->channel_map[RedPixelChannel].traits=traits;
+}
+
+static inline void SetPixelWriteMask(const Image *__restrict__ image,
+  const Quantum mask,Quantum *__restrict__ pixel)
+{
+  if (image->channel_map[WriteMaskPixelChannel].traits != UndefinedPixelTrait)
+    pixel[image->channel_map[WriteMaskPixelChannel].offset]=mask;
+}
+
+static inline void SetPixelYellow(const Image *__restrict__ image,
+  const Quantum yellow,Quantum *__restrict__ pixel)
+{
+  pixel[image->channel_map[YellowPixelChannel].offset]=yellow;
+}
+
+static inline void SetPixelYellowTraits(Image *image,const PixelTrait traits)
+{
+  image->channel_map[YellowPixelChannel].traits=traits;
+}
+
+static inline void SetPixelY(const Image *__restrict__ image,
+  const Quantum y,Quantum *__restrict__ pixel)
+{
+  pixel[image->channel_map[YPixelChannel].offset]=y;
+}
+
+static inline void SetPixelYTraits(Image *image,const PixelTrait traits)
+{
+  image->channel_map[YPixelChannel].traits=traits;
+}
+# 29 "./MagickCore/image-private.h" 2
+# 1 "./MagickCore/quantum-private.h" 1
+# 23 "./MagickCore/quantum-private.h"
+# 1 "./MagickCore/image-private.h" 1
+# 24 "./MagickCore/quantum-private.h" 2
+
+
+
+
+
+
+typedef struct _QuantumState
+{
+  double
+    inverse_scale;
+
+  unsigned int
+    pixel;
+
+  size_t
+    bits;
+
+  const unsigned int
+    *mask;
+} QuantumState;
+
+struct _QuantumInfo
+{
+  size_t
+    depth,
+    quantum;
+
+  QuantumFormatType
+    format;
+
+  double
+    minimum,
+    maximum,
+    scale;
+
+  size_t
+    pad;
+
+  MagickBooleanType
+    min_is_white,
+    pack;
+
+  QuantumAlphaType
+    alpha_type;
+
+  size_t
+    number_threads;
+
+  MemoryInfo
+    **pixels;
+
+  size_t
+    extent;
+
+  EndianType
+    endian;
+
+  QuantumState
+    state;
+
+  SemaphoreInfo
+    *semaphore;
+
+  size_t
+    signature;
+};
+
+extern __attribute__ ((visibility ("hidden"))) void
+  ResetQuantumState(QuantumInfo *);
+
+static inline MagickSizeType GetQuantumRange(const size_t depth)
+{
+  MagickSizeType
+    one;
+
+  size_t
+    max_depth;
+
+  if (depth == 0)
+    return(0);
+  one=1;
+  max_depth=8*sizeof(MagickSizeType);
+  return((MagickSizeType) ((one << ((((depth) < (max_depth)) ? (depth) : (max_depth))-1))+
+    ((one << ((((depth) < (max_depth)) ? (depth) : (max_depth))-1))-1)));
+}
+
+static inline float HalfToSinglePrecision(const unsigned short half)
+{
+
+
+
+
+
+
+
+  typedef union _SinglePrecision
+  {
+    unsigned int
+      fixed_point;
+
+    float
+      single_precision;
+  } SinglePrecision;
+
+  SinglePrecision
+    map;
+
+  unsigned int
+    exponent,
+    significand,
+    sign_bit,
+    value;
+# 144 "./MagickCore/quantum-private.h"
+  sign_bit=(unsigned int) ((half >> 15) & 0x00000001);
+  exponent=(unsigned int) ((half >> 10) & 0x0000001f);
+  significand=(unsigned int) (half & 0x000003ff);
+  if (exponent == 0)
+    {
+      if (significand == 0)
+        value=sign_bit << 31;
+      else
+        {
+          while ((significand & (0x00000400U)) == 0)
+          {
+            significand<<=1;
+            exponent--;
+          }
+          exponent++;
+          significand&=(~(0x00000400U));
+          exponent+=(127-15);
+          value=(sign_bit << 31) | (exponent << 23) |
+            (significand << 13);
+        }
+    }
+  else
+    if (exponent == 31)
+      {
+        value=(sign_bit << 31) | 0x7f800000;
+        if (significand != 0)
+          value|=(significand << 13);
+      }
+    else
+      {
+        exponent+=(127-15);
+        significand<<=13;
+        value=(sign_bit << 31) | (exponent << 23) |
+          significand;
+      }
+  map.fixed_point=value;
+  return(map.single_precision);
+}
+
+static inline unsigned char *PopCharPixel(const unsigned char pixel,
+  unsigned char *__restrict__ pixels)
+{
+  *pixels++=pixel;
+  return(pixels);
+}
+
+static inline unsigned char *PopLongPixel(const EndianType endian,
+  const unsigned int pixel,unsigned char *__restrict__ pixels)
+{
+  unsigned int
+    quantum;
+
+  quantum=(unsigned int) pixel;
+  if (endian == LSBEndian)
+    {
+      *pixels++=(unsigned char) (quantum);
+      *pixels++=(unsigned char) (quantum >> 8);
+      *pixels++=(unsigned char) (quantum >> 16);
+      *pixels++=(unsigned char) (quantum >> 24);
+      return(pixels);
+    }
+  *pixels++=(unsigned char) (quantum >> 24);
+  *pixels++=(unsigned char) (quantum >> 16);
+  *pixels++=(unsigned char) (quantum >> 8);
+  *pixels++=(unsigned char) (quantum);
+  return(pixels);
+}
+
+static inline unsigned char *PopShortPixel(const EndianType endian,
+  const unsigned short pixel,unsigned char *__restrict__ pixels)
+{
+  unsigned int
+    quantum;
+
+  quantum=pixel;
+  if (endian == LSBEndian)
+    {
+      *pixels++=(unsigned char) (quantum);
+      *pixels++=(unsigned char) (quantum >> 8);
+      return(pixels);
+    }
+  *pixels++=(unsigned char) (quantum >> 8);
+  *pixels++=(unsigned char) (quantum);
+  return(pixels);
+}
+
+static inline const unsigned char *PushCharPixel(
+  const unsigned char *__restrict__ pixels,
+  unsigned char *__restrict__ pixel)
+{
+  *pixel=(*pixels++);
+  return(pixels);
+}
+
+static inline const unsigned char *PushLongPixel(const EndianType endian,
+  const unsigned char *__restrict__ pixels,
+  unsigned int *__restrict__ pixel)
+{
+  unsigned int
+    quantum;
+
+  if (endian == LSBEndian)
+    {
+      quantum=((unsigned int) *pixels++);
+      quantum|=((unsigned int) *pixels++ << 8);
+      quantum|=((unsigned int) *pixels++ << 16);
+      quantum|=((unsigned int) *pixels++ << 24);
+      *pixel=quantum;
+      return(pixels);
+    }
+  quantum=((unsigned int) *pixels++ << 24);
+  quantum|=((unsigned int) *pixels++ << 16);
+  quantum|=((unsigned int) *pixels++ << 8);
+  quantum|=((unsigned int) *pixels++);
+  *pixel=quantum;
+  return(pixels);
+}
+
+static inline const unsigned char *PushShortPixel(const EndianType endian,
+  const unsigned char *__restrict__ pixels,
+  unsigned short *__restrict__ pixel)
+{
+  unsigned int
+    quantum;
+
+  if (endian == LSBEndian)
+    {
+      quantum=(unsigned int) *pixels++;
+      quantum|=(unsigned int) (*pixels++ << 8);
+      *pixel=(unsigned short) (quantum & 0xffff);
+      return(pixels);
+    }
+  quantum=(unsigned int) (*pixels++ << 8);
+  quantum|=(unsigned int) *pixels++;
+  *pixel=(unsigned short) (quantum & 0xffff);
+  return(pixels);
+}
+
+static inline const unsigned char *PushFloatPixel(const EndianType endian,
+  const unsigned char *__restrict__ pixels,
+  MagickFloatType *__restrict__ pixel)
+{
+  union
+  {
+    unsigned int
+      unsigned_value;
+
+    MagickFloatType
+      float_value;
+  } quantum;
+
+  if (endian == LSBEndian)
+    {
+      quantum.unsigned_value=((unsigned int) *pixels++);
+      quantum.unsigned_value|=((unsigned int) *pixels++ << 8);
+      quantum.unsigned_value|=((unsigned int) *pixels++ << 16);
+      quantum.unsigned_value|=((unsigned int) *pixels++ << 24);
+      *pixel=quantum.float_value;
+      return(pixels);
+    }
+  quantum.unsigned_value=((unsigned int) *pixels++ << 24);
+  quantum.unsigned_value|=((unsigned int) *pixels++ << 16);
+  quantum.unsigned_value|=((unsigned int) *pixels++ << 8);
+  quantum.unsigned_value|=((unsigned int) *pixels++);
+  *pixel=quantum.float_value;
+  return(pixels);
+}
+
+static inline Quantum ScaleAnyToQuantum(const QuantumAny quantum,
+  const QuantumAny range)
+{
+  if (quantum > range)
+    return(((Quantum) 65535.0));
+
+
+
+
+  return((Quantum) ((double) ((Quantum) 65535.0)*(quantum*
+    PerceptibleReciprocal((double) range))));
+
+}
+
+static inline QuantumAny ScaleQuantumToAny(const Quantum quantum,
+  const QuantumAny range)
+{
+
+
+
+  if ((
+# 332 "./MagickCore/quantum-private.h" 3 4
+      __builtin_isnan (
+# 332 "./MagickCore/quantum-private.h"
+      quantum
+# 332 "./MagickCore/quantum-private.h" 3 4
+      ) 
+# 332 "./MagickCore/quantum-private.h"
+                     != 0) || (quantum <= 0.0f))
+    return((QuantumAny) 0UL);
+  if ((range*(double) quantum/(double) ((Quantum) 65535.0)) >= 18446744073709551615.0)
+    return((QuantumAny) ((MagickSizeType) (18446744073709551615ULL)));
+  return((QuantumAny) (range*(double) quantum/(double) ((Quantum) 65535.0)+0.5));
+
+}
+# 438 "./MagickCore/quantum-private.h"
+static inline Quantum ScaleCharToQuantum(const unsigned char value)
+{
+
+
+
+  return((Quantum) (257.0*value));
+
+}
+
+static inline Quantum ScaleLongToQuantum(const unsigned int value)
+{
+
+
+
+  return((Quantum) (value/65537.0));
+
+}
+
+static inline Quantum ScaleLongLongToQuantum(const MagickSizeType value)
+{
+
+
+
+  return((Quantum) (value/281479271743489.0));
+
+}
+
+static inline Quantum ScaleMapToQuantum(const MagickRealType value)
+{
+  if (value <= 0.0)
+    return((Quantum) 0);
+  if (value >= 65535UL)
+    return(((Quantum) 65535.0));
+
+
+
+  return((Quantum) value);
+
+}
+
+static inline unsigned int ScaleQuantumToLong(const Quantum quantum)
+{
+
+
+
+  if ((
+# 483 "./MagickCore/quantum-private.h" 3 4
+      __builtin_isnan (
+# 483 "./MagickCore/quantum-private.h"
+      quantum
+# 483 "./MagickCore/quantum-private.h" 3 4
+      ) 
+# 483 "./MagickCore/quantum-private.h"
+                     != 0) || (quantum <= 0.0f))
+    return(0U);
+  if ((65537.0*(double) quantum) >= 4294967295.0)
+    return(4294967295U);
+  return((unsigned int) (65537.0*(double) quantum+0.5));
+
+}
+
+static inline MagickSizeType ScaleQuantumToLongLong(const Quantum quantum)
+{
+
+
+
+  if ((
+# 496 "./MagickCore/quantum-private.h" 3 4
+      __builtin_isnan (
+# 496 "./MagickCore/quantum-private.h"
+      quantum
+# 496 "./MagickCore/quantum-private.h" 3 4
+      ) 
+# 496 "./MagickCore/quantum-private.h"
+                     != 0) || (quantum <= 0.0f))
+    return(0UL);
+  if ((281479271743489.0*(double) quantum) >= 18446744073709551615.0)
+    return(((MagickSizeType) (18446744073709551615ULL)));
+  return((MagickSizeType) (281479271743489.0*(double) quantum+0.5));
+
+}
+
+static inline unsigned int ScaleQuantumToMap(const Quantum quantum)
+{
+  if (quantum >= (Quantum) 65535UL)
+    return((unsigned int) 65535UL);
+
+
+
+  if ((
+# 511 "./MagickCore/quantum-private.h" 3 4
+      __builtin_isnan (
+# 511 "./MagickCore/quantum-private.h"
+      quantum
+# 511 "./MagickCore/quantum-private.h" 3 4
+      ) 
+# 511 "./MagickCore/quantum-private.h"
+                     != 0) || (quantum <= 0.0f))
+    return(0U);
+  return((unsigned int) (quantum+0.5f));
+
+}
+
+static inline unsigned short ScaleQuantumToShort(const Quantum quantum)
+{
+
+
+
+  if ((
+# 522 "./MagickCore/quantum-private.h" 3 4
+      __builtin_isnan (
+# 522 "./MagickCore/quantum-private.h"
+      quantum
+# 522 "./MagickCore/quantum-private.h" 3 4
+      ) 
+# 522 "./MagickCore/quantum-private.h"
+                     != 0) || (quantum <= 0.0f))
+    return(0);
+  if (quantum >= 65535.0f)
+    return(65535);
+  return((unsigned short) (quantum+0.5f));
+
+}
+
+static inline Quantum ScaleShortToQuantum(const unsigned short value)
+{
+  return((Quantum) value);
+}
+# 700 "./MagickCore/quantum-private.h"
+static inline unsigned short SinglePrecisionToHalf(const float value)
+{
+  typedef union _SinglePrecision
+  {
+    unsigned int
+      fixed_point;
+
+    float
+      single_precision;
+  } SinglePrecision;
+
+  int
+    exponent;
+
+  SinglePrecision
+    map;
+
+  unsigned int
+    significand,
+    sign_bit;
+
+  unsigned short
+    half;
+# 731 "./MagickCore/quantum-private.h"
+  map.single_precision=value;
+  sign_bit=(map.fixed_point >> 16) & 0x00008000;
+  exponent=(int) ((map.fixed_point >> 23) & 0x000000ff)-(127-15);
+  significand=map.fixed_point & 0x007fffff;
+  if (exponent <= 0)
+    {
+      int
+        shift;
+
+      if (exponent < -10)
+        return((unsigned short) sign_bit);
+      significand=significand | 0x00800000;
+      shift=(int) (14-exponent);
+      significand=(unsigned int) ((significand+((1U << (shift-1))-1)+
+        ((significand >> shift) & 0x01)) >> shift);
+      return((unsigned short) (sign_bit | significand));
+    }
+  else
+    if (exponent == (0xff-(127-15)))
+      {
+        if (significand == 0)
+          return((unsigned short) (sign_bit | (0x7c00U)));
+        else
+          {
+            significand>>=13;
+            half=(unsigned short) (sign_bit | significand |
+              (significand == 0) | (0x7c00U));
+            return(half);
+          }
+      }
+  significand=significand+((significand >> 13) & 0x01)+0x00000fff;
+  if ((significand & 0x00800000) != 0)
+    {
+      significand=0;
+      exponent++;
+    }
+  if (exponent > 30)
+    {
+      float
+        alpha;
+
+      int
+        i;
+
+
+
+
+      alpha=1.0e10;
+      for (i=0; i < 10; i++)
+        alpha*=alpha;
+      return((unsigned short) (sign_bit | (0x7c00U)));
+    }
+  half=(unsigned short) (sign_bit | ((unsigned int) exponent << 10) |
+    (significand >> 13));
+  return(half);
+}
+# 30 "./MagickCore/image-private.h" 2
+# 67 "./MagickCore/image-private.h"
+static inline ssize_t CastDoubleToLong(const double x)
+{
+  if (
+# 69 "./MagickCore/image-private.h" 3 4
+     __builtin_isnan (
+# 69 "./MagickCore/image-private.h"
+     x
+# 69 "./MagickCore/image-private.h" 3 4
+     ) 
+# 69 "./MagickCore/image-private.h"
+              != 0)
+    {
+      
+# 71 "./MagickCore/image-private.h" 3 4
+     (*__errno_location ())
+# 71 "./MagickCore/image-private.h"
+          =
+# 71 "./MagickCore/image-private.h" 3 4
+           34
+# 71 "./MagickCore/image-private.h"
+                 ;
+      return(0);
+    }
+  if (floor(x) > ((double) (0x7fffffffffffffffL
+# 74 "./MagickCore/image-private.h"
+                          )-1))
+    {
+      
+# 76 "./MagickCore/image-private.h" 3 4
+     (*__errno_location ())
+# 76 "./MagickCore/image-private.h"
+          =
+# 76 "./MagickCore/image-private.h" 3 4
+           34
+# 76 "./MagickCore/image-private.h"
+                 ;
+      return((ssize_t) (0x7fffffffffffffffL
+# 77 "./MagickCore/image-private.h"
+                      ));
+    }
+  if (ceil(x) < ((double) (-0x7fffffffffffffffL 
+# 79 "./MagickCore/image-private.h"
+                         -1)+1))
+    {
+      
+# 81 "./MagickCore/image-private.h" 3 4
+     (*__errno_location ())
+# 81 "./MagickCore/image-private.h"
+          =
+# 81 "./MagickCore/image-private.h" 3 4
+           34
+# 81 "./MagickCore/image-private.h"
+                 ;
+      return((ssize_t) (-0x7fffffffffffffffL 
+# 82 "./MagickCore/image-private.h"
+                      -1));
+    }
+  return((ssize_t) x);
+}
+
+static inline QuantumAny CastDoubleToQuantumAny(const double x)
+{
+  if (
+# 89 "./MagickCore/image-private.h" 3 4
+     __builtin_isnan (
+# 89 "./MagickCore/image-private.h"
+     x
+# 89 "./MagickCore/image-private.h" 3 4
+     ) 
+# 89 "./MagickCore/image-private.h"
+              != 0)
+    {
+      
+# 91 "./MagickCore/image-private.h" 3 4
+     (*__errno_location ())
+# 91 "./MagickCore/image-private.h"
+          =
+# 91 "./MagickCore/image-private.h" 3 4
+           34
+# 91 "./MagickCore/image-private.h"
+                 ;
+      return(0);
+    }
+  if (x > ((double) ((QuantumAny) ~0)))
+    {
+      
+# 96 "./MagickCore/image-private.h" 3 4
+     (*__errno_location ())
+# 96 "./MagickCore/image-private.h"
+          =
+# 96 "./MagickCore/image-private.h" 3 4
+           34
+# 96 "./MagickCore/image-private.h"
+                 ;
+      return((QuantumAny) ~0);
+    }
+  if (x < 0.0)
+    {
+      
+# 101 "./MagickCore/image-private.h" 3 4
+     (*__errno_location ())
+# 101 "./MagickCore/image-private.h"
+          =
+# 101 "./MagickCore/image-private.h" 3 4
+           34
+# 101 "./MagickCore/image-private.h"
+                 ;
+      return((QuantumAny) 0);
+    }
+  return((QuantumAny) (x+0.5));
+}
+
+static inline size_t CastDoubleToUnsigned(const double x)
+{
+  if (
+# 109 "./MagickCore/image-private.h" 3 4
+     __builtin_isnan (
+# 109 "./MagickCore/image-private.h"
+     x
+# 109 "./MagickCore/image-private.h" 3 4
+     ) 
+# 109 "./MagickCore/image-private.h"
+              != 0)
+    {
+      
+# 111 "./MagickCore/image-private.h" 3 4
+     (*__errno_location ())
+# 111 "./MagickCore/image-private.h"
+          =
+# 111 "./MagickCore/image-private.h" 3 4
+           34
+# 111 "./MagickCore/image-private.h"
+                 ;
+      return(0);
+    }
+  if (floor(x) > ((double) (
+# 114 "./MagickCore/image-private.h" 3 4
+                          (18446744073709551615UL)
+# 114 "./MagickCore/image-private.h"
+                          )-1))
+    {
+      
+# 116 "./MagickCore/image-private.h" 3 4
+     (*__errno_location ())
+# 116 "./MagickCore/image-private.h"
+          =
+# 116 "./MagickCore/image-private.h" 3 4
+           34
+# 116 "./MagickCore/image-private.h"
+                 ;
+      return((size_t) (
+# 117 "./MagickCore/image-private.h" 3 4
+                     (18446744073709551615UL)
+# 117 "./MagickCore/image-private.h"
+                     ));
+    }
+  if (ceil(x) < 0.0)
+    {
+      
+# 121 "./MagickCore/image-private.h" 3 4
+     (*__errno_location ())
+# 121 "./MagickCore/image-private.h"
+          =
+# 121 "./MagickCore/image-private.h" 3 4
+           34
+# 121 "./MagickCore/image-private.h"
+                 ;
+      return(0);
+    }
+  return((size_t) x);
+}
+
+static inline double DegreesToRadians(const double degrees)
+{
+  return((double) (3.1415926535897932384626433832795028841971693993751058209749445923078164062*degrees/180.0));
+}
+
+static inline size_t GetImageChannels(const Image *image)
+{
+  ssize_t
+    i;
+
+  size_t
+    channels;
+
+  channels=0;
+  for (i=0; i < (ssize_t) GetPixelChannels(image); i++)
+  {
+    PixelChannel channel = GetPixelChannelChannel(image,i);
+    PixelTrait traits = GetPixelChannelTraits(image,channel);
+    if ((traits & UpdatePixelTrait) != 0)
+      channels++;
+  }
+  return(channels == 0 ? (size_t) 1 : channels);
+}
+
+static inline double RadiansToDegrees(const double radians)
+{
+  return((double) (180.0*radians/3.1415926535897932384626433832795028841971693993751058209749445923078164062));
+}
+
+static inline unsigned char ScaleColor5to8(const unsigned int color)
+{
+  return((unsigned char) (((color) << 3) | ((color) >> 2)));
+}
+
+static inline unsigned char ScaleColor6to8(const unsigned int color)
+{
+  return((unsigned char) (((color) << 2) | ((color) >> 4)));
+}
+
+static inline unsigned int ScaleColor8to5(const unsigned char color)
+{
+  return((unsigned int) (((color) & ~0x07) >> 3));
+}
+
+static inline unsigned int ScaleColor8to6(const unsigned char color)
+{
+  return((unsigned int) (((color) & ~0x03) >> 2));
+}
+# 58 "MagickCore/blob.c" 2
+# 1 "./MagickCore/list.h" 1
+# 25 "./MagickCore/list.h"
+extern __attribute__ ((visibility ("default"))) Image
+  *CloneImageList(const Image *,ExceptionInfo *),
+  *CloneImages(const Image *,const char *,ExceptionInfo *),
+  *DestroyImageList(Image *),
+  *DuplicateImages(Image *,const size_t,const char *,ExceptionInfo *),
+  *GetFirstImageInList(const Image *) __attribute__((__pure__)),
+  *GetImageFromList(const Image *,const ssize_t) __attribute__((__pure__)),
+  *GetLastImageInList(const Image *) __attribute__((__pure__)),
+  *GetNextImageInList(const Image *) __attribute__((__pure__)),
+  *GetPreviousImageInList(const Image *) __attribute__((__pure__)),
+  **ImageListToArray(const Image *,ExceptionInfo *),
+  *NewImageList(void) __attribute__((__const__)),
+  *RemoveImageFromList(Image **),
+  *RemoveLastImageFromList(Image **),
+  *RemoveFirstImageFromList(Image **),
+  *SpliceImageIntoList(Image **,const size_t,const Image *),
+  *SplitImageList(Image *),
+  *SyncNextImageInList(const Image *);
+
+extern __attribute__ ((visibility ("default"))) size_t
+  GetImageListLength(const Image *) __attribute__((__pure__));
+
+extern __attribute__ ((visibility ("default"))) ssize_t
+  GetImageIndexInList(const Image *) __attribute__((__pure__));
+
+extern __attribute__ ((visibility ("default"))) void
+  AppendImageToList(Image **,const Image *),
+  DeleteImageFromList(Image **),
+  DeleteImages(Image **,const char *,ExceptionInfo *),
+  InsertImageInList(Image **,Image *),
+  PrependImageToList(Image **,Image *),
+  ReplaceImageInList(Image **,Image *),
+  ReplaceImageInListReturnLast(Image **,Image *),
+  ReverseImageList(Image **),
+  SyncImageList(Image *);
+# 59 "MagickCore/blob.c" 2
+
+
+
+
+# 1 "./MagickCore/memory-private.h" 1
+# 46 "./MagickCore/memory-private.h"
+static inline size_t OverAllocateMemory(const size_t length)
+{
+  size_t
+    extent;
+
+
+
+
+  extent=length;
+  if (extent < 131072)
+    for (extent=256; extent < length; extent*=2);
+  return(extent);
+}
+
+extern __attribute__ ((visibility ("hidden"))) MagickBooleanType
+  ShredMagickMemory(void *,const size_t);
+
+extern __attribute__ ((visibility ("hidden"))) void
+  ResetMaxMemoryRequest(void),
+  ResetVirtualAnonymousMemory(void),
+  SetMaxMemoryRequest(const MagickSizeType);
+# 64 "MagickCore/blob.c" 2
+
+# 1 "./MagickCore/option.h" 1
+# 25 "./MagickCore/option.h"
+typedef enum
+{
+  MagickUndefinedOptions = -1,
+  MagickAlignOptions = 0,
+  MagickAlphaChannelOptions,
+  MagickBooleanOptions,
+  MagickCacheOptions,
+  MagickChannelOptions,
+  MagickClassOptions,
+  MagickClipPathOptions,
+  MagickCoderOptions,
+  MagickColorOptions,
+  MagickColorspaceOptions,
+  MagickCommandOptions,
+  MagickComplexOptions,
+  MagickComplianceOptions,
+  MagickComposeOptions,
+  MagickCompressOptions,
+  MagickConfigureOptions,
+  MagickDataTypeOptions,
+  MagickDebugOptions,
+  MagickDecorateOptions,
+  MagickDelegateOptions,
+  MagickDirectionOptions,
+  MagickDisposeOptions,
+  MagickDistortOptions,
+  MagickDitherOptions,
+  MagickEndianOptions,
+  MagickEvaluateOptions,
+  MagickFillRuleOptions,
+  MagickFilterOptions,
+  MagickFontOptions,
+  MagickFontsOptions,
+  MagickFormatOptions,
+  MagickFunctionOptions,
+  MagickGradientOptions,
+  MagickGravityOptions,
+  MagickIntensityOptions,
+  MagickIntentOptions,
+  MagickInterlaceOptions,
+  MagickInterpolateOptions,
+  MagickKernelOptions,
+  MagickLayerOptions,
+  MagickLineCapOptions,
+  MagickLineJoinOptions,
+  MagickListOptions,
+  MagickLocaleOptions,
+  MagickLogEventOptions,
+  MagickLogOptions,
+  MagickMagicOptions,
+  MagickMethodOptions,
+  MagickMetricOptions,
+  MagickMimeOptions,
+  MagickModeOptions,
+  MagickModuleOptions,
+  MagickMorphologyOptions,
+  MagickNoiseOptions,
+  MagickOrientationOptions,
+  MagickPixelChannelOptions,
+  MagickPixelIntensityOptions,
+  MagickPixelMaskOptions,
+  MagickPixelTraitOptions,
+  MagickPolicyOptions,
+  MagickPolicyDomainOptions,
+  MagickPolicyRightsOptions,
+  MagickPreviewOptions,
+  MagickPrimitiveOptions,
+  MagickQuantumFormatOptions,
+  MagickResolutionOptions,
+  MagickResourceOptions,
+  MagickSparseColorOptions,
+  MagickStatisticOptions,
+  MagickStorageOptions,
+  MagickStretchOptions,
+  MagickStyleOptions,
+  MagickThresholdOptions,
+  MagickTypeOptions,
+  MagickValidateOptions,
+  MagickVirtualPixelOptions,
+  MagickWeightOptions,
+  MagickAutoThresholdOptions,
+  MagickToolOptions,
+  MagickCLIOptions,
+  MagickIlluminantOptions,
+  MagickWordBreakOptions,
+  MagickPagesizeOptions
+} CommandOption;
+
+typedef enum
+{
+  UndefinedValidate,
+  NoValidate = 0x00000,
+  ColorspaceValidate = 0x00001,
+  CompareValidate = 0x00002,
+  CompositeValidate = 0x00004,
+  ConvertValidate = 0x00008,
+  FormatsDiskValidate = 0x00010,
+  FormatsMapValidate = 0x00020,
+  FormatsMemoryValidate = 0x00040,
+  IdentifyValidate = 0x00080,
+  ImportExportValidate = 0x00100,
+  MontageValidate = 0x00200,
+  StreamValidate = 0x00400,
+  MagickValidate = 0x00800,
+  AllValidate = 0x7fffffff
+} ValidateType;
+
+
+
+
+
+
+typedef enum
+{
+  UndefinedOptionFlag = 0x0000,
+
+  ImageInfoOptionFlag = 0x0001,
+  DrawInfoOptionFlag = 0x0002,
+  QuantizeInfoOptionFlag = 0x0004,
+  GlobalOptionFlag = 0x0008,
+  SettingOptionFlags = 0x000F,
+
+  NoImageOperatorFlag = 0x0010,
+  SimpleOperatorFlag = 0x0020,
+  ListOperatorFlag = 0x0040,
+  GenesisOptionFlag = 0x0080,
+
+  SpecialOptionFlag = 0x0100,
+
+
+  AlwaysInterpretArgsFlag = 0x0400,
+
+  NeverInterpretArgsFlag = 0x0800,
+
+
+  NonMagickOptionFlag = 0x1000,
+  FireOptionFlag = 0x2000,
+  DeprecateOptionFlag = 0x4000,
+  ReplacedOptionFlag = 0x8800
+
+} CommandOptionFlags;
+
+typedef struct _OptionInfo
+{
+  const char
+    *mnemonic;
+
+  ssize_t
+    type,
+    flags;
+
+  MagickBooleanType
+    stealth;
+} OptionInfo;
+
+
+extern __attribute__ ((visibility ("default"))) char
+  **GetCommandOptions(const CommandOption),
+  *GetNextImageOption(const ImageInfo *),
+  *RemoveImageOption(ImageInfo *,const char *);
+
+extern __attribute__ ((visibility ("default"))) const char
+  *CommandOptionToMnemonic(const CommandOption,const ssize_t),
+  *GetImageOption(const ImageInfo *,const char *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  CloneImageOptions(ImageInfo *,const ImageInfo *),
+  DefineImageOption(ImageInfo *,const char *),
+  DeleteImageOption(ImageInfo *,const char *),
+  IsCommandOption(const char *),
+  IsOptionMember(const char *,const char *),
+  ListCommandOptions(FILE *,const CommandOption,ExceptionInfo *),
+  SetImageOption(ImageInfo *,const char *,const char *);
+
+extern __attribute__ ((visibility ("default"))) ssize_t
+  GetCommandOptionFlags(const CommandOption,const MagickBooleanType,
+    const char *),
+  ParseChannelOption(const char *),
+  ParsePixelChannelOption(const char *),
+  ParseCommandOption(const CommandOption,const MagickBooleanType,const char *);
+
+extern __attribute__ ((visibility ("default"))) void
+  DestroyImageOptions(ImageInfo *),
+  ResetImageOptions(const ImageInfo *),
+  ResetImageOptionIterator(const ImageInfo *);
+
+extern __attribute__ ((visibility ("default"))) const OptionInfo
+  *GetCommandOptionInfo(const char *value);
+# 66 "MagickCore/blob.c" 2
+# 1 "./MagickCore/policy.h" 1
+# 28 "./MagickCore/policy.h"
+typedef enum
+{
+  UndefinedPolicyDomain,
+  CoderPolicyDomain,
+  DelegatePolicyDomain,
+  FilterPolicyDomain,
+  PathPolicyDomain,
+  ResourcePolicyDomain,
+  SystemPolicyDomain,
+  CachePolicyDomain,
+  ModulePolicyDomain
+} PolicyDomain;
+
+typedef enum
+{
+  UndefinedPolicyRights = 0x00,
+  NoPolicyRights = 0x00,
+  ReadPolicyRights = 0x01,
+  WritePolicyRights = 0x02,
+  ExecutePolicyRights = 0x04,
+  AllPolicyRights = 0xff
+} PolicyRights;
+
+typedef struct _PolicyInfo
+  PolicyInfo;
+
+extern __attribute__ ((visibility ("default"))) char
+  *GetPolicyValue(const char *),
+  **GetPolicyList(const char *,size_t *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) const PolicyInfo
+  **GetPolicyInfoList(const char *,size_t *,ExceptionInfo *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  IsRightsAuthorized(const PolicyDomain,const PolicyRights,const char *),
+  ListPolicyInfo(FILE *,ExceptionInfo *),
+  SetMagickSecurityPolicy(const char *,ExceptionInfo *),
+  SetMagickSecurityPolicyValue(const PolicyDomain,const char *,const char *,
+    ExceptionInfo *);
+# 67 "MagickCore/blob.c" 2
+# 1 "./MagickCore/resource_.h" 1
+# 25 "./MagickCore/resource_.h"
+typedef enum
+{
+  UndefinedResource,
+  AreaResource,
+  DiskResource,
+  FileResource,
+  HeightResource,
+  MapResource,
+  MemoryResource,
+  ThreadResource,
+  ThrottleResource,
+  TimeResource,
+  WidthResource,
+  ListLengthResource
+} ResourceType;
+
+
+
+extern __attribute__ ((visibility ("default"))) int
+  AcquireUniqueFileResource(char *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  AcquireMagickResource(const ResourceType,const MagickSizeType),
+  GetPathTemplate(char *),
+  ListMagickResourceInfo(FILE *,ExceptionInfo *),
+  RelinquishUniqueFileResource(const char *),
+  SetMagickResourceLimit(const ResourceType,const MagickSizeType);
+
+extern __attribute__ ((visibility ("default"))) MagickSizeType
+  GetMagickResource(const ResourceType),
+  GetMagickResourceLimit(const ResourceType);
+
+extern __attribute__ ((visibility ("default"))) void
+  RelinquishMagickResource(const ResourceType,const MagickSizeType);
+# 68 "MagickCore/blob.c" 2
+
+
+# 1 "./MagickCore/string-private.h" 1
+# 28 "./MagickCore/string-private.h"
+static inline double SiPrefixToDoubleInterval(const char *string,
+  const double interval)
+{
+  char
+    *q;
+
+  double
+    value;
+
+  value=InterpretSiPrefixValue(string,&q);
+  if (*q == '%')
+    value*=interval/100.0;
+  return(value);
+}
+
+static inline double StringToDouble(const char *__restrict__ string,
+  char *__restrict__ *sentinel)
+{
+  return(InterpretLocaleValue(string,sentinel));
+}
+
+static inline const char *StringLocateSubstring(const char *haystack,
+  const char *needle)
+{
+
+  return(strcasestr(haystack,needle));
+# 86 "./MagickCore/string-private.h"
+}
+
+static inline double StringToDoubleInterval(const char *string,
+  const double interval)
+{
+  char
+    *q;
+
+  double
+    value;
+
+  value=InterpretLocaleValue(string,&q);
+  if (*q == '%')
+    value*=interval/100.0;
+  return(value);
+}
+
+static inline int StringToInteger(const char *__restrict__ value)
+{
+  if (value == (const char *) 
+# 105 "./MagickCore/string-private.h" 3 4
+                             ((void *)0)
+# 105 "./MagickCore/string-private.h"
+                                 )
+    return(0);
+  return((int) strtol(value,(char **) 
+# 107 "./MagickCore/string-private.h" 3 4
+                                     ((void *)0)
+# 107 "./MagickCore/string-private.h"
+                                         ,10));
+}
+
+static inline long StringToLong(const char *__restrict__ value)
+{
+  if (value == (const char *) 
+# 112 "./MagickCore/string-private.h" 3 4
+                             ((void *)0)
+# 112 "./MagickCore/string-private.h"
+                                 )
+    return(0);
+  return(strtol(value,(char **) 
+# 114 "./MagickCore/string-private.h" 3 4
+                               ((void *)0)
+# 114 "./MagickCore/string-private.h"
+                                   ,10));
+}
+
+static inline MagickOffsetType StringToMagickOffsetType(const char *string,
+  const double interval)
+{
+  double
+    value;
+
+  value=SiPrefixToDoubleInterval(string,interval);
+  if (value >= (double) ((MagickSizeType) (~0ULL)))
+    return((MagickOffsetType) ((MagickSizeType) (~0ULL)));
+  return((MagickOffsetType) value);
+}
+
+static inline MagickSizeType StringToMagickSizeType(const char *string,
+  const double interval)
+{
+  double
+    value;
+
+  value=SiPrefixToDoubleInterval(string,interval);
+  if (value >= (double) ((MagickSizeType) (~0ULL)))
+    return(((MagickSizeType) (~0ULL)));
+  return((MagickSizeType) value);
+}
+
+static inline size_t StringToSizeType(const char *string,const double interval)
+{
+  double
+    value;
+
+  value=SiPrefixToDoubleInterval(string,interval);
+  if (value >= (double) ((MagickSizeType) (~0ULL)))
+    return(~0UL);
+  return((size_t) value);
+}
+
+static inline unsigned long StringToUnsignedLong(
+  const char *__restrict__ value)
+{
+  if (value == (const char *) 
+# 155 "./MagickCore/string-private.h" 3 4
+                             ((void *)0)
+# 155 "./MagickCore/string-private.h"
+                                 )
+    return(0);
+  return(strtoul(value,(char **) 
+# 157 "./MagickCore/string-private.h" 3 4
+                                ((void *)0)
+# 157 "./MagickCore/string-private.h"
+                                    ,10));
+}
+# 71 "MagickCore/blob.c" 2
+# 1 "./MagickCore/timer-private.h" 1
+# 27 "./MagickCore/timer-private.h"
+static inline void GetMagickUTCTime(const time_t *timep,struct tm *result)
+{
+
+  (void) gmtime_r(timep,result);
+# 41 "./MagickCore/timer-private.h"
+}
+
+static inline void GetMagickLocaltime(const time_t *timep,struct tm *result)
+{
+
+  (void) localtime_r(timep,result);
+# 57 "./MagickCore/timer-private.h"
+}
+
+extern __attribute__ ((visibility ("default"))) time_t
+  GetMagickTime(void);
+
+static inline MagickBooleanType IsImageTTLExpired(const Image* image)
+{
+  if ((image->ttl != (time_t) 0) &&
+      (image->timestamp+image->ttl) < GetMagickTime())
+    return(MagickTrue);
+  return(MagickFalse);
+}
+
+static inline time_t ParseMagickTimeToLive(const char *time_to_live)
+{
+  char
+    *q;
+
+  time_t
+    ttl;
+
+
+
+
+  ttl=(time_t) InterpretLocaleValue(time_to_live,&q);
+  if (q != time_to_live)
+    {
+      while (
+# 84 "./MagickCore/timer-private.h" 3 4
+            ((*__ctype_b_loc ())[(int) ((
+# 84 "./MagickCore/timer-private.h"
+            (int) ((unsigned char) *q)
+# 84 "./MagickCore/timer-private.h" 3 4
+            ))] & (unsigned short int) _ISspace) 
+# 84 "./MagickCore/timer-private.h"
+                                                != 0)
+        q++;
+      if (LocaleNCompare(q,"second",6) == 0)
+        ttl*=1;
+      if (LocaleNCompare(q,"minute",6) == 0)
+        ttl*=60;
+      if (LocaleNCompare(q,"hour",4) == 0)
+        ttl*=3600;
+      if (LocaleNCompare(q,"day",3) == 0)
+        ttl*=86400;
+      if (LocaleNCompare(q,"week",4) == 0)
+        ttl*=604800;
+      if (LocaleNCompare(q,"month",5) == 0)
+        ttl*=2628000;
+      if (LocaleNCompare(q,"year",4) == 0)
+        ttl*=31536000;
+   }
+  return(ttl);
+}
+
+extern __attribute__ ((visibility ("hidden"))) void
+  SetMagickDatePrecision(const unsigned long);
+# 72 "MagickCore/blob.c" 2
+# 1 "./MagickCore/token.h" 1
+# 28 "./MagickCore/token.h"
+typedef struct _TokenInfo
+  TokenInfo;
+
+extern __attribute__ ((visibility ("default"))) int
+  Tokenizer(TokenInfo *,const unsigned int,char *,const size_t,const char *,
+    const char *,const char *,const char *,const char,char *,int *,char *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  GlobExpression(const char *__restrict__,const char *__restrict__,
+    const MagickBooleanType) __attribute__((__pure__));
+
+extern __attribute__ ((visibility ("default"))) size_t
+  GetNextToken(const char *__restrict__,const char **__restrict__,
+    const size_t,char *__restrict__) __attribute__((__hot__));
+
+extern __attribute__ ((visibility ("default"))) TokenInfo
+  *AcquireTokenInfo(void),
+  *DestroyTokenInfo(TokenInfo *);
+# 73 "MagickCore/blob.c" 2
+# 1 "./MagickCore/utility.h" 1
+# 25 "./MagickCore/utility.h"
+typedef enum
+{
+  UndefinedPath,
+  MagickPath,
+  RootPath,
+  HeadPath,
+  TailPath,
+  BasePath,
+  ExtensionPath,
+  SubimagePath,
+  CanonicalPath,
+  SubcanonicalPath,
+  BasePathSansCompressExtension
+} PathType;
+
+extern __attribute__ ((visibility ("default"))) char
+  *Base64Encode(const unsigned char *,const size_t,size_t *);
+
+extern __attribute__ ((visibility ("default"))) MagickBooleanType
+  AcquireUniqueFilename(char *),
+  AcquireUniqueSymbolicLink(const char *,char *),
+  ExpandFilenames(int *,char ***),
+  GetPathAttributes(const char *,void *),
+  IsPathAccessible(const char *);
+
+extern __attribute__ ((visibility ("default"))) size_t
+  MultilineCensus(const char *) __attribute__((__pure__));
+
+extern __attribute__ ((visibility ("default"))) unsigned char
+  *Base64Decode(const char *, size_t *);
+
+extern __attribute__ ((visibility ("default"))) void
+  AppendImageFormat(const char *,char *),
+  GetPathComponent(const char *,PathType,char *),
+  MagickDelay(const MagickSizeType);
+# 74 "MagickCore/blob.c" 2
+# 1 "./MagickCore/utility-private.h" 1
+# 22 "./MagickCore/utility-private.h"
+# 1 "./MagickCore/nt-base.h" 1
+# 23 "./MagickCore/utility-private.h" 2
+
+
+# 1 "/usr/include/utime.h" 1 3 4
+# 27 "/usr/include/utime.h" 3 4
+
+# 36 "/usr/include/utime.h" 3 4
+
+# 36 "/usr/include/utime.h" 3 4
+struct utimbuf
+  {
+
+
+
+
+    __time_t actime;
+    __time_t modtime;
+
+  };
+
+
+
+
+extern int utime (const char *__file,
+    const struct utimbuf *__file_times)
+     __attribute__ ((__nothrow__ , __leaf__)) __attribute__ ((__nonnull__ (1)));
+# 64 "/usr/include/utime.h" 3 4
+
+# 26 "./MagickCore/utility-private.h" 2
+
+
+
+
+
+
+
+# 32 "./MagickCore/utility-private.h"
+extern __attribute__ ((visibility ("hidden"))) char
+  **GetPathComponents(const char *,size_t *),
+  **ListFiles(const char *,const char *,size_t *);
+
+extern __attribute__ ((visibility ("hidden"))) MagickBooleanType
+  GetExecutionPath(char *,const size_t),
+  ShredFile(const char *);
+
+extern __attribute__ ((visibility ("hidden"))) ssize_t
+  GetMagickPageSize(void);
+
+extern __attribute__ ((visibility ("hidden"))) void
+  ChopPathComponents(char *,const size_t),
+  ExpandFilename(char *);
+
+static inline int MagickReadDirectory(DIR *directory,struct dirent *entry,
+  struct dirent **result)
+{
+  (void) entry;
+  
+# 51 "./MagickCore/utility-private.h" 3 4
+ (*__errno_location ())
+# 51 "./MagickCore/utility-private.h"
+      =0;
+  *result=readdir(directory);
+  return(
+# 53 "./MagickCore/utility-private.h" 3 4
+        (*__errno_location ())
+# 53 "./MagickCore/utility-private.h"
+             );
+}
+# 128 "./MagickCore/utility-private.h"
+static inline int access_utf8(const char *path,int mode)
+{
+  if (path == (const char *) 
+# 130 "./MagickCore/utility-private.h" 3 4
+                            ((void *)0)
+# 130 "./MagickCore/utility-private.h"
+                                )
+    return(-1);
+
+  return(access(path,mode));
+# 148 "./MagickCore/utility-private.h"
+}
+
+static inline FILE *fopen_utf8(const char *path,const char *mode)
+{
+
+  return(fopen(path,mode));
+# 176 "./MagickCore/utility-private.h"
+}
+
+static inline void getcwd_utf8(char *path,size_t extent)
+{
+
+  char
+    *directory;
+
+   directory=getcwd(path,extent);
+   (void) directory;
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+static inline int open_utf8(const char *path,int flags,mode_t mode)
+{
+
+  return(open(path,flags,mode));
+# 219 "./MagickCore/utility-private.h"
+}
+
+static inline FILE *popen_utf8(const char *command,const char *type)
+{
+
+  return(popen(command,type));
+# 253 "./MagickCore/utility-private.h"
+}
+
+static inline int remove_utf8(const char *path)
+{
+
+  return(unlink(path));
+# 273 "./MagickCore/utility-private.h"
+}
+
+static inline int rename_utf8(const char *source,const char *destination)
+{
+
+  return(rename(source,destination));
+# 301 "./MagickCore/utility-private.h"
+}
+
+static inline int set_file_timestamp(const char *path,struct stat *attributes)
+{
+  int
+    status;
+# 316 "./MagickCore/utility-private.h"
+  struct timespec
+    timestamp[2];
+
+  timestamp[0].tv_sec=attributes->st_atim.tv_sec;
+  timestamp[0].tv_nsec=attributes->st_atim.tv_nsec;
+  timestamp[1].tv_sec=attributes->st_mtim.tv_sec;
+  timestamp[1].tv_nsec=attributes->st_mtim.tv_nsec;
+  status=utimensat(
+# 323 "./MagickCore/utility-private.h" 3 4
+                  -100
+# 323 "./MagickCore/utility-private.h"
+                          ,path,timestamp,0);
+# 373 "./MagickCore/utility-private.h"
+  return(status);
+}
+
+static inline int stat_utf8(const char *path,struct stat *attributes)
+{
+
+  return(stat(path,attributes));
+# 394 "./MagickCore/utility-private.h"
+}
+# 75 "MagickCore/blob.c" 2
+
+# 1 "/usr/include/zlib.h" 1 3 4
+# 34 "/usr/include/zlib.h" 3 4
+# 1 "/usr/include/zconf.h" 1 3 4
+# 254 "/usr/include/zconf.h" 3 4
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h" 1 3 4
+# 255 "/usr/include/zconf.h" 2 3 4
+     
+# 255 "/usr/include/zconf.h" 3 4
+    typedef size_t z_size_t;
+# 393 "/usr/include/zconf.h" 3 4
+typedef unsigned char Byte;
+
+typedef unsigned int uInt;
+typedef unsigned long uLong;
+
+
+
+
+
+   typedef Byte Bytef;
+
+typedef char charf;
+typedef int intf;
+typedef uInt uIntf;
+typedef uLong uLongf;
+
+
+   typedef void const *voidpc;
+   typedef void *voidpf;
+   typedef void *voidp;
+
+
+
+
+
+
+
+# 1 "/usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h" 1 3 4
+# 421 "/usr/include/zconf.h" 2 3 4
+# 431 "/usr/include/zconf.h" 3 4
+   typedef unsigned z_crc_t;
+# 35 "/usr/include/zlib.h" 2 3 4
+# 81 "/usr/include/zlib.h" 3 4
+typedef voidpf (*alloc_func)(voidpf opaque, uInt items, uInt size);
+typedef void (*free_func)(voidpf opaque, voidpf address);
+
+struct internal_state;
+
+typedef struct z_stream_s {
+    Bytef *next_in;
+    uInt avail_in;
+    uLong total_in;
+
+    Bytef *next_out;
+    uInt avail_out;
+    uLong total_out;
+
+    char *msg;
+    struct internal_state *state;
+
+    alloc_func zalloc;
+    free_func zfree;
+    voidpf opaque;
+
+    int data_type;
+
+    uLong adler;
+    uLong reserved;
+} z_stream;
+
+typedef z_stream *z_streamp;
+
+
+
+
+
+typedef struct gz_header_s {
+    int text;
+    uLong time;
+    int xflags;
+    int os;
+    Bytef *extra;
+    uInt extra_len;
+    uInt extra_max;
+    Bytef *name;
+    uInt name_max;
+    Bytef *comment;
+    uInt comm_max;
+    int hcrc;
+    int done;
+
+} gz_header;
+
+typedef gz_header *gz_headerp;
+# 220 "/usr/include/zlib.h" 3 4
+extern const char * zlibVersion(void);
+# 250 "/usr/include/zlib.h" 3 4
+extern int deflate(z_streamp strm, int flush);
+# 363 "/usr/include/zlib.h" 3 4
+extern int deflateEnd(z_streamp strm);
+# 401 "/usr/include/zlib.h" 3 4
+extern int inflate(z_streamp strm, int flush);
+# 521 "/usr/include/zlib.h" 3 4
+extern int inflateEnd(z_streamp strm);
+# 611 "/usr/include/zlib.h" 3 4
+extern int deflateSetDictionary(z_streamp strm,
+                                         const Bytef *dictionary,
+                                         uInt dictLength);
+# 655 "/usr/include/zlib.h" 3 4
+extern int deflateGetDictionary(z_streamp strm,
+                                         Bytef *dictionary,
+                                         uInt *dictLength);
+# 677 "/usr/include/zlib.h" 3 4
+extern int deflateCopy(z_streamp dest,
+                                z_streamp source);
+# 695 "/usr/include/zlib.h" 3 4
+extern int deflateReset(z_streamp strm);
+# 706 "/usr/include/zlib.h" 3 4
+extern int deflateParams(z_streamp strm,
+                                  int level,
+                                  int strategy);
+# 744 "/usr/include/zlib.h" 3 4
+extern int deflateTune(z_streamp strm,
+                                int good_length,
+                                int max_lazy,
+                                int nice_length,
+                                int max_chain);
+# 761 "/usr/include/zlib.h" 3 4
+extern uLong deflateBound(z_streamp strm,
+                                   uLong sourceLen);
+# 776 "/usr/include/zlib.h" 3 4
+extern int deflatePending(z_streamp strm,
+                                   unsigned *pending,
+                                   int *bits);
+# 791 "/usr/include/zlib.h" 3 4
+extern int deflatePrime(z_streamp strm,
+                                 int bits,
+                                 int value);
+# 808 "/usr/include/zlib.h" 3 4
+extern int deflateSetHeader(z_streamp strm,
+                                     gz_headerp head);
+# 888 "/usr/include/zlib.h" 3 4
+extern int inflateSetDictionary(z_streamp strm,
+                                         const Bytef *dictionary,
+                                         uInt dictLength);
+# 911 "/usr/include/zlib.h" 3 4
+extern int inflateGetDictionary(z_streamp strm,
+                                         Bytef *dictionary,
+                                         uInt *dictLength);
+# 926 "/usr/include/zlib.h" 3 4
+extern int inflateSync(z_streamp strm);
+# 945 "/usr/include/zlib.h" 3 4
+extern int inflateCopy(z_streamp dest,
+                                z_streamp source);
+# 961 "/usr/include/zlib.h" 3 4
+extern int inflateReset(z_streamp strm);
+# 972 "/usr/include/zlib.h" 3 4
+extern int inflateReset2(z_streamp strm,
+                                  int windowBits);
+# 986 "/usr/include/zlib.h" 3 4
+extern int inflatePrime(z_streamp strm,
+                                 int bits,
+                                 int value);
+# 1007 "/usr/include/zlib.h" 3 4
+extern long inflateMark(z_streamp strm);
+# 1035 "/usr/include/zlib.h" 3 4
+extern int inflateGetHeader(z_streamp strm,
+                                     gz_headerp head);
+# 1097 "/usr/include/zlib.h" 3 4
+typedef unsigned (*in_func)(void *,
+                            unsigned char * *);
+typedef int (*out_func)(void *, unsigned char *, unsigned);
+
+extern int inflateBack(z_streamp strm,
+                                in_func in, void *in_desc,
+                                out_func out, void *out_desc);
+# 1171 "/usr/include/zlib.h" 3 4
+extern int inflateBackEnd(z_streamp strm);
+
+
+
+
+
+
+
+extern uLong zlibCompileFlags(void);
+# 1232 "/usr/include/zlib.h" 3 4
+extern int compress(Bytef *dest, uLongf *destLen,
+                             const Bytef *source, uLong sourceLen);
+# 1247 "/usr/include/zlib.h" 3 4
+extern int compress2(Bytef *dest, uLongf *destLen,
+                              const Bytef *source, uLong sourceLen,
+                              int level);
+# 1263 "/usr/include/zlib.h" 3 4
+extern uLong compressBound(uLong sourceLen);
+
+
+
+
+
+
+extern int uncompress(Bytef *dest, uLongf *destLen,
+                               const Bytef *source, uLong sourceLen);
+# 1288 "/usr/include/zlib.h" 3 4
+extern int uncompress2(Bytef *dest, uLongf *destLen,
+                                const Bytef *source, uLong *sourceLen);
+# 1305 "/usr/include/zlib.h" 3 4
+typedef struct gzFile_s *gzFile;
+# 1345 "/usr/include/zlib.h" 3 4
+extern gzFile gzdopen(int fd, const char *mode);
+# 1368 "/usr/include/zlib.h" 3 4
+extern int gzbuffer(gzFile file, unsigned size);
+# 1384 "/usr/include/zlib.h" 3 4
+extern int gzsetparams(gzFile file, int level, int strategy);
+# 1395 "/usr/include/zlib.h" 3 4
+extern int gzread(gzFile file, voidp buf, unsigned len);
+# 1425 "/usr/include/zlib.h" 3 4
+extern z_size_t gzfread(voidp buf, z_size_t size, z_size_t nitems,
+                                 gzFile file);
+# 1451 "/usr/include/zlib.h" 3 4
+extern int gzwrite(gzFile file, voidpc buf, unsigned len);
+
+
+
+
+
+extern z_size_t gzfwrite(voidpc buf, z_size_t size,
+                                  z_size_t nitems, gzFile file);
+# 1471 "/usr/include/zlib.h" 3 4
+extern int gzprintf(gzFile file, const char *format, ...);
+# 1486 "/usr/include/zlib.h" 3 4
+extern int gzputs(gzFile file, const char *s);
+
+
+
+
+
+
+
+extern char * gzgets(gzFile file, char *buf, int len);
+# 1508 "/usr/include/zlib.h" 3 4
+extern int gzputc(gzFile file, int c);
+
+
+
+
+
+extern int gzgetc(gzFile file);
+# 1523 "/usr/include/zlib.h" 3 4
+extern int gzungetc(int c, gzFile file);
+# 1535 "/usr/include/zlib.h" 3 4
+extern int gzflush(gzFile file, int flush);
+# 1570 "/usr/include/zlib.h" 3 4
+extern int gzrewind(gzFile file);
+# 1598 "/usr/include/zlib.h" 3 4
+extern int gzeof(gzFile file);
+# 1613 "/usr/include/zlib.h" 3 4
+extern int gzdirect(gzFile file);
+# 1634 "/usr/include/zlib.h" 3 4
+extern int gzclose(gzFile file);
+# 1647 "/usr/include/zlib.h" 3 4
+extern int gzclose_r(gzFile file);
+extern int gzclose_w(gzFile file);
+# 1659 "/usr/include/zlib.h" 3 4
+extern const char * gzerror(gzFile file, int *errnum);
+# 1675 "/usr/include/zlib.h" 3 4
+extern void gzclearerr(gzFile file);
+# 1692 "/usr/include/zlib.h" 3 4
+extern uLong adler32(uLong adler, const Bytef *buf, uInt len);
+# 1712 "/usr/include/zlib.h" 3 4
+extern uLong adler32_z(uLong adler, const Bytef *buf,
+                                z_size_t len);
+# 1730 "/usr/include/zlib.h" 3 4
+extern uLong crc32(uLong crc, const Bytef *buf, uInt len);
+# 1748 "/usr/include/zlib.h" 3 4
+extern uLong crc32_z(uLong crc, const Bytef *buf,
+                              z_size_t len);
+# 1771 "/usr/include/zlib.h" 3 4
+extern uLong crc32_combine_op(uLong crc1, uLong crc2, uLong op);
+# 1784 "/usr/include/zlib.h" 3 4
+extern int deflateInit_(z_streamp strm, int level,
+                                 const char *version, int stream_size);
+extern int inflateInit_(z_streamp strm,
+                                 const char *version, int stream_size);
+extern int deflateInit2_(z_streamp strm, int level, int method,
+                                  int windowBits, int memLevel,
+                                  int strategy, const char *version,
+                                  int stream_size);
+extern int inflateInit2_(z_streamp strm, int windowBits,
+                                  const char *version, int stream_size);
+extern int inflateBackInit_(z_streamp strm, int windowBits,
+                                     unsigned char *window,
+                                     const char *version,
+                                     int stream_size);
+# 1837 "/usr/include/zlib.h" 3 4
+struct gzFile_s {
+    unsigned have;
+    unsigned char *next;
+    off64_t pos;
+};
+extern int gzgetc_(gzFile file);
+# 1859 "/usr/include/zlib.h" 3 4
+   extern gzFile gzopen64(const char *, const char *);
+   extern off64_t gzseek64(gzFile, off64_t, int);
+   extern off64_t gztell64(gzFile);
+   extern off64_t gzoffset64(gzFile);
+   extern uLong adler32_combine64(uLong, uLong, off64_t);
+   extern uLong crc32_combine64(uLong, uLong, off64_t);
+   extern uLong crc32_combine_gen64(off64_t);
+# 1896 "/usr/include/zlib.h" 3 4
+   extern gzFile gzopen(const char *, const char *);
+   extern off_t gzseek(gzFile, off_t, int);
+   extern off_t gztell(gzFile);
+   extern off_t gzoffset(gzFile);
+   extern uLong adler32_combine(uLong, uLong, off_t);
+   extern uLong crc32_combine(uLong, uLong, off_t);
+   extern uLong crc32_combine_gen(off_t);
+# 1914 "/usr/include/zlib.h" 3 4
+extern const char * zError(int);
+extern int inflateSyncPoint(z_streamp);
+extern const z_crc_t * get_crc_table(void);
+extern int inflateUndermine(z_streamp, int);
+extern int inflateValidate(z_streamp, int);
+extern unsigned long inflateCodesUsed(z_streamp);
+extern int inflateResetKeep(z_streamp);
+extern int deflateResetKeep(z_streamp);
+
+
+
+
+
+
+extern int gzvprintf(gzFile file,
+                                           const char *format,
+                                           va_list va);
+# 77 "MagickCore/blob.c" 2
+
+
+# 1 "/usr/include/bzlib.h" 1 3 4
+# 48 "/usr/include/bzlib.h" 3 4
+typedef
+   struct {
+      char *next_in;
+      unsigned int avail_in;
+      unsigned int total_in_lo32;
+      unsigned int total_in_hi32;
+
+      char *next_out;
+      unsigned int avail_out;
+      unsigned int total_out_lo32;
+      unsigned int total_out_hi32;
+
+      void *state;
+
+      void *(*bzalloc)(void *,int,int);
+      void (*bzfree)(void *,void *);
+      void *opaque;
+   }
+   bz_stream;
+# 100 "/usr/include/bzlib.h" 3 4
+extern int BZ2_bzCompressInit (
+      bz_stream* strm,
+      int blockSize100k,
+      int verbosity,
+      int workFactor
+   );
+
+extern int BZ2_bzCompress (
+      bz_stream* strm,
+      int action
+   );
+
+extern int BZ2_bzCompressEnd (
+      bz_stream* strm
+   );
+
+extern int BZ2_bzDecompressInit (
+      bz_stream *strm,
+      int verbosity,
+      int small
+   );
+
+extern int BZ2_bzDecompress (
+      bz_stream* strm
+   );
+
+extern int BZ2_bzDecompressEnd (
+      bz_stream *strm
+   );
+# 137 "/usr/include/bzlib.h" 3 4
+typedef void BZFILE;
+
+extern BZFILE* BZ2_bzReadOpen (
+      int* bzerror,
+      FILE* f,
+      int verbosity,
+      int small,
+      void* unused,
+      int nUnused
+   );
+
+extern void BZ2_bzReadClose (
+      int* bzerror,
+      BZFILE* b
+   );
+
+extern void BZ2_bzReadGetUnused (
+      int* bzerror,
+      BZFILE* b,
+      void** unused,
+      int* nUnused
+   );
+
+extern int BZ2_bzRead (
+      int* bzerror,
+      BZFILE* b,
+      void* buf,
+      int len
+   );
+
+extern BZFILE* BZ2_bzWriteOpen (
+      int* bzerror,
+      FILE* f,
+      int blockSize100k,
+      int verbosity,
+      int workFactor
+   );
+
+extern void BZ2_bzWrite (
+      int* bzerror,
+      BZFILE* b,
+      void* buf,
+      int len
+   );
+
+extern void BZ2_bzWriteClose (
+      int* bzerror,
+      BZFILE* b,
+      int abandon,
+      unsigned int* nbytes_in,
+      unsigned int* nbytes_out
+   );
+
+extern void BZ2_bzWriteClose64 (
+      int* bzerror,
+      BZFILE* b,
+      int abandon,
+      unsigned int* nbytes_in_lo32,
+      unsigned int* nbytes_in_hi32,
+      unsigned int* nbytes_out_lo32,
+      unsigned int* nbytes_out_hi32
+   );
+
+
+
+
+
+extern int BZ2_bzBuffToBuffCompress (
+      char* dest,
+      unsigned int* destLen,
+      char* source,
+      unsigned int sourceLen,
+      int blockSize100k,
+      int verbosity,
+      int workFactor
+   );
+
+extern int BZ2_bzBuffToBuffDecompress (
+      char* dest,
+      unsigned int* destLen,
+      char* source,
+      unsigned int sourceLen,
+      int small,
+      int verbosity
+   );
+# 233 "/usr/include/bzlib.h" 3 4
+extern const char * BZ2_bzlibVersion (
+      void
+   );
+
+
+extern BZFILE * BZ2_bzopen (
+      const char *path,
+      const char *mode
+   );
+
+extern BZFILE * BZ2_bzdopen (
+      int fd,
+      const char *mode
+   );
+
+extern int BZ2_bzread (
+      BZFILE* b,
+      void* buf,
+      int len
+   );
+
+extern int BZ2_bzwrite (
+      BZFILE* b,
+      void* buf,
+      int len
+   );
+
+extern int BZ2_bzflush (
+      BZFILE* b
+   );
+
+extern void BZ2_bzclose (
+      BZFILE* b
+   );
+
+extern const char * BZ2_bzerror (
+      BZFILE *b,
+      int *errnum
+   );
+# 80 "MagickCore/blob.c" 2
+# 100 "MagickCore/blob.c"
+
+# 100 "MagickCore/blob.c"
 typedef union FileInfo
 {
   FILE
     *file;
 
-#if defined(MAGICKCORE_ZLIB_DELEGATE)
+
   gzFile
     gzfile;
-#endif
 
-#if defined(MAGICKCORE_BZLIB_DELEGATE)
+
+
   BZFILE
     *bzfile;
-#endif
+
 } FileInfo;
 
 struct _BlobInfo
@@ -194,160 +18560,124 @@ struct _CustomStreamInfo
   size_t
     signature;
 };
-
-/*
-  Forward declarations.
-*/
+
+
+
+
 static int
   SyncBlob(const Image *);
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   A c q u i r e C u s t o m S t r e a m I n f o                             %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  AcquireCustomStreamInfo() allocates the CustomStreamInfo structure.
-%
-%  The format of the AcquireCustomStreamInfo method is:
-%
-%      CustomStreamInfo *AcquireCustomStreamInfo(ExceptionInfo *exception)
-%
-%  A description of each parameter follows:
-%
-%    o exception: return any errors or warnings in this structure.
-%
-*/
-MagickExport CustomStreamInfo *AcquireCustomStreamInfo(
-  ExceptionInfo *magick_unused(exception))
+# 226 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) CustomStreamInfo *AcquireCustomStreamInfo(
+  ExceptionInfo *magick_unused_exception __attribute__((unused)))
 {
   CustomStreamInfo
     *custom_stream;
 
-  magick_unreferenced(exception);
+  ;
   custom_stream=(CustomStreamInfo *) AcquireCriticalMemory(
     sizeof(*custom_stream));
   (void) memset(custom_stream,0,sizeof(*custom_stream));
-  custom_stream->signature=MagickCoreSignature;
+  custom_stream->signature=0xabacadabUL;
   return(custom_stream);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   A t t a c h B l o b                                                       %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  AttachBlob() attaches a blob to the BlobInfo structure.
-%
-%  The format of the AttachBlob method is:
-%
-%      void AttachBlob(BlobInfo *blob_info,const void *blob,const size_t length)
-%
-%  A description of each parameter follows:
-%
-%    o blob_info: Specifies a pointer to a BlobInfo structure.
-%
-%    o blob: the address of a character stream in one of the image formats
-%      understood by ImageMagick.
-%
-%    o length: This size_t integer reflects the length in bytes of the blob.
-%
-*/
-MagickExport void AttachBlob(BlobInfo *blob_info,const void *blob,
+# 267 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void AttachBlob(BlobInfo *blob_info,const void *blob,
   const size_t length)
 {
-  assert(blob_info != (BlobInfo *) NULL);
+  
+# 270 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 270 "MagickCore/blob.c"
+ blob_info != (BlobInfo *) 
+# 270 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 270 "MagickCore/blob.c"
+ blob_info != (BlobInfo *) 
+# 270 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 270 "MagickCore/blob.c"
+ "blob_info != (BlobInfo *) NULL"
+# 270 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 270, __extension__ __PRETTY_FUNCTION__); }))
+# 270 "MagickCore/blob.c"
+                                       ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 272,"...");
   blob_info->length=length;
   blob_info->extent=length;
-  blob_info->quantum=(size_t) MagickMaxBlobExtent;
+  blob_info->quantum=(size_t) (8*8192);
   blob_info->offset=0;
   blob_info->type=BlobStream;
-  blob_info->file_info.file=(FILE *) NULL;
+  blob_info->file_info.file=(FILE *) 
+# 278 "MagickCore/blob.c" 3 4
+                                    ((void *)0)
+# 278 "MagickCore/blob.c"
+                                        ;
   blob_info->data=(unsigned char *) blob;
   blob_info->mapped=MagickFalse;
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   A t t a c h C u s t o m S t r e a m                                       %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  AttachCustomStream() attaches a CustomStreamInfo to the BlobInfo structure.
-%
-%  The format of the AttachCustomStream method is:
-%
-%      void AttachCustomStream(BlobInfo *blob_info,
-%        CustomStreamInfo *custom_stream)
-%
-%  A description of each parameter follows:
-%
-%    o blob_info: specifies a pointer to a BlobInfo structure.
-%
-%    o custom_stream: the custom stream info.
-%
-*/
-MagickExport void AttachCustomStream(BlobInfo *blob_info,
+# 308 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void AttachCustomStream(BlobInfo *blob_info,
   CustomStreamInfo *custom_stream)
 {
-  assert(blob_info != (BlobInfo *) NULL);
-  assert(custom_stream != (CustomStreamInfo *) NULL);
-  assert(custom_stream->signature == MagickCoreSignature);
+  
+# 311 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 311 "MagickCore/blob.c"
+ blob_info != (BlobInfo *) 
+# 311 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 311 "MagickCore/blob.c"
+ blob_info != (BlobInfo *) 
+# 311 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 311 "MagickCore/blob.c"
+ "blob_info != (BlobInfo *) NULL"
+# 311 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 311, __extension__ __PRETTY_FUNCTION__); }))
+# 311 "MagickCore/blob.c"
+                                       ;
+  
+# 312 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 312 "MagickCore/blob.c"
+ custom_stream != (CustomStreamInfo *) 
+# 312 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 312 "MagickCore/blob.c"
+ custom_stream != (CustomStreamInfo *) 
+# 312 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 312 "MagickCore/blob.c"
+ "custom_stream != (CustomStreamInfo *) NULL"
+# 312 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 312, __extension__ __PRETTY_FUNCTION__); }))
+# 312 "MagickCore/blob.c"
+                                                   ;
+  
+# 313 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 313 "MagickCore/blob.c"
+ custom_stream->signature == 0xabacadabUL
+# 313 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 313 "MagickCore/blob.c"
+ custom_stream->signature == 0xabacadabUL
+# 313 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 313 "MagickCore/blob.c"
+ "custom_stream->signature == MagickCoreSignature"
+# 313 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 313, __extension__ __PRETTY_FUNCTION__); }))
+# 313 "MagickCore/blob.c"
+                                                        ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 315,"...");
   blob_info->type=CustomStream;
   blob_info->custom_stream=custom_stream;
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   B l o b T o F i l e                                                       %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  BlobToFile() writes a blob to a file.  It returns MagickFalse if an error
-%  occurs otherwise MagickTrue.
-%
-%  The format of the BlobToFile method is:
-%
-%       MagickBooleanType BlobToFile(char *filename,const void *blob,
-%         const size_t length,ExceptionInfo *exception)
-%
-%  A description of each parameter follows:
-%
-%    o filename: Write the blob to this file.
-%
-%    o blob: the address of a blob.
-%
-%    o length: This length in bytes of the blob.
-%
-%    o exception: return any errors or warnings in this structure.
-%
-*/
-MagickExport MagickBooleanType BlobToFile(char *filename,const void *blob,
+# 350 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) MagickBooleanType BlobToFile(char *filename,const void *blob,
   const size_t length,ExceptionInfo *exception)
 {
   int
@@ -359,71 +18689,112 @@ MagickExport MagickBooleanType BlobToFile(char *filename,const void *blob,
   ssize_t
     count;
 
-  assert(filename != (const char *) NULL);
-  assert(blob != (const void *) NULL);
+  
+# 362 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 362 "MagickCore/blob.c"
+ filename != (const char *) 
+# 362 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 362 "MagickCore/blob.c"
+ filename != (const char *) 
+# 362 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 362 "MagickCore/blob.c"
+ "filename != (const char *) NULL"
+# 362 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 362, __extension__ __PRETTY_FUNCTION__); }))
+# 362 "MagickCore/blob.c"
+                                        ;
+  
+# 363 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 363 "MagickCore/blob.c"
+ blob != (const void *) 
+# 363 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 363 "MagickCore/blob.c"
+ blob != (const void *) 
+# 363 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 363 "MagickCore/blob.c"
+ "blob != (const void *) NULL"
+# 363 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 363, __extension__ __PRETTY_FUNCTION__); }))
+# 363 "MagickCore/blob.c"
+                                    ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 365,"%s",filename);
   if (*filename == '\0')
     file=AcquireUniqueFileResource(filename);
   else
-    file=open_utf8(filename,O_RDWR | O_CREAT | O_EXCL | O_BINARY,S_MODE);
+    file=open_utf8(filename,
+# 369 "MagickCore/blob.c" 3 4
+                           02 
+# 369 "MagickCore/blob.c"
+                                  | 
+# 369 "MagickCore/blob.c" 3 4
+                                    0100 
+# 369 "MagickCore/blob.c"
+                                            | 
+# 369 "MagickCore/blob.c" 3 4
+                                              0200 
+# 369 "MagickCore/blob.c"
+                                                     | 0x00,(
+# 369 "MagickCore/blob.c" 3 4
+                                                                0400 
+# 369 "MagickCore/blob.c"
+                                                                | 
+# 369 "MagickCore/blob.c" 3 4
+                                                                0200
+# 369 "MagickCore/blob.c"
+                                                                ));
   if (file == -1)
     {
-      ThrowFileException(exception,BlobError,"UnableToWriteBlob",filename);
+      { char *file_message; file_message=GetExceptionMessage(
+# 372 "MagickCore/blob.c" 3 4
+     (*__errno_location ())
+# 372 "MagickCore/blob.c"
+     ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 372,BlobError,"UnableToWriteBlob", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); };
       return(MagickFalse);
     }
   for (i=0; i < length; i+=(size_t) count)
   {
-    count=write(file,(const char *) blob+i,MagickMin(length-i,(size_t)
-      MAGICK_SSIZE_MAX));
+    count=write(file,(const char *) blob+i,(((length-i) < ((size_t) (0x7fffffffffffffffL
+# 377 "MagickCore/blob.c"
+                                          ))) ? (length-i) : ((size_t) (0x7fffffffffffffffL
+# 377 "MagickCore/blob.c"
+                                          )))
+                       );
     if (count <= 0)
       {
         count=0;
-        if (errno != EINTR)
+        if (
+# 382 "MagickCore/blob.c" 3 4
+           (*__errno_location ()) 
+# 382 "MagickCore/blob.c"
+                 != 
+# 382 "MagickCore/blob.c" 3 4
+                    4
+# 382 "MagickCore/blob.c"
+                         )
           break;
       }
   }
   file=close(file);
   if ((file == -1) || (i < length))
     {
-      ThrowFileException(exception,BlobError,"UnableToWriteBlob",filename);
+      { char *file_message; file_message=GetExceptionMessage(
+# 389 "MagickCore/blob.c" 3 4
+     (*__errno_location ())
+# 389 "MagickCore/blob.c"
+     ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 389,BlobError,"UnableToWriteBlob", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); };
       return(MagickFalse);
     }
   return(MagickTrue);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%   B l o b T o I m a g e                                                     %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  BlobToImage() implements direct to memory image formats.  It returns the
-%  blob as an image.
-%
-%  The format of the BlobToImage method is:
-%
-%      Image *BlobToImage(const ImageInfo *image_info,const void *blob,
-%        const size_t length,ExceptionInfo *exception)
-%
-%  A description of each parameter follows:
-%
-%    o image_info: the image info.
-%
-%    o blob: the address of a character stream in one of the image formats
-%      understood by ImageMagick.
-%
-%    o length: This size_t integer reflects the length in bytes of the blob.
-%
-%    o exception: return any errors or warnings in this structure.
-%
-*/
-MagickExport Image *BlobToImage(const ImageInfo *image_info,const void *blob,
+# 426 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) Image *BlobToImage(const ImageInfo *image_info,const void *blob,
   const size_t length,ExceptionInfo *exception)
 {
   const MagickInfo
@@ -439,17 +18810,73 @@ MagickExport Image *BlobToImage(const ImageInfo *image_info,const void *blob,
   MagickBooleanType
     status;
 
-  assert(image_info != (ImageInfo *) NULL);
-  assert(image_info->signature == MagickCoreSignature);
-  assert(exception != (ExceptionInfo *) NULL);
+  
+# 442 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 442 "MagickCore/blob.c"
+ image_info != (ImageInfo *) 
+# 442 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 442 "MagickCore/blob.c"
+ image_info != (ImageInfo *) 
+# 442 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 442 "MagickCore/blob.c"
+ "image_info != (ImageInfo *) NULL"
+# 442 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 442, __extension__ __PRETTY_FUNCTION__); }))
+# 442 "MagickCore/blob.c"
+                                         ;
+  
+# 443 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 443 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 443 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 443 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 443 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 443 "MagickCore/blob.c"
+ "image_info->signature == MagickCoreSignature"
+# 443 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 443, __extension__ __PRETTY_FUNCTION__); }))
+# 443 "MagickCore/blob.c"
+                                                     ;
+  
+# 444 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 444 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 444 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 444 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 444 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 444 "MagickCore/blob.c"
+ "exception != (ExceptionInfo *) NULL"
+# 444 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 444, __extension__ __PRETTY_FUNCTION__); }))
+# 444 "MagickCore/blob.c"
+                                            ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 446,"%s",
       image_info->filename);
-  if ((blob == (const void *) NULL) || (length == 0))
+  if ((blob == (const void *) 
+# 448 "MagickCore/blob.c" 3 4
+                             ((void *)0)
+# 448 "MagickCore/blob.c"
+                                 ) || (length == 0))
     {
-      (void) ThrowMagickException(exception,GetMagickModule(),BlobError,
+      (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 450,BlobError,
         "ZeroLengthBlobNotPermitted","`%s'",image_info->filename);
-      return((Image *) NULL);
+      return((Image *) 
+# 452 "MagickCore/blob.c" 3 4
+                      ((void *)0)
+# 452 "MagickCore/blob.c"
+                          );
     }
   blob_info=CloneImageInfo(image_info);
   blob_info->blob=(void *) blob;
@@ -457,35 +18884,51 @@ MagickExport Image *BlobToImage(const ImageInfo *image_info,const void *blob,
   if (*blob_info->magick == '\0')
     (void) SetImageInfo(blob_info,0,exception);
   magick_info=GetMagickInfo(blob_info->magick,exception);
-  if (magick_info == (const MagickInfo *) NULL)
+  if (magick_info == (const MagickInfo *) 
+# 460 "MagickCore/blob.c" 3 4
+                                         ((void *)0)
+# 460 "MagickCore/blob.c"
+                                             )
     {
-      (void) ThrowMagickException(exception,GetMagickModule(),
+      (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 462,
         MissingDelegateError,"NoDecodeDelegateForThisImageFormat","`%s'",
         blob_info->magick);
       blob_info=DestroyImageInfo(blob_info);
-      return((Image *) NULL);
+      return((Image *) 
+# 466 "MagickCore/blob.c" 3 4
+                      ((void *)0)
+# 466 "MagickCore/blob.c"
+                          );
     }
   if (GetMagickBlobSupport(magick_info) != MagickFalse)
     {
       char
-        filename[MagickPathExtent];
+        filename[4096];
 
-      /*
-        Native blob support for this image format.
-      */
-      (void) CopyMagickString(filename,blob_info->filename,MagickPathExtent);
-      (void) FormatLocaleString(blob_info->filename,MagickPathExtent,"%s:%s",
+
+
+
+      (void) CopyMagickString(filename,blob_info->filename,4096);
+      (void) FormatLocaleString(blob_info->filename,4096,"%s:%s",
         blob_info->magick,filename);
       image=ReadImage(blob_info,exception);
-      if (image != (Image *) NULL)
+      if (image != (Image *) 
+# 480 "MagickCore/blob.c" 3 4
+                            ((void *)0)
+# 480 "MagickCore/blob.c"
+                                )
         (void) DetachBlob(image->blob);
       blob_info=DestroyImageInfo(blob_info);
       return(image);
     }
-  /*
-    Write blob to a temporary file on disk.
-  */
-  blob_info->blob=(void *) NULL;
+
+
+
+  blob_info->blob=(void *) 
+# 488 "MagickCore/blob.c" 3 4
+                          ((void *)0)
+# 488 "MagickCore/blob.c"
+                              ;
   blob_info->length=0;
   *blob_info->filename='\0';
   status=BlobToFile(blob_info->filename,blob,length,exception);
@@ -493,28 +18936,40 @@ MagickExport Image *BlobToImage(const ImageInfo *image_info,const void *blob,
     {
       (void) RelinquishUniqueFileResource(blob_info->filename);
       blob_info=DestroyImageInfo(blob_info);
-      return((Image *) NULL);
+      return((Image *) 
+# 496 "MagickCore/blob.c" 3 4
+                      ((void *)0)
+# 496 "MagickCore/blob.c"
+                          );
     }
   clone_info=CloneImageInfo(blob_info);
-  (void) FormatLocaleString(clone_info->filename,MagickPathExtent,"%s:%s",
+  (void) FormatLocaleString(clone_info->filename,4096,"%s:%s",
     blob_info->magick,blob_info->filename);
   image=ReadImage(clone_info,exception);
-  if (image != (Image *) NULL)
+  if (image != (Image *) 
+# 502 "MagickCore/blob.c" 3 4
+                        ((void *)0)
+# 502 "MagickCore/blob.c"
+                            )
     {
       Image
         *images;
 
-      /*
-        Restore original filenames and image format.
-      */
-      for (images=GetFirstImageInList(image); images != (Image *) NULL; )
+
+
+
+      for (images=GetFirstImageInList(image); images != (Image *) 
+# 510 "MagickCore/blob.c" 3 4
+                                                                 ((void *)0)
+# 510 "MagickCore/blob.c"
+                                                                     ; )
       {
         (void) CopyMagickString(images->filename,image_info->filename,
-          MagickPathExtent);
+          4096);
         (void) CopyMagickString(images->magick_filename,image_info->filename,
-          MagickPathExtent);
+          4096);
         (void) CopyMagickString(images->magick,magick_info->name,
-          MagickPathExtent);
+          4096);
         images=GetNextImageInList(images);
       }
     }
@@ -523,31 +18978,8 @@ MagickExport Image *BlobToImage(const ImageInfo *image_info,const void *blob,
   blob_info=DestroyImageInfo(blob_info);
   return(image);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   C l o n e B l o b I n f o                                                 %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  CloneBlobInfo() makes a duplicate of the given blob info structure, or if
-%  blob info is NULL, a new one.
-%
-%  The format of the CloneBlobInfo method is:
-%
-%      BlobInfo *CloneBlobInfo(const BlobInfo *blob_info)
-%
-%  A description of each parameter follows:
-%
-%    o blob_info: the blob info.
-%
-*/
-MagickExport BlobInfo *CloneBlobInfo(const BlobInfo *blob_info)
+# 550 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) BlobInfo *CloneBlobInfo(const BlobInfo *blob_info)
 {
   BlobInfo
     *clone_info;
@@ -557,7 +18989,11 @@ MagickExport BlobInfo *CloneBlobInfo(const BlobInfo *blob_info)
 
   clone_info=(BlobInfo *) AcquireCriticalMemory(sizeof(*clone_info));
   GetBlobInfo(clone_info);
-  if (blob_info == (BlobInfo *) NULL)
+  if (blob_info == (BlobInfo *) 
+# 560 "MagickCore/blob.c" 3 4
+                               ((void *)0)
+# 560 "MagickCore/blob.c"
+                                   )
     return(clone_info);
   semaphore=clone_info->semaphore;
   (void) memcpy(clone_info,blob_info,sizeof(*clone_info));
@@ -569,54 +19005,75 @@ MagickExport BlobInfo *CloneBlobInfo(const BlobInfo *blob_info)
   UnlockSemaphoreInfo(clone_info->semaphore);
   return(clone_info);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   C l o s e B l o b                                                         %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  CloseBlob() closes a stream associated with the image.
-%
-%  The format of the CloseBlob method is:
-%
-%      MagickBooleanType CloseBlob(Image *image)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-*/
-
+# 596 "MagickCore/blob.c"
 static inline void ThrowBlobException(BlobInfo *blob_info)
 {
-  if ((blob_info->status == 0) && (errno != 0))
-    blob_info->error_number=errno;
+  if ((blob_info->status == 0) && (
+# 598 "MagickCore/blob.c" 3 4
+                                  (*__errno_location ()) 
+# 598 "MagickCore/blob.c"
+                                        != 0))
+    blob_info->error_number=
+# 599 "MagickCore/blob.c" 3 4
+                           (*__errno_location ())
+# 599 "MagickCore/blob.c"
+                                ;
   blob_info->status=(-1);
 }
 
-MagickExport MagickBooleanType CloseBlob(Image *image)
+__attribute__ ((visibility ("default"))) MagickBooleanType CloseBlob(Image *image)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
   int
     status;
 
-  /*
-    Close image file.
-  */
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+
+
+
+  
+# 614 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 614 "MagickCore/blob.c"
+ image != (Image *) 
+# 614 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 614 "MagickCore/blob.c"
+ image != (Image *) 
+# 614 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 614 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 614 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 614, __extension__ __PRETTY_FUNCTION__); }))
+# 614 "MagickCore/blob.c"
+                                ;
+  
+# 615 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 615 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 615 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 615 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 615 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 615 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 615 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 615, __extension__ __PRETTY_FUNCTION__); }))
+# 615 "MagickCore/blob.c"
+                                                ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 617,"%s",image->filename);
   blob_info=image->blob;
-  if ((blob_info == (BlobInfo *) NULL) || (blob_info->type == UndefinedStream))
+  if ((blob_info == (BlobInfo *) 
+# 619 "MagickCore/blob.c" 3 4
+                                ((void *)0)
+# 619 "MagickCore/blob.c"
+                                    ) || (blob_info->type == UndefinedStream))
     return(MagickTrue);
   (void) SyncBlob(image);
   status=blob_info->status;
@@ -643,29 +19100,49 @@ MagickExport MagickBooleanType CloseBlob(Image *image)
     }
     case ZipStream:
     {
-#if defined(MAGICKCORE_ZLIB_DELEGATE)
-      status=Z_OK;
+
+      status=
+# 647 "MagickCore/blob.c" 3 4
+            0
+# 647 "MagickCore/blob.c"
+                ;
       (void) gzerror(blob_info->file_info.gzfile,&status);
-      if (status != Z_OK)
+      if (status != 
+# 649 "MagickCore/blob.c" 3 4
+                   0
+# 649 "MagickCore/blob.c"
+                       )
         ThrowBlobException(blob_info);
-#endif
+
       break;
     }
     case BZipStream:
     {
-#if defined(MAGICKCORE_BZLIB_DELEGATE)
-      status=BZ_OK;
+
+      status=
+# 657 "MagickCore/blob.c" 3 4
+            0
+# 657 "MagickCore/blob.c"
+                 ;
       (void) BZ2_bzerror(blob_info->file_info.bzfile,&status);
-      if (status != BZ_OK)
+      if (status != 
+# 659 "MagickCore/blob.c" 3 4
+                   0
+# 659 "MagickCore/blob.c"
+                        )
         ThrowBlobException(blob_info);
-#endif
+
       break;
     }
     case FifoStream:
       break;
     case BlobStream:
     {
-      if (blob_info->file_info.file != (FILE *) NULL)
+      if (blob_info->file_info.file != (FILE *) 
+# 668 "MagickCore/blob.c" 3 4
+                                               ((void *)0)
+# 668 "MagickCore/blob.c"
+                                                   )
         {
           if (blob_info->synchronize != MagickFalse)
             {
@@ -701,7 +19178,11 @@ MagickExport MagickBooleanType CloseBlob(Image *image)
       break;
     case FileStream:
     {
-      if (blob_info->file_info.file != (FILE *) NULL)
+      if (blob_info->file_info.file != (FILE *) 
+# 704 "MagickCore/blob.c" 3 4
+                                               ((void *)0)
+# 704 "MagickCore/blob.c"
+                                                   )
         {
           status=fclose(blob_info->file_info.file);
           if (status != 0)
@@ -711,34 +19192,42 @@ MagickExport MagickBooleanType CloseBlob(Image *image)
     }
     case PipeStream:
     {
-#if defined(MAGICKCORE_HAVE_PCLOSE)
+
       status=pclose(blob_info->file_info.file);
       if (status != 0)
         ThrowBlobException(blob_info);
-#endif
+
       break;
     }
     case ZipStream:
     {
-#if defined(MAGICKCORE_ZLIB_DELEGATE)
+
       status=gzclose(blob_info->file_info.gzfile);
-      if (status != Z_OK)
+      if (status != 
+# 725 "MagickCore/blob.c" 3 4
+                   0
+# 725 "MagickCore/blob.c"
+                       )
         ThrowBlobException(blob_info);
-#endif
+
       break;
     }
     case BZipStream:
     {
-#if defined(MAGICKCORE_BZLIB_DELEGATE)
+
       BZ2_bzclose(blob_info->file_info.bzfile);
-#endif
+
       break;
     }
     case FifoStream:
       break;
     case BlobStream:
     {
-      if (blob_info->file_info.file != (FILE *) NULL)
+      if (blob_info->file_info.file != (FILE *) 
+# 741 "MagickCore/blob.c" 3 4
+                                               ((void *)0)
+# 741 "MagickCore/blob.c"
+                                                   )
         {
           status=fclose(blob_info->file_info.file);
           if (status != 0)
@@ -752,34 +19241,8 @@ MagickExport MagickBooleanType CloseBlob(Image *image)
   (void) DetachBlob(blob_info);
   return(blob_info->status != 0 ? MagickFalse : MagickTrue);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%   C u s t o m S t r e a m T o I m a g e                                     %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  CustomStreamToImage() is the equivalent of ReadImage(), but reads the
-%  formatted "file" from the supplied method rather than to an actual file.
-%
-%  The format of the CustomStreamToImage method is:
-%
-%      Image *CustomStreamToImage(const ImageInfo *image_info,
-%         ExceptionInfo *exception)
-%
-%  A description of each parameter follows:
-%
-%    o image_info: the image info.
-%
-%    o exception: return any errors or warnings in this structure.
-%
-*/
-MagickExport Image *CustomStreamToImage(const ImageInfo *image_info,
+# 782 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) Image *CustomStreamToImage(const ImageInfo *image_info,
   ExceptionInfo *exception)
 {
   const MagickInfo
@@ -791,47 +19254,155 @@ MagickExport Image *CustomStreamToImage(const ImageInfo *image_info,
   ImageInfo
     *blob_info;
 
-  assert(image_info != (ImageInfo *) NULL);
-  assert(image_info->signature == MagickCoreSignature);
-  assert(image_info->custom_stream != (CustomStreamInfo *) NULL);
-  assert(image_info->custom_stream->signature == MagickCoreSignature);
-  assert(image_info->custom_stream->reader != (CustomStreamHandler) NULL);
-  assert(exception != (ExceptionInfo *) NULL);
+  
+# 794 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 794 "MagickCore/blob.c"
+ image_info != (ImageInfo *) 
+# 794 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 794 "MagickCore/blob.c"
+ image_info != (ImageInfo *) 
+# 794 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 794 "MagickCore/blob.c"
+ "image_info != (ImageInfo *) NULL"
+# 794 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 794, __extension__ __PRETTY_FUNCTION__); }))
+# 794 "MagickCore/blob.c"
+                                         ;
+  
+# 795 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 795 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 795 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 795 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 795 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 795 "MagickCore/blob.c"
+ "image_info->signature == MagickCoreSignature"
+# 795 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 795, __extension__ __PRETTY_FUNCTION__); }))
+# 795 "MagickCore/blob.c"
+                                                     ;
+  
+# 796 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 796 "MagickCore/blob.c"
+ image_info->custom_stream != (CustomStreamInfo *) 
+# 796 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 796 "MagickCore/blob.c"
+ image_info->custom_stream != (CustomStreamInfo *) 
+# 796 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 796 "MagickCore/blob.c"
+ "image_info->custom_stream != (CustomStreamInfo *) NULL"
+# 796 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 796, __extension__ __PRETTY_FUNCTION__); }))
+# 796 "MagickCore/blob.c"
+                                                               ;
+  
+# 797 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 797 "MagickCore/blob.c"
+ image_info->custom_stream->signature == 0xabacadabUL
+# 797 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 797 "MagickCore/blob.c"
+ image_info->custom_stream->signature == 0xabacadabUL
+# 797 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 797 "MagickCore/blob.c"
+ "image_info->custom_stream->signature == MagickCoreSignature"
+# 797 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 797, __extension__ __PRETTY_FUNCTION__); }))
+# 797 "MagickCore/blob.c"
+                                                                    ;
+  
+# 798 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 798 "MagickCore/blob.c"
+ image_info->custom_stream->reader != (CustomStreamHandler) 
+# 798 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 798 "MagickCore/blob.c"
+ image_info->custom_stream->reader != (CustomStreamHandler) 
+# 798 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 798 "MagickCore/blob.c"
+ "image_info->custom_stream->reader != (CustomStreamHandler) NULL"
+# 798 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 798, __extension__ __PRETTY_FUNCTION__); }))
+# 798 "MagickCore/blob.c"
+                                                                        ;
+  
+# 799 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 799 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 799 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 799 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 799 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 799 "MagickCore/blob.c"
+ "exception != (ExceptionInfo *) NULL"
+# 799 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 799, __extension__ __PRETTY_FUNCTION__); }))
+# 799 "MagickCore/blob.c"
+                                            ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 801,"%s",
       image_info->filename);
   blob_info=CloneImageInfo(image_info);
   if (*blob_info->magick == '\0')
     (void) SetImageInfo(blob_info,0,exception);
   magick_info=GetMagickInfo(blob_info->magick,exception);
-  if (magick_info == (const MagickInfo *) NULL)
+  if (magick_info == (const MagickInfo *) 
+# 807 "MagickCore/blob.c" 3 4
+                                         ((void *)0)
+# 807 "MagickCore/blob.c"
+                                             )
     {
-      (void) ThrowMagickException(exception,GetMagickModule(),
+      (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 809,
         MissingDelegateError,"NoDecodeDelegateForThisImageFormat","`%s'",
         blob_info->magick);
       blob_info=DestroyImageInfo(blob_info);
-      return((Image *) NULL);
+      return((Image *) 
+# 813 "MagickCore/blob.c" 3 4
+                      ((void *)0)
+# 813 "MagickCore/blob.c"
+                          );
     }
-  image=(Image *) NULL;
+  image=(Image *) 
+# 815 "MagickCore/blob.c" 3 4
+                 ((void *)0)
+# 815 "MagickCore/blob.c"
+                     ;
   if ((GetMagickBlobSupport(magick_info) != MagickFalse) ||
       (*blob_info->filename != '\0'))
     {
       char
-        filename[MagickPathExtent];
+        filename[4096];
 
-      /*
-        Native blob support for this image format or SetImageInfo changed the
-        blob to a file.
-      */
-      (void) CopyMagickString(filename,blob_info->filename,MagickPathExtent);
-      (void) FormatLocaleString(blob_info->filename,MagickPathExtent,"%s:%s",
+
+
+
+
+      (void) CopyMagickString(filename,blob_info->filename,4096);
+      (void) FormatLocaleString(blob_info->filename,4096,"%s:%s",
         blob_info->magick,filename);
       image=ReadImage(blob_info,exception);
     }
   else
     {
       char
-        unique[MagickPathExtent];
+        unique[4096];
 
       int
         file;
@@ -842,62 +19413,98 @@ MagickExport Image *CustomStreamToImage(const ImageInfo *image_info,
       unsigned char
         *blob;
 
-      /*
-        Write data to file on disk.
-      */
-      blob_info->custom_stream=(CustomStreamInfo *) NULL;
-      blob=(unsigned char *) AcquireQuantumMemory(MagickMaxBufferExtent,
+
+
+
+      blob_info->custom_stream=(CustomStreamInfo *) 
+# 848 "MagickCore/blob.c" 3 4
+                                                   ((void *)0)
+# 848 "MagickCore/blob.c"
+                                                       ;
+      blob=(unsigned char *) AcquireQuantumMemory(81920,
         sizeof(*blob));
-      if (blob == (unsigned char *) NULL)
+      if (blob == (unsigned char *) 
+# 851 "MagickCore/blob.c" 3 4
+                                   ((void *)0)
+# 851 "MagickCore/blob.c"
+                                       )
         {
-          ThrowFileException(exception,BlobError,"UnableToReadBlob",
-            image_info->filename);
+          { char *file_message; file_message=GetExceptionMessage(
+# 853 "MagickCore/blob.c" 3 4
+         (*__errno_location ())
+# 853 "MagickCore/blob.c"
+         ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 853,BlobError,"UnableToReadBlob", "'%s': %s",image_info->filename,file_message); file_message=DestroyString(file_message); }
+                                 ;
           blob_info=DestroyImageInfo(blob_info);
-          return((Image *) NULL);
+          return((Image *) 
+# 856 "MagickCore/blob.c" 3 4
+                          ((void *)0)
+# 856 "MagickCore/blob.c"
+                              );
         }
       file=AcquireUniqueFileResource(unique);
       if (file == -1)
         {
-          ThrowFileException(exception,BlobError,"UnableToReadBlob",
-            image_info->filename);
+          { char *file_message; file_message=GetExceptionMessage(
+# 861 "MagickCore/blob.c" 3 4
+         (*__errno_location ())
+# 861 "MagickCore/blob.c"
+         ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 861,BlobError,"UnableToReadBlob", "'%s': %s",image_info->filename,file_message); file_message=DestroyString(file_message); }
+                                 ;
           blob=(unsigned char *) RelinquishMagickMemory(blob);
           blob_info=DestroyImageInfo(blob_info);
-          return((Image *) NULL);
+          return((Image *) 
+# 865 "MagickCore/blob.c" 3 4
+                          ((void *)0)
+# 865 "MagickCore/blob.c"
+                              );
         }
       clone_info=CloneImageInfo(blob_info);
       blob_info->file=fdopen(file,"wb+");
-      if (blob_info->file != (FILE *) NULL)
+      if (blob_info->file != (FILE *) 
+# 869 "MagickCore/blob.c" 3 4
+                                     ((void *)0)
+# 869 "MagickCore/blob.c"
+                                         )
         {
           ssize_t
             count;
 
-          count=(ssize_t) MagickMaxBufferExtent;
-          while (count == (ssize_t) MagickMaxBufferExtent)
+          count=(ssize_t) 81920;
+          while (count == (ssize_t) 81920)
           {
-            count=image_info->custom_stream->reader(blob,MagickMaxBufferExtent,
+            count=image_info->custom_stream->reader(blob,81920,
               image_info->custom_stream->data);
             count=(ssize_t) write(file,(const char *) blob,(size_t) count);
           }
           (void) fclose(blob_info->file);
-          (void) FormatLocaleString(clone_info->filename,MagickPathExtent,
+          (void) FormatLocaleString(clone_info->filename,4096,
             "%s:%s",blob_info->magick,unique);
           image=ReadImage(clone_info,exception);
-          if (image != (Image *) NULL)
+          if (image != (Image *) 
+# 885 "MagickCore/blob.c" 3 4
+                                ((void *)0)
+# 885 "MagickCore/blob.c"
+                                    )
             {
               Image
                 *images;
 
-              /*
-                Restore original filenames and image format.
-              */
-              for (images=GetFirstImageInList(image); images != (Image *) NULL; )
+
+
+
+              for (images=GetFirstImageInList(image); images != (Image *) 
+# 893 "MagickCore/blob.c" 3 4
+                                                                         ((void *)0)
+# 893 "MagickCore/blob.c"
+                                                                             ; )
               {
                 (void) CopyMagickString(images->filename,image_info->filename,
-                  MagickPathExtent);
+                  4096);
                 (void) CopyMagickString(images->magick_filename,
-                  image_info->filename,MagickPathExtent);
+                  image_info->filename,4096);
                 (void) CopyMagickString(images->magick,magick_info->name,
-                  MagickPathExtent);
+                  4096);
                 images=GetNextImageInList(images);
               }
             }
@@ -907,59 +19514,125 @@ MagickExport Image *CustomStreamToImage(const ImageInfo *image_info,
       (void) RelinquishUniqueFileResource(unique);
     }
   blob_info=DestroyImageInfo(blob_info);
-  if (image != (Image *) NULL)
+  if (image != (Image *) 
+# 910 "MagickCore/blob.c" 3 4
+                        ((void *)0)
+# 910 "MagickCore/blob.c"
+                            )
     if (CloseBlob(image) == MagickFalse)
       image=DestroyImageList(image);
   return(image);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   D e s t r o y B l o b                                                     %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  DestroyBlob() deallocates memory associated with a blob.
-%
-%  The format of the DestroyBlob method is:
-%
-%      void DestroyBlob(Image *image)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-*/
-MagickExport void DestroyBlob(Image *image)
+# 938 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void DestroyBlob(Image *image)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
   MagickBooleanType
     destroy;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image->blob != (BlobInfo *) NULL);
-  assert(image->blob->signature == MagickCoreSignature);
+  
+# 946 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 946 "MagickCore/blob.c"
+ image != (Image *) 
+# 946 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 946 "MagickCore/blob.c"
+ image != (Image *) 
+# 946 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 946 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 946 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 946, __extension__ __PRETTY_FUNCTION__); }))
+# 946 "MagickCore/blob.c"
+                                ;
+  
+# 947 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 947 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 947 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 947 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 947 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 947 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 947 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 947, __extension__ __PRETTY_FUNCTION__); }))
+# 947 "MagickCore/blob.c"
+                                                ;
+  
+# 948 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 948 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 948 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 948 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 948 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 948 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 948 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 948, __extension__ __PRETTY_FUNCTION__); }))
+# 948 "MagickCore/blob.c"
+                                         ;
+  
+# 949 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 949 "MagickCore/blob.c"
+ image->blob->signature == 0xabacadabUL
+# 949 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 949 "MagickCore/blob.c"
+ image->blob->signature == 0xabacadabUL
+# 949 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 949 "MagickCore/blob.c"
+ "image->blob->signature == MagickCoreSignature"
+# 949 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 949, __extension__ __PRETTY_FUNCTION__); }))
+# 949 "MagickCore/blob.c"
+                                                      ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 951,"%s",image->filename);
   blob_info=image->blob;
   destroy=MagickFalse;
   LockSemaphoreInfo(blob_info->semaphore);
   blob_info->reference_count--;
-  assert(blob_info->reference_count >= 0);
+  
+# 956 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 956 "MagickCore/blob.c"
+ blob_info->reference_count >= 0
+# 956 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 956 "MagickCore/blob.c"
+ blob_info->reference_count >= 0
+# 956 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 956 "MagickCore/blob.c"
+ "blob_info->reference_count >= 0"
+# 956 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 956, __extension__ __PRETTY_FUNCTION__); }))
+# 956 "MagickCore/blob.c"
+                                        ;
   if (blob_info->reference_count == 0)
     destroy=MagickTrue;
   UnlockSemaphoreInfo(blob_info->semaphore);
   if (destroy == MagickFalse)
     {
-      image->blob=(BlobInfo *) NULL;
+      image->blob=(BlobInfo *) 
+# 962 "MagickCore/blob.c" 3 4
+                              ((void *)0)
+# 962 "MagickCore/blob.c"
+                                  ;
       return;
     }
   (void) CloseBlob(image);
@@ -968,81 +19641,92 @@ MagickExport void DestroyBlob(Image *image)
       (void) UnmapBlob(blob_info->data,blob_info->length);
       RelinquishMagickResource(MapResource,blob_info->length);
     }
-  if (blob_info->semaphore != (SemaphoreInfo *) NULL)
+  if (blob_info->semaphore != (SemaphoreInfo *) 
+# 971 "MagickCore/blob.c" 3 4
+                                               ((void *)0)
+# 971 "MagickCore/blob.c"
+                                                   )
     RelinquishSemaphoreInfo(&blob_info->semaphore);
-  blob_info->signature=(~MagickCoreSignature);
+  blob_info->signature=(~0xabacadabUL);
   image->blob=(BlobInfo *) RelinquishMagickMemory(blob_info);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   D e s t r o y C u s t o m S t r e a m I n f o                             %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  DestroyCustomStreamInfo() destroys memory associated with the
-%  CustomStreamInfo structure.
-%
-%  The format of the DestroyCustomStreamInfo method is:
-%
-%      CustomStreamInfo *DestroyCustomStreamInfo(CustomStreamInfo *stream_info)
-%
-%  A description of each parameter follows:
-%
-%    o custom_stream: the custom stream info.
-%
-*/
-MagickExport CustomStreamInfo *DestroyCustomStreamInfo(
+# 1000 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) CustomStreamInfo *DestroyCustomStreamInfo(
   CustomStreamInfo *custom_stream)
 {
-  assert(custom_stream != (CustomStreamInfo *) NULL);
-  assert(custom_stream->signature == MagickCoreSignature);
+  
+# 1003 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1003 "MagickCore/blob.c"
+ custom_stream != (CustomStreamInfo *) 
+# 1003 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1003 "MagickCore/blob.c"
+ custom_stream != (CustomStreamInfo *) 
+# 1003 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1003 "MagickCore/blob.c"
+ "custom_stream != (CustomStreamInfo *) NULL"
+# 1003 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1003, __extension__ __PRETTY_FUNCTION__); }))
+# 1003 "MagickCore/blob.c"
+                                                   ;
+  
+# 1004 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1004 "MagickCore/blob.c"
+ custom_stream->signature == 0xabacadabUL
+# 1004 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1004 "MagickCore/blob.c"
+ custom_stream->signature == 0xabacadabUL
+# 1004 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1004 "MagickCore/blob.c"
+ "custom_stream->signature == MagickCoreSignature"
+# 1004 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1004, __extension__ __PRETTY_FUNCTION__); }))
+# 1004 "MagickCore/blob.c"
+                                                        ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
-  custom_stream->signature=(~MagickCoreSignature);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 1006,"...");
+  custom_stream->signature=(~0xabacadabUL);
   custom_stream=(CustomStreamInfo *) RelinquishMagickMemory(custom_stream);
   return(custom_stream);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   D e t a c h B l o b                                                       %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  DetachBlob() detaches a blob from the BlobInfo structure.
-%
-%  The format of the DetachBlob method is:
-%
-%      void *DetachBlob(BlobInfo *blob_info)
-%
-%  A description of each parameter follows:
-%
-%    o blob_info: Specifies a pointer to a BlobInfo structure.
-%
-*/
-MagickExport void *DetachBlob(BlobInfo *blob_info)
+# 1034 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void *DetachBlob(BlobInfo *blob_info)
 {
   void
     *data;
 
-  assert(blob_info != (BlobInfo *) NULL);
+  
+# 1039 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1039 "MagickCore/blob.c"
+ blob_info != (BlobInfo *) 
+# 1039 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1039 "MagickCore/blob.c"
+ blob_info != (BlobInfo *) 
+# 1039 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1039 "MagickCore/blob.c"
+ "blob_info != (BlobInfo *) NULL"
+# 1039 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1039, __extension__ __PRETTY_FUNCTION__); }))
+# 1039 "MagickCore/blob.c"
+                                       ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 1041,"...");
   if (blob_info->mapped != MagickFalse)
     {
       (void) UnmapBlob(blob_info->data,blob_info->length);
-      blob_info->data=NULL;
+      blob_info->data=
+# 1045 "MagickCore/blob.c" 3 4
+                     ((void *)0)
+# 1045 "MagickCore/blob.c"
+                         ;
       RelinquishMagickResource(MapResource,blob_info->length);
     }
   blob_info->mapped=MagickFalse;
@@ -1053,57 +19737,129 @@ MagickExport void *DetachBlob(BlobInfo *blob_info)
   blob_info->error=0;
   blob_info->exempt=MagickFalse;
   blob_info->type=UndefinedStream;
-  blob_info->file_info.file=(FILE *) NULL;
+  blob_info->file_info.file=(FILE *) 
+# 1056 "MagickCore/blob.c" 3 4
+                                    ((void *)0)
+# 1056 "MagickCore/blob.c"
+                                        ;
   data=blob_info->data;
-  blob_info->data=(unsigned char *) NULL;
-  blob_info->stream=(StreamHandler) NULL;
-  blob_info->custom_stream=(CustomStreamInfo *) NULL;
+  blob_info->data=(unsigned char *) 
+# 1058 "MagickCore/blob.c" 3 4
+                                   ((void *)0)
+# 1058 "MagickCore/blob.c"
+                                       ;
+  blob_info->stream=(StreamHandler) 
+# 1059 "MagickCore/blob.c" 3 4
+                                   ((void *)0)
+# 1059 "MagickCore/blob.c"
+                                       ;
+  blob_info->custom_stream=(CustomStreamInfo *) 
+# 1060 "MagickCore/blob.c" 3 4
+                                               ((void *)0)
+# 1060 "MagickCore/blob.c"
+                                                   ;
   return(data);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   D i s a s s o c i a t e B l o b                                           %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  DisassociateBlob() disassociates the image stream.  It checks if the
-%  blob of the specified image is referenced by other images. If the reference
-%  count is higher then 1 a new blob is assigned to the specified image.
-%
-%  The format of the DisassociateBlob method is:
-%
-%      void DisassociateBlob(const Image *image)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-*/
-MagickExport void DisassociateBlob(Image *image)
+# 1088 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void DisassociateBlob(Image *image)
 {
   BlobInfo
-    *magick_restrict blob_info,
+    *__restrict__ blob_info,
     *clone_info;
 
   MagickBooleanType
     clone;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image->blob != (BlobInfo *) NULL);
-  assert(image->blob->signature == MagickCoreSignature);
+  
+# 1097 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1097 "MagickCore/blob.c"
+ image != (Image *) 
+# 1097 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1097 "MagickCore/blob.c"
+ image != (Image *) 
+# 1097 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1097 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 1097 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1097, __extension__ __PRETTY_FUNCTION__); }))
+# 1097 "MagickCore/blob.c"
+                                ;
+  
+# 1098 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1098 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1098 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1098 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1098 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1098 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 1098 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1098, __extension__ __PRETTY_FUNCTION__); }))
+# 1098 "MagickCore/blob.c"
+                                                ;
+  
+# 1099 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1099 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 1099 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1099 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 1099 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1099 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 1099 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1099, __extension__ __PRETTY_FUNCTION__); }))
+# 1099 "MagickCore/blob.c"
+                                         ;
+  
+# 1100 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1100 "MagickCore/blob.c"
+ image->blob->signature == 0xabacadabUL
+# 1100 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1100 "MagickCore/blob.c"
+ image->blob->signature == 0xabacadabUL
+# 1100 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1100 "MagickCore/blob.c"
+ "image->blob->signature == MagickCoreSignature"
+# 1100 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1100, __extension__ __PRETTY_FUNCTION__); }))
+# 1100 "MagickCore/blob.c"
+                                                      ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 1102,"%s",image->filename);
   blob_info=image->blob;
   clone=MagickFalse;
   LockSemaphoreInfo(blob_info->semaphore);
-  assert(blob_info->reference_count >= 0);
+  
+# 1106 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1106 "MagickCore/blob.c"
+ blob_info->reference_count >= 0
+# 1106 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1106 "MagickCore/blob.c"
+ blob_info->reference_count >= 0
+# 1106 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1106 "MagickCore/blob.c"
+ "blob_info->reference_count >= 0"
+# 1106 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1106, __extension__ __PRETTY_FUNCTION__); }))
+# 1106 "MagickCore/blob.c"
+                                        ;
   if (blob_info->reference_count > 1)
     clone=MagickTrue;
   UnlockSemaphoreInfo(blob_info->semaphore);
@@ -1113,33 +19869,8 @@ MagickExport void DisassociateBlob(Image *image)
   DestroyBlob(image);
   image->blob=clone_info;
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  D i s c a r d B l o b B y t e s                                            %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  DiscardBlobBytes() discards bytes in a blob.
-%
-%  The format of the DiscardBlobBytes method is:
-%
-%      MagickBooleanType DiscardBlobBytes(Image *image,
-%        const MagickSizeType length)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-%    o length:  the number of bytes to skip.
-%
-*/
-MagickExport MagickBooleanType DiscardBlobBytes(Image *image,
+# 1142 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) MagickBooleanType DiscardBlobBytes(Image *image,
   const MagickSizeType length)
 {
   MagickSizeType
@@ -1152,97 +19883,218 @@ MagickExport MagickBooleanType DiscardBlobBytes(Image *image,
     count;
 
   unsigned char
-    buffer[MagickMinBufferExtent >> 1];
+    buffer[16384 >> 1];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 1157 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1157 "MagickCore/blob.c"
+ image != (Image *) 
+# 1157 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1157 "MagickCore/blob.c"
+ image != (Image *) 
+# 1157 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1157 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 1157 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1157, __extension__ __PRETTY_FUNCTION__); }))
+# 1157 "MagickCore/blob.c"
+                                ;
+  
+# 1158 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1158 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1158 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1158 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1158 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1158 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 1158 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1158, __extension__ __PRETTY_FUNCTION__); }))
+# 1158 "MagickCore/blob.c"
+                                                ;
   if (length != (MagickSizeType) ((MagickOffsetType) length))
     return(MagickFalse);
   count=0;
   for (i=0; i < length; i+=(MagickSizeType) count)
   {
-    quantum=(size_t) MagickMin(length-i,sizeof(buffer));
+    quantum=(size_t) (((length-i) < (sizeof(buffer))) ? (length-i) : (sizeof(buffer)));
     (void) ReadBlobStream(image,quantum,buffer,&count);
     if (count <= 0)
       {
         count=0;
-        if (errno != EINTR)
+        if (
+# 1169 "MagickCore/blob.c" 3 4
+           (*__errno_location ()) 
+# 1169 "MagickCore/blob.c"
+                 != 
+# 1169 "MagickCore/blob.c" 3 4
+                    4
+# 1169 "MagickCore/blob.c"
+                         )
           break;
       }
   }
   return(i < (MagickSizeType) length ? MagickFalse : MagickTrue);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   D u p l i c a t e s B l o b                                               %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  DuplicateBlob() duplicates a blob descriptor.
-%
-%  The format of the DuplicateBlob method is:
-%
-%      void DuplicateBlob(Image *image,const Image *duplicate)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-%    o duplicate: the duplicate image.
-%
-*/
-MagickExport void DuplicateBlob(Image *image,const Image *duplicate)
+# 1200 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void DuplicateBlob(Image *image,const Image *duplicate)
 {
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(duplicate != (Image *) NULL);
-  assert(duplicate->signature == MagickCoreSignature);
+  
+# 1202 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1202 "MagickCore/blob.c"
+ image != (Image *) 
+# 1202 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1202 "MagickCore/blob.c"
+ image != (Image *) 
+# 1202 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1202 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 1202 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1202, __extension__ __PRETTY_FUNCTION__); }))
+# 1202 "MagickCore/blob.c"
+                                ;
+  
+# 1203 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1203 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1203 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1203 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1203 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1203 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 1203 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1203, __extension__ __PRETTY_FUNCTION__); }))
+# 1203 "MagickCore/blob.c"
+                                                ;
+  
+# 1204 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1204 "MagickCore/blob.c"
+ duplicate != (Image *) 
+# 1204 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1204 "MagickCore/blob.c"
+ duplicate != (Image *) 
+# 1204 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1204 "MagickCore/blob.c"
+ "duplicate != (Image *) NULL"
+# 1204 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1204, __extension__ __PRETTY_FUNCTION__); }))
+# 1204 "MagickCore/blob.c"
+                                    ;
+  
+# 1205 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1205 "MagickCore/blob.c"
+ duplicate->signature == 0xabacadabUL
+# 1205 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1205 "MagickCore/blob.c"
+ duplicate->signature == 0xabacadabUL
+# 1205 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1205 "MagickCore/blob.c"
+ "duplicate->signature == MagickCoreSignature"
+# 1205 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1205, __extension__ __PRETTY_FUNCTION__); }))
+# 1205 "MagickCore/blob.c"
+                                                    ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 1207,"%s",image->filename);
   DestroyBlob(image);
   image->blob=ReferenceBlob(duplicate->blob);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  E O F B l o b                                                              %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  EOFBlob() returns a non-zero value when EOF has been detected reading from
-%  a blob or file.
-%
-%  The format of the EOFBlob method is:
-%
-%      int EOFBlob(const Image *image)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-*/
-MagickExport int EOFBlob(const Image *image)
+# 1235 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) int EOFBlob(const Image *image)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image->blob != (BlobInfo *) NULL);
-  assert(image->blob->type != UndefinedStream);
+  
+# 1240 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1240 "MagickCore/blob.c"
+ image != (Image *) 
+# 1240 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1240 "MagickCore/blob.c"
+ image != (Image *) 
+# 1240 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1240 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 1240 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1240, __extension__ __PRETTY_FUNCTION__); }))
+# 1240 "MagickCore/blob.c"
+                                ;
+  
+# 1241 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1241 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1241 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1241 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1241 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1241 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 1241 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1241, __extension__ __PRETTY_FUNCTION__); }))
+# 1241 "MagickCore/blob.c"
+                                                ;
+  
+# 1242 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1242 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 1242 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1242 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 1242 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1242 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 1242 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1242, __extension__ __PRETTY_FUNCTION__); }))
+# 1242 "MagickCore/blob.c"
+                                         ;
+  
+# 1243 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1243 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 1243 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1243 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 1243 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1243 "MagickCore/blob.c"
+ "image->blob->type != UndefinedStream"
+# 1243 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1243, __extension__ __PRETTY_FUNCTION__); }))
+# 1243 "MagickCore/blob.c"
+                                             ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 1245,"...");
   blob_info=image->blob;
   switch (blob_info->type)
   {
@@ -1258,22 +20110,26 @@ MagickExport int EOFBlob(const Image *image)
     }
     case ZipStream:
     {
-#if defined(MAGICKCORE_ZLIB_DELEGATE)
+
       blob_info->eof=gzeof(blob_info->file_info.gzfile) != 0 ? MagickTrue :
         MagickFalse;
-#endif
+
       break;
     }
     case BZipStream:
     {
-#if defined(MAGICKCORE_BZLIB_DELEGATE)
+
       int
         status;
 
       status=0;
       (void) BZ2_bzerror(blob_info->file_info.bzfile,&status);
-      blob_info->eof=status == BZ_UNEXPECTED_EOF ? MagickTrue : MagickFalse;
-#endif
+      blob_info->eof=status == 
+# 1275 "MagickCore/blob.c" 3 4
+                              (-7) 
+# 1275 "MagickCore/blob.c"
+                                                ? MagickTrue : MagickFalse;
+
       break;
     }
     case FifoStream:
@@ -1288,41 +20144,82 @@ MagickExport int EOFBlob(const Image *image)
   }
   return((int) blob_info->eof);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  E r r o r B l o b                                                          %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ErrorBlob() returns a non-zero value when an error has been detected reading
-%  from a blob or file.
-%
-%  The format of the ErrorBlob method is:
-%
-%      int ErrorBlob(const Image *image)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-*/
-MagickExport int ErrorBlob(const Image *image)
+# 1315 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) int ErrorBlob(const Image *image)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image->blob != (BlobInfo *) NULL);
-  assert(image->blob->type != UndefinedStream);
+  
+# 1320 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1320 "MagickCore/blob.c"
+ image != (Image *) 
+# 1320 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1320 "MagickCore/blob.c"
+ image != (Image *) 
+# 1320 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1320 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 1320 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1320, __extension__ __PRETTY_FUNCTION__); }))
+# 1320 "MagickCore/blob.c"
+                                ;
+  
+# 1321 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1321 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1321 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1321 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1321 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1321 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 1321 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1321, __extension__ __PRETTY_FUNCTION__); }))
+# 1321 "MagickCore/blob.c"
+                                                ;
+  
+# 1322 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1322 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 1322 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1322 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 1322 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1322 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 1322 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1322, __extension__ __PRETTY_FUNCTION__); }))
+# 1322 "MagickCore/blob.c"
+                                         ;
+  
+# 1323 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1323 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 1323 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1323 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 1323 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1323 "MagickCore/blob.c"
+ "image->blob->type != UndefinedStream"
+# 1323 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1323, __extension__ __PRETTY_FUNCTION__); }))
+# 1323 "MagickCore/blob.c"
+                                             ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 1325,"...");
   blob_info=image->blob;
   switch (blob_info->type)
   {
@@ -1337,16 +20234,16 @@ MagickExport int ErrorBlob(const Image *image)
     }
     case ZipStream:
     {
-#if defined(MAGICKCORE_ZLIB_DELEGATE)
+
       (void) gzerror(blob_info->file_info.gzfile,&blob_info->error);
-#endif
+
       break;
     }
     case BZipStream:
     {
-#if defined(MAGICKCORE_BZLIB_DELEGATE)
+
       (void) BZ2_bzerror(blob_info->file_info.bzfile,&blob_info->error);
-#endif
+
       break;
     }
     case FifoStream:
@@ -1361,43 +20258,8 @@ MagickExport int ErrorBlob(const Image *image)
   }
   return(blob_info->error);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%   F i l e T o B l o b                                                       %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  FileToBlob() returns the contents of a file as a buffer terminated with
-%  the '\0' character.  The length of the buffer (not including the extra
-%  terminating '\0' character) is returned via the 'length' parameter.  Free
-%  the buffer with RelinquishMagickMemory().
-%
-%  The format of the FileToBlob method is:
-%
-%      void *FileToBlob(const char *filename,const size_t extent,
-%        size_t *length,ExceptionInfo *exception)
-%
-%  A description of each parameter follows:
-%
-%    o blob:  FileToBlob() returns the contents of a file as a blob.  If
-%      an error occurs NULL is returned.
-%
-%    o filename: the filename.
-%
-%    o extent:  The maximum length of the blob.
-%
-%    o length: On return, this reflects the actual length of the blob.
-%
-%    o exception: return any errors or warnings in this structure.
-%
-*/
-MagickExport void *FileToBlob(const char *filename,const size_t extent,
+# 1400 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void *FileToBlob(const char *filename,const size_t extent,
   size_t *length,ExceptionInfo *exception)
 {
   int
@@ -1424,39 +20286,139 @@ MagickExport void *FileToBlob(const char *filename,const size_t extent,
   void
     *map;
 
-  assert(filename != (const char *) NULL);
-  assert(exception != (ExceptionInfo *) NULL);
-  assert(exception->signature == MagickCoreSignature);
+  
+# 1427 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1427 "MagickCore/blob.c"
+ filename != (const char *) 
+# 1427 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1427 "MagickCore/blob.c"
+ filename != (const char *) 
+# 1427 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1427 "MagickCore/blob.c"
+ "filename != (const char *) NULL"
+# 1427 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1427, __extension__ __PRETTY_FUNCTION__); }))
+# 1427 "MagickCore/blob.c"
+                                        ;
+  
+# 1428 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1428 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 1428 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1428 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 1428 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1428 "MagickCore/blob.c"
+ "exception != (ExceptionInfo *) NULL"
+# 1428 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1428, __extension__ __PRETTY_FUNCTION__); }))
+# 1428 "MagickCore/blob.c"
+                                            ;
+  
+# 1429 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1429 "MagickCore/blob.c"
+ exception->signature == 0xabacadabUL
+# 1429 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1429 "MagickCore/blob.c"
+ exception->signature == 0xabacadabUL
+# 1429 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1429 "MagickCore/blob.c"
+ "exception->signature == MagickCoreSignature"
+# 1429 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1429, __extension__ __PRETTY_FUNCTION__); }))
+# 1429 "MagickCore/blob.c"
+                                                    ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 1431,"%s",filename);
   *length=0;
   status=IsRightsAuthorized(PathPolicyDomain,ReadPolicyRights,filename);
   if (status == MagickFalse)
     {
-      errno=EPERM;
-      (void) ThrowMagickException(exception,GetMagickModule(),PolicyError,
+      
+# 1436 "MagickCore/blob.c" 3 4
+     (*__errno_location ())
+# 1436 "MagickCore/blob.c"
+          =
+# 1436 "MagickCore/blob.c" 3 4
+           1
+# 1436 "MagickCore/blob.c"
+                ;
+      (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 1437,PolicyError,
         "NotAuthorized","`%s'",filename);
-      return(NULL);
+      return(
+# 1439 "MagickCore/blob.c" 3 4
+            ((void *)0)
+# 1439 "MagickCore/blob.c"
+                );
     }
-  file=fileno(stdin);
+  file=fileno(
+# 1441 "MagickCore/blob.c" 3 4
+             stdin
+# 1441 "MagickCore/blob.c"
+                  );
   if (LocaleCompare(filename,"-") != 0)
     {
       status=GetPathAttributes(filename,&attributes);
-      if ((status == MagickFalse) || (S_ISDIR(attributes.st_mode) != 0))
+      if ((status == MagickFalse) || (
+# 1445 "MagickCore/blob.c" 3 4
+                                     ((((
+# 1445 "MagickCore/blob.c"
+                                     attributes.st_mode
+# 1445 "MagickCore/blob.c" 3 4
+                                     )) & 0170000) == (0040000)) 
+# 1445 "MagickCore/blob.c"
+                                                                 != 0))
         {
-          ThrowFileException(exception,BlobError,"UnableToReadBlob",filename);
-          return(NULL);
+          { char *file_message; file_message=GetExceptionMessage(
+# 1447 "MagickCore/blob.c" 3 4
+         (*__errno_location ())
+# 1447 "MagickCore/blob.c"
+         ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 1447,BlobError,"UnableToReadBlob", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); };
+          return(
+# 1448 "MagickCore/blob.c" 3 4
+                ((void *)0)
+# 1448 "MagickCore/blob.c"
+                    );
         }
-      file=open_utf8(filename,O_RDONLY | O_BINARY,0);
+      file=open_utf8(filename,
+# 1450 "MagickCore/blob.c" 3 4
+                             00 
+# 1450 "MagickCore/blob.c"
+                                      | 0x00,0);
     }
   if (file == -1)
     {
-      ThrowFileException(exception,BlobError,"UnableToOpenFile",filename);
-      return(NULL);
+      { char *file_message; file_message=GetExceptionMessage(
+# 1454 "MagickCore/blob.c" 3 4
+     (*__errno_location ())
+# 1454 "MagickCore/blob.c"
+     ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 1454,BlobError,"UnableToOpenFile", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); };
+      return(
+# 1455 "MagickCore/blob.c" 3 4
+            ((void *)0)
+# 1455 "MagickCore/blob.c"
+                );
     }
-  offset=(MagickOffsetType) lseek(file,0,SEEK_END);
+  offset=(MagickOffsetType) lseek(file,0,
+# 1457 "MagickCore/blob.c" 3 4
+                                        2
+# 1457 "MagickCore/blob.c"
+                                                );
   count=0;
-  if ((file == fileno(stdin)) || (offset < 0) ||
+  if ((file == fileno(
+# 1459 "MagickCore/blob.c" 3 4
+                     stdin
+# 1459 "MagickCore/blob.c"
+                          )) || (offset < 0) ||
       (offset != (MagickOffsetType) ((ssize_t) offset)))
     {
       size_t
@@ -1465,21 +20427,37 @@ MagickExport void *FileToBlob(const char *filename,const size_t extent,
       struct stat
         file_stats;
 
-      /*
-        Stream is not seekable.
-      */
-      offset=(MagickOffsetType) lseek(file,0,SEEK_SET);
-      quantum=(size_t) MagickMaxBufferExtent;
+
+
+
+      offset=(MagickOffsetType) lseek(file,0,
+# 1471 "MagickCore/blob.c" 3 4
+                                            0
+# 1471 "MagickCore/blob.c"
+                                                    );
+      quantum=(size_t) 81920;
       if ((fstat(file,&file_stats) == 0) && (file_stats.st_size > 0))
-        quantum=(size_t) MagickMin(file_stats.st_size,MagickMaxBufferExtent);
+        quantum=(size_t) (((file_stats.st_size) < (81920)) ? (file_stats.st_size) : (81920));
       blob=(unsigned char *) AcquireQuantumMemory(quantum,sizeof(*blob));
-      for (i=0; blob != (unsigned char *) NULL; i+=(size_t) count)
+      for (i=0; blob != (unsigned char *) 
+# 1476 "MagickCore/blob.c" 3 4
+                                         ((void *)0)
+# 1476 "MagickCore/blob.c"
+                                             ; i+=(size_t) count)
       {
         count=read(file,blob+i,quantum);
         if (count <= 0)
           {
             count=0;
-            if (errno != EINTR)
+            if (
+# 1482 "MagickCore/blob.c" 3 4
+               (*__errno_location ()) 
+# 1482 "MagickCore/blob.c"
+                     != 
+# 1482 "MagickCore/blob.c" 3 4
+                        4
+# 1482 "MagickCore/blob.c"
+                             )
               break;
           }
         if (~i < ((size_t) count+quantum+1))
@@ -1494,52 +20472,108 @@ MagickExport void *FileToBlob(const char *filename,const size_t extent,
       }
       if (LocaleCompare(filename,"-") != 0)
         file=close(file);
-      if (blob == (unsigned char *) NULL)
+      if (blob == (unsigned char *) 
+# 1497 "MagickCore/blob.c" 3 4
+                                   ((void *)0)
+# 1497 "MagickCore/blob.c"
+                                       )
         {
-          (void) ThrowMagickException(exception,GetMagickModule(),
+          (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 1499,
             ResourceLimitError,"MemoryAllocationFailed","`%s'",filename);
-          return(NULL);
+          return(
+# 1501 "MagickCore/blob.c" 3 4
+                ((void *)0)
+# 1501 "MagickCore/blob.c"
+                    );
         }
       if (file == -1)
         {
           blob=(unsigned char *) RelinquishMagickMemory(blob);
-          ThrowFileException(exception,BlobError,"UnableToReadBlob",filename);
-          return(NULL);
+          { char *file_message; file_message=GetExceptionMessage(
+# 1506 "MagickCore/blob.c" 3 4
+         (*__errno_location ())
+# 1506 "MagickCore/blob.c"
+         ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 1506,BlobError,"UnableToReadBlob", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); };
+          return(
+# 1507 "MagickCore/blob.c" 3 4
+                ((void *)0)
+# 1507 "MagickCore/blob.c"
+                    );
         }
-      *length=(size_t) MagickMin(i+(size_t) count,extent);
+      *length=(size_t) (((i+(size_t) count) < (extent)) ? (i+(size_t) count) : (extent));
       blob[*length]='\0';
       return(blob);
     }
-  *length=(size_t) MagickMin(offset,(MagickOffsetType)
-    MagickMin(extent,(size_t) MAGICK_SSIZE_MAX));
-  blob=(unsigned char *) NULL;
-  if (~(*length) >= (MagickPathExtent-1))
-    blob=(unsigned char *) AcquireQuantumMemory(*length+MagickPathExtent,
+  *length=(size_t) (((offset) < ((MagickOffsetType) (((extent) < ((size_t) (0x7fffffffffffffffL
+# 1513 "MagickCore/blob.c"
+                  ))) ? (extent) : ((size_t) (0x7fffffffffffffffL
+# 1513 "MagickCore/blob.c"
+                  ))))) ? (offset) : ((MagickOffsetType) (((extent) < ((size_t) (0x7fffffffffffffffL
+# 1513 "MagickCore/blob.c"
+                  ))) ? (extent) : ((size_t) (0x7fffffffffffffffL
+# 1513 "MagickCore/blob.c"
+                  )))))
+                                                ;
+  blob=(unsigned char *) 
+# 1515 "MagickCore/blob.c" 3 4
+                        ((void *)0)
+# 1515 "MagickCore/blob.c"
+                            ;
+  if (~(*length) >= (4096 -1))
+    blob=(unsigned char *) AcquireQuantumMemory(*length+4096,
       sizeof(*blob));
-  if (blob == (unsigned char *) NULL)
+  if (blob == (unsigned char *) 
+# 1519 "MagickCore/blob.c" 3 4
+                               ((void *)0)
+# 1519 "MagickCore/blob.c"
+                                   )
     {
       file=close(file);
-      (void) ThrowMagickException(exception,GetMagickModule(),
+      (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 1522,
         ResourceLimitError,"MemoryAllocationFailed","`%s'",filename);
-      return(NULL);
+      return(
+# 1524 "MagickCore/blob.c" 3 4
+            ((void *)0)
+# 1524 "MagickCore/blob.c"
+                );
     }
   map=MapBlob(file,ReadMode,0,*length);
-  if (map != (unsigned char *) NULL)
+  if (map != (unsigned char *) 
+# 1527 "MagickCore/blob.c" 3 4
+                              ((void *)0)
+# 1527 "MagickCore/blob.c"
+                                  )
     {
       (void) memcpy(blob,map,*length);
       (void) UnmapBlob(map,*length);
     }
   else
     {
-      (void) lseek(file,0,SEEK_SET);
+      (void) lseek(file,0,
+# 1534 "MagickCore/blob.c" 3 4
+                         0
+# 1534 "MagickCore/blob.c"
+                                 );
       for (i=0; i < *length; i+=(size_t) count)
       {
-        count=read(file,blob+i,(size_t) MagickMin(*length-i,(size_t)
-          MAGICK_SSIZE_MAX));
+        count=read(file,blob+i,(size_t) (((*length-i) < ((size_t) (0x7fffffffffffffffL
+# 1537 "MagickCore/blob.c"
+                                       ))) ? (*length-i) : ((size_t) (0x7fffffffffffffffL
+# 1537 "MagickCore/blob.c"
+                                       )))
+                           );
         if (count <= 0)
           {
             count=0;
-            if (errno != EINTR)
+            if (
+# 1542 "MagickCore/blob.c" 3 4
+               (*__errno_location ()) 
+# 1542 "MagickCore/blob.c"
+                     != 
+# 1542 "MagickCore/blob.c" 3 4
+                        4
+# 1542 "MagickCore/blob.c"
+                             )
               break;
           }
       }
@@ -1547,8 +20581,16 @@ MagickExport void *FileToBlob(const char *filename,const size_t extent,
         {
           file=close(file)-1;
           blob=(unsigned char *) RelinquishMagickMemory(blob);
-          ThrowFileException(exception,BlobError,"UnableToReadBlob",filename);
-          return(NULL);
+          { char *file_message; file_message=GetExceptionMessage(
+# 1550 "MagickCore/blob.c" 3 4
+         (*__errno_location ())
+# 1550 "MagickCore/blob.c"
+         ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 1550,BlobError,"UnableToReadBlob", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); };
+          return(
+# 1551 "MagickCore/blob.c" 3 4
+                ((void *)0)
+# 1551 "MagickCore/blob.c"
+                    );
         }
     }
   blob[*length]='\0';
@@ -1557,50 +20599,78 @@ MagickExport void *FileToBlob(const char *filename,const size_t extent,
   if (file == -1)
     {
       blob=(unsigned char *) RelinquishMagickMemory(blob);
-      ThrowFileException(exception,BlobError,"UnableToReadBlob",filename);
+      { char *file_message; file_message=GetExceptionMessage(
+# 1560 "MagickCore/blob.c" 3 4
+     (*__errno_location ())
+# 1560 "MagickCore/blob.c"
+     ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 1560,BlobError,"UnableToReadBlob", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); };
     }
   return(blob);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%   F i l e T o I m a g e                                                     %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  FileToImage() write the contents of a file to an image.
-%
-%  The format of the FileToImage method is:
-%
-%      MagickBooleanType FileToImage(Image *,const char *filename)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-%    o filename: the filename.
-%
-*/
+# 1589 "MagickCore/blob.c"
 static inline ssize_t WriteBlobStream(Image *image,const size_t length,
-  const void *magick_restrict data)
+  const void *__restrict__ data)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
   MagickSizeType
     extent;
 
   unsigned char
-    *magick_restrict q;
+    *__restrict__ q;
 
-  assert(image->blob != (BlobInfo *) NULL);
-  assert(image->blob->type != UndefinedStream);
-  assert(data != NULL);
+  
+# 1601 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1601 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 1601 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1601 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 1601 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1601 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 1601 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1601, __extension__ __PRETTY_FUNCTION__); }))
+# 1601 "MagickCore/blob.c"
+                                         ;
+  
+# 1602 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1602 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 1602 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1602 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 1602 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1602 "MagickCore/blob.c"
+ "image->blob->type != UndefinedStream"
+# 1602 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1602, __extension__ __PRETTY_FUNCTION__); }))
+# 1602 "MagickCore/blob.c"
+                                             ;
+  
+# 1603 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1603 "MagickCore/blob.c"
+ data != 
+# 1603 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1603 "MagickCore/blob.c"
+ data != 
+# 1603 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1603 "MagickCore/blob.c"
+ "data != NULL"
+# 1603 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1603, __extension__ __PRETTY_FUNCTION__); }))
+# 1603 "MagickCore/blob.c"
+                     ;
   blob_info=image->blob;
   if (blob_info->type != BlobStream)
     return(WriteBlob(image,length,(const unsigned char *) data));
@@ -1620,7 +20690,7 @@ static inline ssize_t WriteBlobStream(Image *image,const size_t length,
   return((ssize_t) length);
 }
 
-MagickExport MagickBooleanType FileToImage(Image *image,const char *filename,
+__attribute__ ((visibility ("default"))) MagickBooleanType FileToImage(Image *image,const char *filename,
   ExceptionInfo *exception)
 {
   int
@@ -1642,36 +20712,112 @@ MagickExport MagickBooleanType FileToImage(Image *image,const char *filename,
   unsigned char
     *blob;
 
-  assert(image != (const Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(filename != (const char *) NULL);
+  
+# 1645 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1645 "MagickCore/blob.c"
+ image != (const Image *) 
+# 1645 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1645 "MagickCore/blob.c"
+ image != (const Image *) 
+# 1645 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1645 "MagickCore/blob.c"
+ "image != (const Image *) NULL"
+# 1645 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1645, __extension__ __PRETTY_FUNCTION__); }))
+# 1645 "MagickCore/blob.c"
+                                      ;
+  
+# 1646 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1646 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1646 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1646 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1646 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1646 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 1646 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1646, __extension__ __PRETTY_FUNCTION__); }))
+# 1646 "MagickCore/blob.c"
+                                                ;
+  
+# 1647 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1647 "MagickCore/blob.c"
+ filename != (const char *) 
+# 1647 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1647 "MagickCore/blob.c"
+ filename != (const char *) 
+# 1647 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1647 "MagickCore/blob.c"
+ "filename != (const char *) NULL"
+# 1647 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1647, __extension__ __PRETTY_FUNCTION__); }))
+# 1647 "MagickCore/blob.c"
+                                        ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 1649,"%s",filename);
   status=IsRightsAuthorized(PathPolicyDomain,WritePolicyRights,filename);
   if (status == MagickFalse)
     {
-      errno=EPERM;
-      (void) ThrowMagickException(exception,GetMagickModule(),PolicyError,
+      
+# 1653 "MagickCore/blob.c" 3 4
+     (*__errno_location ())
+# 1653 "MagickCore/blob.c"
+          =
+# 1653 "MagickCore/blob.c" 3 4
+           1
+# 1653 "MagickCore/blob.c"
+                ;
+      (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 1654,PolicyError,
         "NotAuthorized","`%s'",filename);
       return(MagickFalse);
     }
-  file=fileno(stdin);
+  file=fileno(
+# 1658 "MagickCore/blob.c" 3 4
+             stdin
+# 1658 "MagickCore/blob.c"
+                  );
   if (LocaleCompare(filename,"-") != 0)
-    file=open_utf8(filename,O_RDONLY | O_BINARY,0);
+    file=open_utf8(filename,
+# 1660 "MagickCore/blob.c" 3 4
+                           00 
+# 1660 "MagickCore/blob.c"
+                                    | 0x00,0);
   if (file == -1)
     {
-      ThrowFileException(exception,BlobError,"UnableToOpenBlob",filename);
+      { char *file_message; file_message=GetExceptionMessage(
+# 1663 "MagickCore/blob.c" 3 4
+     (*__errno_location ())
+# 1663 "MagickCore/blob.c"
+     ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 1663,BlobError,"UnableToOpenBlob", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); };
       return(MagickFalse);
     }
-  quantum=(size_t) MagickMaxBufferExtent;
+  quantum=(size_t) 81920;
   if ((fstat(file,&file_stats) == 0) && (file_stats.st_size > 0))
-    quantum=(size_t) MagickMin(file_stats.st_size,MagickMaxBufferExtent);
+    quantum=(size_t) (((file_stats.st_size) < (81920)) ? (file_stats.st_size) : (81920));
   blob=(unsigned char *) AcquireQuantumMemory(quantum,sizeof(*blob));
-  if (blob == (unsigned char *) NULL)
+  if (blob == (unsigned char *) 
+# 1670 "MagickCore/blob.c" 3 4
+                               ((void *)0)
+# 1670 "MagickCore/blob.c"
+                                   )
     {
       file=close(file);
-      ThrowFileException(exception,ResourceLimitError,"MemoryAllocationFailed",
-        filename);
+      { char *file_message; file_message=GetExceptionMessage(
+# 1673 "MagickCore/blob.c" 3 4
+     (*__errno_location ())
+# 1673 "MagickCore/blob.c"
+     ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 1673,ResourceLimitError,"MemoryAllocationFailed", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); }
+                 ;
       return(MagickFalse);
     }
   for ( ; ; )
@@ -1680,190 +20826,270 @@ MagickExport MagickBooleanType FileToImage(Image *image,const char *filename,
     if (count <= 0)
       {
         count=0;
-        if (errno != EINTR)
+        if (
+# 1683 "MagickCore/blob.c" 3 4
+           (*__errno_location ()) 
+# 1683 "MagickCore/blob.c"
+                 != 
+# 1683 "MagickCore/blob.c" 3 4
+                    4
+# 1683 "MagickCore/blob.c"
+                         )
           break;
       }
     length=(size_t) count;
     count=WriteBlobStream(image,length,blob);
     if (count != (ssize_t) length)
       {
-        ThrowFileException(exception,BlobError,"UnableToWriteBlob",filename);
+        { char *file_message; file_message=GetExceptionMessage(
+# 1690 "MagickCore/blob.c" 3 4
+       (*__errno_location ())
+# 1690 "MagickCore/blob.c"
+       ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 1690,BlobError,"UnableToWriteBlob", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); };
         break;
       }
   }
   file=close(file);
   if (file == -1)
-    ThrowFileException(exception,BlobError,"UnableToWriteBlob",filename);
+    { char *file_message; file_message=GetExceptionMessage(
+# 1696 "MagickCore/blob.c" 3 4
+   (*__errno_location ())
+# 1696 "MagickCore/blob.c"
+   ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 1696,BlobError,"UnableToWriteBlob", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); };
   blob=(unsigned char *) RelinquishMagickMemory(blob);
   return(MagickTrue);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   G e t B l o b E r r o r                                                   %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  GetBlobError() returns MagickTrue if the blob associated with the specified
-%  image encountered an error.
-%
-%  The format of the GetBlobError method is:
-%
-%       MagickBooleanType GetBlobError(const Image *image)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-*/
-MagickExport MagickBooleanType GetBlobError(const Image *image)
+# 1724 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) MagickBooleanType GetBlobError(const Image *image)
 {
-  assert(image != (const Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 1726 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1726 "MagickCore/blob.c"
+ image != (const Image *) 
+# 1726 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1726 "MagickCore/blob.c"
+ image != (const Image *) 
+# 1726 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1726 "MagickCore/blob.c"
+ "image != (const Image *) NULL"
+# 1726 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1726, __extension__ __PRETTY_FUNCTION__); }))
+# 1726 "MagickCore/blob.c"
+                                      ;
+  
+# 1727 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1727 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1727 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1727 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1727 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1727 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 1727 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1727, __extension__ __PRETTY_FUNCTION__); }))
+# 1727 "MagickCore/blob.c"
+                                                ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 1729,"%s",image->filename);
   if ((image->blob->status != 0) && (image->blob->error_number != 0))
-    errno=image->blob->error_number;
+    
+# 1731 "MagickCore/blob.c" 3 4
+   (*__errno_location ())
+# 1731 "MagickCore/blob.c"
+        =image->blob->error_number;
   return(image->blob->status == 0 ? MagickFalse : MagickTrue);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   G e t B l o b F i l e H a n d l e                                         %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  GetBlobFileHandle() returns the file handle associated with the image blob.
-%
-%  The format of the GetBlobFile method is:
-%
-%      FILE *GetBlobFileHandle(const Image *image)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-*/
-MagickExport FILE *GetBlobFileHandle(const Image *image)
+# 1757 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) FILE *GetBlobFileHandle(const Image *image)
 {
-  assert(image != (const Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 1759 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1759 "MagickCore/blob.c"
+ image != (const Image *) 
+# 1759 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1759 "MagickCore/blob.c"
+ image != (const Image *) 
+# 1759 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1759 "MagickCore/blob.c"
+ "image != (const Image *) NULL"
+# 1759 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1759, __extension__ __PRETTY_FUNCTION__); }))
+# 1759 "MagickCore/blob.c"
+                                      ;
+  
+# 1760 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1760 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1760 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1760 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1760 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1760 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 1760 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1760, __extension__ __PRETTY_FUNCTION__); }))
+# 1760 "MagickCore/blob.c"
+                                                ;
   return(image->blob->file_info.file);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   G e t B l o b I n f o                                                     %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  GetBlobInfo() initializes the BlobInfo structure.
-%
-%  The format of the GetBlobInfo method is:
-%
-%      void GetBlobInfo(BlobInfo *blob_info)
-%
-%  A description of each parameter follows:
-%
-%    o blob_info: Specifies a pointer to a BlobInfo structure.
-%
-*/
-MagickExport void GetBlobInfo(BlobInfo *blob_info)
+# 1786 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void GetBlobInfo(BlobInfo *blob_info)
 {
-  assert(blob_info != (BlobInfo *) NULL);
+  
+# 1788 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1788 "MagickCore/blob.c"
+ blob_info != (BlobInfo *) 
+# 1788 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1788 "MagickCore/blob.c"
+ blob_info != (BlobInfo *) 
+# 1788 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1788 "MagickCore/blob.c"
+ "blob_info != (BlobInfo *) NULL"
+# 1788 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1788, __extension__ __PRETTY_FUNCTION__); }))
+# 1788 "MagickCore/blob.c"
+                                       ;
   (void) memset(blob_info,0,sizeof(*blob_info));
   blob_info->type=UndefinedStream;
-  blob_info->quantum=(size_t) MagickMaxBlobExtent;
-  blob_info->properties.st_mtime=GetMagickTime();
-  blob_info->properties.st_ctime=blob_info->properties.st_mtime;
+  blob_info->quantum=(size_t) (8*8192);
+  blob_info->properties.
+# 1792 "MagickCore/blob.c" 3 4
+                       st_mtim.tv_sec
+# 1792 "MagickCore/blob.c"
+                               =GetMagickTime();
+  blob_info->properties.
+# 1793 "MagickCore/blob.c" 3 4
+                       st_ctim.tv_sec
+# 1793 "MagickCore/blob.c"
+                               =blob_info->properties.
+# 1793 "MagickCore/blob.c" 3 4
+                                                      st_mtim.tv_sec
+# 1793 "MagickCore/blob.c"
+                                                              ;
   blob_info->debug=GetLogEventMask() & BlobEvent ? MagickTrue : MagickFalse;
   blob_info->reference_count=1;
   blob_info->semaphore=AcquireSemaphoreInfo();
-  blob_info->signature=MagickCoreSignature;
+  blob_info->signature=0xabacadabUL;
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%  G e t B l o b P r o p e r t i e s                                          %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  GetBlobProperties() returns information about an image blob.
-%
-%  The format of the GetBlobProperties method is:
-%
-%      const struct stat *GetBlobProperties(const Image *image)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-*/
-MagickExport const struct stat *GetBlobProperties(const Image *image)
+# 1822 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) const struct stat *GetBlobProperties(const Image *image)
 {
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 1824 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1824 "MagickCore/blob.c"
+ image != (Image *) 
+# 1824 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1824 "MagickCore/blob.c"
+ image != (Image *) 
+# 1824 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1824 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 1824 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1824, __extension__ __PRETTY_FUNCTION__); }))
+# 1824 "MagickCore/blob.c"
+                                ;
+  
+# 1825 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1825 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1825 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1825 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1825 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1825 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 1825 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1825, __extension__ __PRETTY_FUNCTION__); }))
+# 1825 "MagickCore/blob.c"
+                                                ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 1827,"%s",image->filename);
   return(&image->blob->properties);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  G e t B l o b S i z e                                                      %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  GetBlobSize() returns the current length of the image file or blob; zero is
-%  returned if the size cannot be determined.
-%
-%  The format of the GetBlobSize method is:
-%
-%      MagickSizeType GetBlobSize(const Image *image)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-*/
-MagickExport MagickSizeType GetBlobSize(const Image *image)
+# 1854 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) MagickSizeType GetBlobSize(const Image *image)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
   MagickSizeType
     extent;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image->blob != (BlobInfo *) NULL);
+  
+# 1862 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1862 "MagickCore/blob.c"
+ image != (Image *) 
+# 1862 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1862 "MagickCore/blob.c"
+ image != (Image *) 
+# 1862 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1862 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 1862 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1862, __extension__ __PRETTY_FUNCTION__); }))
+# 1862 "MagickCore/blob.c"
+                                ;
+  
+# 1863 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1863 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1863 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1863 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1863 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1863 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 1863 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1863, __extension__ __PRETTY_FUNCTION__); }))
+# 1863 "MagickCore/blob.c"
+                                                ;
+  
+# 1864 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1864 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 1864 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1864 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 1864 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1864 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 1864 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1864, __extension__ __PRETTY_FUNCTION__); }))
+# 1864 "MagickCore/blob.c"
+                                         ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 1866,"%s",image->filename);
   blob_info=image->blob;
   extent=0;
   switch (blob_info->type)
@@ -1914,17 +21140,33 @@ MagickExport MagickSizeType GetBlobSize(const Image *image)
     }
     case CustomStream:
     {
-      if ((blob_info->custom_stream->teller != (CustomStreamTeller) NULL) &&
-          (blob_info->custom_stream->seeker != (CustomStreamSeeker) NULL))
+      if ((blob_info->custom_stream->teller != (CustomStreamTeller) 
+# 1917 "MagickCore/blob.c" 3 4
+                                                                   ((void *)0)
+# 1917 "MagickCore/blob.c"
+                                                                       ) &&
+          (blob_info->custom_stream->seeker != (CustomStreamSeeker) 
+# 1918 "MagickCore/blob.c" 3 4
+                                                                   ((void *)0)
+# 1918 "MagickCore/blob.c"
+                                                                       ))
         {
           MagickOffsetType
             offset;
 
           offset=blob_info->custom_stream->teller(
             blob_info->custom_stream->data);
-          extent=(MagickSizeType) blob_info->custom_stream->seeker(0,SEEK_END,
+          extent=(MagickSizeType) blob_info->custom_stream->seeker(0,
+# 1925 "MagickCore/blob.c" 3 4
+                                                                    2
+# 1925 "MagickCore/blob.c"
+                                                                            ,
             blob_info->custom_stream->data);
-          (void) blob_info->custom_stream->seeker(offset,SEEK_SET,
+          (void) blob_info->custom_stream->seeker(offset,
+# 1927 "MagickCore/blob.c" 3 4
+                                                        0
+# 1927 "MagickCore/blob.c"
+                                                                ,
             blob_info->custom_stream->data);
         }
       break;
@@ -1932,101 +21174,88 @@ MagickExport MagickSizeType GetBlobSize(const Image *image)
   }
   return(extent);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   G e t B l o b S t r e a m D a t a                                         %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  GetBlobStreamData() returns the stream data for the image.
-%
-%  The format of the GetBlobStreamData method is:
-%
-%      void *GetBlobStreamData(const Image *image)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-*/
-MagickExport void *GetBlobStreamData(const Image *image)
+# 1958 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void *GetBlobStreamData(const Image *image)
 {
-  assert(image != (const Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 1960 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1960 "MagickCore/blob.c"
+ image != (const Image *) 
+# 1960 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1960 "MagickCore/blob.c"
+ image != (const Image *) 
+# 1960 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1960 "MagickCore/blob.c"
+ "image != (const Image *) NULL"
+# 1960 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1960, __extension__ __PRETTY_FUNCTION__); }))
+# 1960 "MagickCore/blob.c"
+                                      ;
+  
+# 1961 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1961 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1961 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1961 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1961 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1961 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 1961 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1961, __extension__ __PRETTY_FUNCTION__); }))
+# 1961 "MagickCore/blob.c"
+                                                ;
   return(image->blob->data);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   G e t B l o b S t r e a m H a n d l e r                                   %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  GetBlobStreamHandler() returns the stream handler for the image.
-%
-%  The format of the GetBlobStreamHandler method is:
-%
-%      StreamHandler GetBlobStreamHandler(const Image *image)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-*/
-MagickExport StreamHandler GetBlobStreamHandler(const Image *image)
+# 1987 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) StreamHandler GetBlobStreamHandler(const Image *image)
 {
-  assert(image != (const Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 1989 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1989 "MagickCore/blob.c"
+ image != (const Image *) 
+# 1989 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 1989 "MagickCore/blob.c"
+ image != (const Image *) 
+# 1989 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 1989 "MagickCore/blob.c"
+ "image != (const Image *) NULL"
+# 1989 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1989, __extension__ __PRETTY_FUNCTION__); }))
+# 1989 "MagickCore/blob.c"
+                                      ;
+  
+# 1990 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 1990 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1990 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 1990 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 1990 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 1990 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 1990 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 1990, __extension__ __PRETTY_FUNCTION__); }))
+# 1990 "MagickCore/blob.c"
+                                                ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 1992,"%s",image->filename);
   return(image->blob->stream);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%   I m a g e T o B l o b                                                     %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ImageToBlob() implements direct to memory image formats.  It returns the
-%  image as a formatted blob and its length.  The magick member of the Image
-%  structure determines the format of the returned blob (GIF, JPEG, PNG,
-%  etc.).  This method is the equivalent of WriteImage(), but writes the
-%  formatted "file" to a memory buffer rather than to an actual file.
-%
-%  The format of the ImageToBlob method is:
-%
-%      void *ImageToBlob(const ImageInfo *image_info,Image *image,
-%        size_t *length,ExceptionInfo *exception)
-%
-%  A description of each parameter follows:
-%
-%    o image_info: the image info.
-%
-%    o image: the image.
-%
-%    o length: return the actual length of the blob.
-%
-%    o exception: return any errors or warnings in this structure.
-%
-*/
-MagickExport void *ImageToBlob(const ImageInfo *image_info,
+# 2029 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void *ImageToBlob(const ImageInfo *image_info,
   Image *image,size_t *length,ExceptionInfo *exception)
 {
   const MagickInfo
@@ -2041,42 +21270,150 @@ MagickExport void *ImageToBlob(const ImageInfo *image_info,
   void
     *blob;
 
-  assert(image_info != (const ImageInfo *) NULL);
-  assert(image_info->signature == MagickCoreSignature);
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(exception != (ExceptionInfo *) NULL);
-  assert(exception->signature == MagickCoreSignature);
+  
+# 2044 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2044 "MagickCore/blob.c"
+ image_info != (const ImageInfo *) 
+# 2044 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2044 "MagickCore/blob.c"
+ image_info != (const ImageInfo *) 
+# 2044 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2044 "MagickCore/blob.c"
+ "image_info != (const ImageInfo *) NULL"
+# 2044 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2044, __extension__ __PRETTY_FUNCTION__); }))
+# 2044 "MagickCore/blob.c"
+                                               ;
+  
+# 2045 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2045 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 2045 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2045 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 2045 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2045 "MagickCore/blob.c"
+ "image_info->signature == MagickCoreSignature"
+# 2045 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2045, __extension__ __PRETTY_FUNCTION__); }))
+# 2045 "MagickCore/blob.c"
+                                                     ;
+  
+# 2046 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2046 "MagickCore/blob.c"
+ image != (Image *) 
+# 2046 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2046 "MagickCore/blob.c"
+ image != (Image *) 
+# 2046 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2046 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 2046 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2046, __extension__ __PRETTY_FUNCTION__); }))
+# 2046 "MagickCore/blob.c"
+                                ;
+  
+# 2047 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2047 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 2047 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2047 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 2047 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2047 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 2047 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2047, __extension__ __PRETTY_FUNCTION__); }))
+# 2047 "MagickCore/blob.c"
+                                                ;
+  
+# 2048 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2048 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 2048 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2048 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 2048 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2048 "MagickCore/blob.c"
+ "exception != (ExceptionInfo *) NULL"
+# 2048 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2048, __extension__ __PRETTY_FUNCTION__); }))
+# 2048 "MagickCore/blob.c"
+                                            ;
+  
+# 2049 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2049 "MagickCore/blob.c"
+ exception->signature == 0xabacadabUL
+# 2049 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2049 "MagickCore/blob.c"
+ exception->signature == 0xabacadabUL
+# 2049 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2049 "MagickCore/blob.c"
+ "exception->signature == MagickCoreSignature"
+# 2049 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2049, __extension__ __PRETTY_FUNCTION__); }))
+# 2049 "MagickCore/blob.c"
+                                                    ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 2051,"%s",
       image_info->filename);
   *length=0;
-  blob=(unsigned char *) NULL;
+  blob=(unsigned char *) 
+# 2054 "MagickCore/blob.c" 3 4
+                        ((void *)0)
+# 2054 "MagickCore/blob.c"
+                            ;
   blob_info=CloneImageInfo(image_info);
   blob_info->adjoin=MagickFalse;
   (void) SetImageInfo(blob_info,1,exception);
   if (*blob_info->magick != '\0')
-    (void) CopyMagickString(image->magick,blob_info->magick,MagickPathExtent);
+    (void) CopyMagickString(image->magick,blob_info->magick,4096);
   magick_info=GetMagickInfo(image->magick,exception);
-  if (magick_info == (const MagickInfo *) NULL)
+  if (magick_info == (const MagickInfo *) 
+# 2061 "MagickCore/blob.c" 3 4
+                                         ((void *)0)
+# 2061 "MagickCore/blob.c"
+                                             )
     {
-      (void) ThrowMagickException(exception,GetMagickModule(),
+      (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2063,
         MissingDelegateError,"NoEncodeDelegateForThisImageFormat","`%s'",
         image->magick);
       blob_info=DestroyImageInfo(blob_info);
       return(blob);
     }
-  (void) CopyMagickString(blob_info->magick,image->magick,MagickPathExtent);
+  (void) CopyMagickString(blob_info->magick,image->magick,4096);
   if (GetMagickBlobSupport(magick_info) != MagickFalse)
     {
-      /*
-        Native blob support for this image format.
-      */
+
+
+
       blob_info->length=0;
-      blob_info->blob=AcquireQuantumMemory(MagickMaxBlobExtent,
+      blob_info->blob=AcquireQuantumMemory((8*8192),
         sizeof(unsigned char));
-      if (blob_info->blob == NULL)
-        (void) ThrowMagickException(exception,GetMagickModule(),
+      if (blob_info->blob == 
+# 2078 "MagickCore/blob.c" 3 4
+                            ((void *)0)
+# 2078 "MagickCore/blob.c"
+                                )
+        (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2079,
           ResourceLimitError,"MemoryAllocationFailed","`%s'",image->filename);
       else
         {
@@ -2086,7 +21423,11 @@ MagickExport void *ImageToBlob(const ImageInfo *image_info,
           status=WriteImage(blob_info,image,exception);
           *length=image->blob->length;
           blob=DetachBlob(image->blob);
-          if (blob != (void *) NULL)
+          if (blob != (void *) 
+# 2089 "MagickCore/blob.c" 3 4
+                              ((void *)0)
+# 2089 "MagickCore/blob.c"
+                                  )
             {
               if (status == MagickFalse)
                 blob=RelinquishMagickMemory(blob);
@@ -2100,31 +21441,43 @@ MagickExport void *ImageToBlob(const ImageInfo *image_info,
   else
     {
       char
-        unique[MagickPathExtent];
+        unique[4096];
 
       int
         file;
 
-      /*
-        Write file to disk in blob image format.
-      */
+
+
+
       file=AcquireUniqueFileResource(unique);
       if (file == -1)
         {
-          ThrowFileException(exception,BlobError,"UnableToWriteBlob",
-            image_info->filename);
+          { char *file_message; file_message=GetExceptionMessage(
+# 2114 "MagickCore/blob.c" 3 4
+         (*__errno_location ())
+# 2114 "MagickCore/blob.c"
+         ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2114,BlobError,"UnableToWriteBlob", "'%s': %s",image_info->filename,file_message); file_message=DestroyString(file_message); }
+                                 ;
         }
       else
         {
           blob_info->file=fdopen(file,"wb");
-          if (blob_info->file != (FILE *) NULL)
+          if (blob_info->file != (FILE *) 
+# 2120 "MagickCore/blob.c" 3 4
+                                         ((void *)0)
+# 2120 "MagickCore/blob.c"
+                                             )
             {
-              (void) FormatLocaleString(image->filename,MagickPathExtent,
+              (void) FormatLocaleString(image->filename,4096,
                 "%s:%s",image->magick,unique);
               status=WriteImage(blob_info,image,exception);
               (void) fclose(blob_info->file);
               if (status != MagickFalse)
-                blob=FileToBlob(unique,SIZE_MAX,length,exception);
+                blob=FileToBlob(unique,
+# 2127 "MagickCore/blob.c" 3 4
+                                      (18446744073709551615UL)
+# 2127 "MagickCore/blob.c"
+                                              ,length,exception);
             }
           (void) RelinquishUniqueFileResource(unique);
         }
@@ -2132,36 +21485,8 @@ MagickExport void *ImageToBlob(const ImageInfo *image_info,
   blob_info=DestroyImageInfo(blob_info);
   return(blob);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  I m a g e T o C u s t o m S t r e a m                                      %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ImageToCustomStream() is the equivalent of WriteImage(), but writes the
-%  formatted "file" to the custom stream rather than to an actual file.
-%
-%  The format of the ImageToCustomStream method is:
-%
-%      void ImageToCustomStream(const ImageInfo *image_info,Image *image,
-%        ExceptionInfo *exception)
-%
-%  A description of each parameter follows:
-%
-%    o image_info: the image info.
-%
-%    o image: the image.
-%
-%    o exception: return any errors or warnings in this structure.
-%
-*/
-MagickExport void ImageToCustomStream(const ImageInfo *image_info,Image *image,
+# 2164 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void ImageToCustomStream(const ImageInfo *image_info,Image *image,
   ExceptionInfo *exception)
 {
   const MagickInfo
@@ -2174,45 +21499,185 @@ MagickExport void ImageToCustomStream(const ImageInfo *image_info,Image *image,
     blob_support,
     status;
 
-  assert(image_info != (const ImageInfo *) NULL);
-  assert(image_info->signature == MagickCoreSignature);
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image_info->custom_stream != (CustomStreamInfo *) NULL);
-  assert(image_info->custom_stream->signature == MagickCoreSignature);
-  assert(image_info->custom_stream->writer != (CustomStreamHandler) NULL);
-  assert(exception != (ExceptionInfo *) NULL);
+  
+# 2177 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2177 "MagickCore/blob.c"
+ image_info != (const ImageInfo *) 
+# 2177 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2177 "MagickCore/blob.c"
+ image_info != (const ImageInfo *) 
+# 2177 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2177 "MagickCore/blob.c"
+ "image_info != (const ImageInfo *) NULL"
+# 2177 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2177, __extension__ __PRETTY_FUNCTION__); }))
+# 2177 "MagickCore/blob.c"
+                                               ;
+  
+# 2178 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2178 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 2178 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2178 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 2178 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2178 "MagickCore/blob.c"
+ "image_info->signature == MagickCoreSignature"
+# 2178 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2178, __extension__ __PRETTY_FUNCTION__); }))
+# 2178 "MagickCore/blob.c"
+                                                     ;
+  
+# 2179 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2179 "MagickCore/blob.c"
+ image != (Image *) 
+# 2179 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2179 "MagickCore/blob.c"
+ image != (Image *) 
+# 2179 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2179 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 2179 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2179, __extension__ __PRETTY_FUNCTION__); }))
+# 2179 "MagickCore/blob.c"
+                                ;
+  
+# 2180 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2180 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 2180 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2180 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 2180 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2180 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 2180 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2180, __extension__ __PRETTY_FUNCTION__); }))
+# 2180 "MagickCore/blob.c"
+                                                ;
+  
+# 2181 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2181 "MagickCore/blob.c"
+ image_info->custom_stream != (CustomStreamInfo *) 
+# 2181 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2181 "MagickCore/blob.c"
+ image_info->custom_stream != (CustomStreamInfo *) 
+# 2181 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2181 "MagickCore/blob.c"
+ "image_info->custom_stream != (CustomStreamInfo *) NULL"
+# 2181 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2181, __extension__ __PRETTY_FUNCTION__); }))
+# 2181 "MagickCore/blob.c"
+                                                               ;
+  
+# 2182 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2182 "MagickCore/blob.c"
+ image_info->custom_stream->signature == 0xabacadabUL
+# 2182 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2182 "MagickCore/blob.c"
+ image_info->custom_stream->signature == 0xabacadabUL
+# 2182 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2182 "MagickCore/blob.c"
+ "image_info->custom_stream->signature == MagickCoreSignature"
+# 2182 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2182, __extension__ __PRETTY_FUNCTION__); }))
+# 2182 "MagickCore/blob.c"
+                                                                    ;
+  
+# 2183 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2183 "MagickCore/blob.c"
+ image_info->custom_stream->writer != (CustomStreamHandler) 
+# 2183 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2183 "MagickCore/blob.c"
+ image_info->custom_stream->writer != (CustomStreamHandler) 
+# 2183 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2183 "MagickCore/blob.c"
+ "image_info->custom_stream->writer != (CustomStreamHandler) NULL"
+# 2183 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2183, __extension__ __PRETTY_FUNCTION__); }))
+# 2183 "MagickCore/blob.c"
+                                                                        ;
+  
+# 2184 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2184 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 2184 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2184 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 2184 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2184 "MagickCore/blob.c"
+ "exception != (ExceptionInfo *) NULL"
+# 2184 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2184, __extension__ __PRETTY_FUNCTION__); }))
+# 2184 "MagickCore/blob.c"
+                                            ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 2186,"%s",
       image_info->filename);
   clone_info=CloneImageInfo(image_info);
   clone_info->adjoin=MagickFalse;
   (void) SetImageInfo(clone_info,1,exception);
   if (*clone_info->magick != '\0')
-    (void) CopyMagickString(image->magick,clone_info->magick,MagickPathExtent);
+    (void) CopyMagickString(image->magick,clone_info->magick,4096);
   magick_info=GetMagickInfo(image->magick,exception);
-  if (magick_info == (const MagickInfo *) NULL)
+  if (magick_info == (const MagickInfo *) 
+# 2194 "MagickCore/blob.c" 3 4
+                                         ((void *)0)
+# 2194 "MagickCore/blob.c"
+                                             )
     {
-      (void) ThrowMagickException(exception,GetMagickModule(),
+      (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2196,
         MissingDelegateError,"NoEncodeDelegateForThisImageFormat","`%s'",
         image->magick);
       clone_info=DestroyImageInfo(clone_info);
       return;
     }
-  (void) CopyMagickString(clone_info->magick,image->magick,MagickPathExtent);
+  (void) CopyMagickString(clone_info->magick,image->magick,4096);
   blob_support=GetMagickBlobSupport(magick_info);
   if ((blob_support != MagickFalse) &&
       (GetMagickEncoderSeekableStream(magick_info) != MagickFalse))
     {
-      if ((clone_info->custom_stream->seeker == (CustomStreamSeeker) NULL) ||
-          (clone_info->custom_stream->teller == (CustomStreamTeller) NULL))
+      if ((clone_info->custom_stream->seeker == (CustomStreamSeeker) 
+# 2207 "MagickCore/blob.c" 3 4
+                                                                    ((void *)0)
+# 2207 "MagickCore/blob.c"
+                                                                        ) ||
+          (clone_info->custom_stream->teller == (CustomStreamTeller) 
+# 2208 "MagickCore/blob.c" 3 4
+                                                                    ((void *)0)
+# 2208 "MagickCore/blob.c"
+                                                                        ))
         blob_support=MagickFalse;
     }
   if (blob_support != MagickFalse)
     {
-      /*
-        Native blob support for this image format.
-      */
+
+
+
       (void) CloseBlob(image);
       *image->filename='\0';
       (void) WriteImage(clone_info,image,exception);
@@ -2220,7 +21685,7 @@ MagickExport void ImageToCustomStream(const ImageInfo *image_info,Image *image,
   else
     {
       char
-        unique[MagickPathExtent];
+        unique[4096];
 
       int
         file;
@@ -2228,44 +21693,68 @@ MagickExport void ImageToCustomStream(const ImageInfo *image_info,Image *image,
       unsigned char
         *blob;
 
-      /*
-        Write file to disk in blob image format.
-      */
-      clone_info->custom_stream=(CustomStreamInfo *) NULL;
-      blob=(unsigned char *) AcquireQuantumMemory(MagickMaxBufferExtent,
+
+
+
+      clone_info->custom_stream=(CustomStreamInfo *) 
+# 2234 "MagickCore/blob.c" 3 4
+                                                    ((void *)0)
+# 2234 "MagickCore/blob.c"
+                                                        ;
+      blob=(unsigned char *) AcquireQuantumMemory(81920,
         sizeof(*blob));
-      if (blob == (unsigned char *) NULL)
+      if (blob == (unsigned char *) 
+# 2237 "MagickCore/blob.c" 3 4
+                                   ((void *)0)
+# 2237 "MagickCore/blob.c"
+                                       )
         {
-          ThrowFileException(exception,BlobError,"UnableToWriteBlob",
-            image_info->filename);
+          { char *file_message; file_message=GetExceptionMessage(
+# 2239 "MagickCore/blob.c" 3 4
+         (*__errno_location ())
+# 2239 "MagickCore/blob.c"
+         ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2239,BlobError,"UnableToWriteBlob", "'%s': %s",image_info->filename,file_message); file_message=DestroyString(file_message); }
+                                 ;
           clone_info=DestroyImageInfo(clone_info);
           return;
         }
       file=AcquireUniqueFileResource(unique);
       if (file == -1)
         {
-          ThrowFileException(exception,BlobError,"UnableToWriteBlob",
-            image_info->filename);
+          { char *file_message; file_message=GetExceptionMessage(
+# 2247 "MagickCore/blob.c" 3 4
+         (*__errno_location ())
+# 2247 "MagickCore/blob.c"
+         ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2247,BlobError,"UnableToWriteBlob", "'%s': %s",image_info->filename,file_message); file_message=DestroyString(file_message); }
+                                 ;
           blob=(unsigned char *) RelinquishMagickMemory(blob);
           clone_info=DestroyImageInfo(clone_info);
           return;
         }
       clone_info->file=fdopen(file,"wb+");
-      if (clone_info->file != (FILE *) NULL)
+      if (clone_info->file != (FILE *) 
+# 2254 "MagickCore/blob.c" 3 4
+                                      ((void *)0)
+# 2254 "MagickCore/blob.c"
+                                          )
         {
           ssize_t
             count;
 
-          (void) FormatLocaleString(image->filename,MagickPathExtent,
+          (void) FormatLocaleString(image->filename,4096,
             "%s:%s",image->magick,unique);
           status=WriteImage(clone_info,image,exception);
           if (status != MagickFalse)
             {
-              (void) fseek(clone_info->file,0,SEEK_SET);
-              count=(ssize_t) MagickMaxBufferExtent;
-              while (count == (ssize_t) MagickMaxBufferExtent)
+              (void) fseeko(clone_info->file,0,
+# 2264 "MagickCore/blob.c" 3 4
+                                             0
+# 2264 "MagickCore/blob.c"
+                                                     );
+              count=(ssize_t) 81920;
+              while (count == (ssize_t) 81920)
               {
-                count=(ssize_t) fread(blob,sizeof(*blob),MagickMaxBufferExtent,
+                count=(ssize_t) fread(blob,sizeof(*blob),81920,
                   clone_info->file);
                 (void) image_info->custom_stream->writer(blob,(size_t) count,
                   image_info->custom_stream->data);
@@ -2278,36 +21767,8 @@ MagickExport void ImageToCustomStream(const ImageInfo *image_info,Image *image,
     }
   clone_info=DestroyImageInfo(clone_info);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%   I m a g e T o F i l e                                                     %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ImageToFile() writes an image to a file.  It returns MagickFalse if an error
-%  occurs otherwise MagickTrue.
-%
-%  The format of the ImageToFile method is:
-%
-%       MagickBooleanType ImageToFile(Image *image,char *filename,
-%         ExceptionInfo *exception)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-%    o filename: Write the image to this file.
-%
-%    o exception: return any errors or warnings in this structure.
-%
-*/
-MagickExport MagickBooleanType ImageToFile(Image *image,char *filename,
+# 2310 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) MagickBooleanType ImageToFile(Image *image,char *filename,
   ExceptionInfo *exception)
 {
   int
@@ -2332,33 +21793,145 @@ MagickExport MagickBooleanType ImageToFile(Image *image,char *filename,
   unsigned char
     *buffer;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image->blob != (BlobInfo *) NULL);
-  assert(image->blob->type != UndefinedStream);
-  assert(filename != (const char *) NULL);
+  
+# 2335 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2335 "MagickCore/blob.c"
+ image != (Image *) 
+# 2335 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2335 "MagickCore/blob.c"
+ image != (Image *) 
+# 2335 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2335 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 2335 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2335, __extension__ __PRETTY_FUNCTION__); }))
+# 2335 "MagickCore/blob.c"
+                                ;
+  
+# 2336 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2336 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 2336 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2336 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 2336 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2336 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 2336 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2336, __extension__ __PRETTY_FUNCTION__); }))
+# 2336 "MagickCore/blob.c"
+                                                ;
+  
+# 2337 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2337 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 2337 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2337 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 2337 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2337 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 2337 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2337, __extension__ __PRETTY_FUNCTION__); }))
+# 2337 "MagickCore/blob.c"
+                                         ;
+  
+# 2338 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2338 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 2338 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2338 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 2338 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2338 "MagickCore/blob.c"
+ "image->blob->type != UndefinedStream"
+# 2338 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2338, __extension__ __PRETTY_FUNCTION__); }))
+# 2338 "MagickCore/blob.c"
+                                             ;
+  
+# 2339 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2339 "MagickCore/blob.c"
+ filename != (const char *) 
+# 2339 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2339 "MagickCore/blob.c"
+ filename != (const char *) 
+# 2339 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2339 "MagickCore/blob.c"
+ "filename != (const char *) NULL"
+# 2339 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2339, __extension__ __PRETTY_FUNCTION__); }))
+# 2339 "MagickCore/blob.c"
+                                        ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 2341,"%s",filename);
   if (*filename == '\0')
     file=AcquireUniqueFileResource(filename);
   else
     if (LocaleCompare(filename,"-") == 0)
-      file=fileno(stdout);
+      file=fileno(
+# 2346 "MagickCore/blob.c" 3 4
+                 stdout
+# 2346 "MagickCore/blob.c"
+                       );
     else
-      file=open_utf8(filename,O_RDWR | O_CREAT | O_EXCL | O_BINARY,S_MODE);
+      file=open_utf8(filename,
+# 2348 "MagickCore/blob.c" 3 4
+                             02 
+# 2348 "MagickCore/blob.c"
+                                    | 
+# 2348 "MagickCore/blob.c" 3 4
+                                      0100 
+# 2348 "MagickCore/blob.c"
+                                              | 
+# 2348 "MagickCore/blob.c" 3 4
+                                                0200 
+# 2348 "MagickCore/blob.c"
+                                                       | 0x00,(
+# 2348 "MagickCore/blob.c" 3 4
+                                                                  0400 
+# 2348 "MagickCore/blob.c"
+                                                                  | 
+# 2348 "MagickCore/blob.c" 3 4
+                                                                  0200
+# 2348 "MagickCore/blob.c"
+                                                                  ));
   if (file == -1)
     {
-      ThrowFileException(exception,BlobError,"UnableToWriteBlob",filename);
+      { char *file_message; file_message=GetExceptionMessage(
+# 2351 "MagickCore/blob.c" 3 4
+     (*__errno_location ())
+# 2351 "MagickCore/blob.c"
+     ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2351,BlobError,"UnableToWriteBlob", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); };
       return(MagickFalse);
     }
-  quantum=(size_t) MagickMaxBufferExtent;
+  quantum=(size_t) 81920;
   if ((fstat(file,&file_stats) == 0) && (file_stats.st_size > 0))
-    quantum=(size_t) MagickMin(file_stats.st_size,MagickMaxBufferExtent);
+    quantum=(size_t) (((file_stats.st_size) < (81920)) ? (file_stats.st_size) : (81920));
   buffer=(unsigned char *) AcquireQuantumMemory(quantum,sizeof(*buffer));
-  if (buffer == (unsigned char *) NULL)
+  if (buffer == (unsigned char *) 
+# 2358 "MagickCore/blob.c" 3 4
+                                 ((void *)0)
+# 2358 "MagickCore/blob.c"
+                                     )
     {
       file=close(file)-1;
-      (void) ThrowMagickException(exception,GetMagickModule(),
+      (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2361,
         ResourceLimitError,"MemoryAllocationError","`%s'",filename);
       return(MagickFalse);
     }
@@ -2373,7 +21946,15 @@ MagickExport MagickBooleanType ImageToFile(Image *image,char *filename,
       if (count <= 0)
         {
           count=0;
-          if (errno != EINTR)
+          if (
+# 2376 "MagickCore/blob.c" 3 4
+             (*__errno_location ()) 
+# 2376 "MagickCore/blob.c"
+                   != 
+# 2376 "MagickCore/blob.c" 3 4
+                      4
+# 2376 "MagickCore/blob.c"
+                           )
             break;
         }
     }
@@ -2388,48 +21969,17 @@ MagickExport MagickBooleanType ImageToFile(Image *image,char *filename,
     {
       if (file != -1)
         file=close(file);
-      ThrowFileException(exception,BlobError,"UnableToWriteBlob",filename);
+      { char *file_message; file_message=GetExceptionMessage(
+# 2391 "MagickCore/blob.c" 3 4
+     (*__errno_location ())
+# 2391 "MagickCore/blob.c"
+     ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2391,BlobError,"UnableToWriteBlob", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); };
       return(MagickFalse);
     }
   return(MagickTrue);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%   I m a g e s T o B l o b                                                   %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ImagesToBlob() implements direct to memory image formats.  It returns the
-%  image sequence as a blob and its length.  The magick member of the ImageInfo
-%  structure determines the format of the returned blob (GIF, JPEG,  PNG, etc.)
-%
-%  Note, some image formats do not permit multiple images to the same image
-%  stream (e.g. JPEG).  in this instance, just the first image of the
-%  sequence is returned as a blob.
-%
-%  The format of the ImagesToBlob method is:
-%
-%      void *ImagesToBlob(const ImageInfo *image_info,Image *images,
-%        size_t *length,ExceptionInfo *exception)
-%
-%  A description of each parameter follows:
-%
-%    o image_info: the image info.
-%
-%    o images: the image list.
-%
-%    o length: return the actual length of the blob.
-%
-%    o exception: return any errors or warnings in this structure.
-%
-*/
-MagickExport void *ImagesToBlob(const ImageInfo *image_info,Image *images,
+# 2432 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void *ImagesToBlob(const ImageInfo *image_info,Image *images,
   size_t *length,ExceptionInfo *exception)
 {
   const MagickInfo
@@ -2444,25 +21994,113 @@ MagickExport void *ImagesToBlob(const ImageInfo *image_info,Image *images,
   void
     *blob;
 
-  assert(image_info != (const ImageInfo *) NULL);
-  assert(image_info->signature == MagickCoreSignature);
-  assert(images != (Image *) NULL);
-  assert(images->signature == MagickCoreSignature);
-  assert(exception != (ExceptionInfo *) NULL);
+  
+# 2447 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2447 "MagickCore/blob.c"
+ image_info != (const ImageInfo *) 
+# 2447 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2447 "MagickCore/blob.c"
+ image_info != (const ImageInfo *) 
+# 2447 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2447 "MagickCore/blob.c"
+ "image_info != (const ImageInfo *) NULL"
+# 2447 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2447, __extension__ __PRETTY_FUNCTION__); }))
+# 2447 "MagickCore/blob.c"
+                                               ;
+  
+# 2448 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2448 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 2448 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2448 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 2448 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2448 "MagickCore/blob.c"
+ "image_info->signature == MagickCoreSignature"
+# 2448 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2448, __extension__ __PRETTY_FUNCTION__); }))
+# 2448 "MagickCore/blob.c"
+                                                     ;
+  
+# 2449 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2449 "MagickCore/blob.c"
+ images != (Image *) 
+# 2449 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2449 "MagickCore/blob.c"
+ images != (Image *) 
+# 2449 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2449 "MagickCore/blob.c"
+ "images != (Image *) NULL"
+# 2449 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2449, __extension__ __PRETTY_FUNCTION__); }))
+# 2449 "MagickCore/blob.c"
+                                 ;
+  
+# 2450 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2450 "MagickCore/blob.c"
+ images->signature == 0xabacadabUL
+# 2450 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2450 "MagickCore/blob.c"
+ images->signature == 0xabacadabUL
+# 2450 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2450 "MagickCore/blob.c"
+ "images->signature == MagickCoreSignature"
+# 2450 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2450, __extension__ __PRETTY_FUNCTION__); }))
+# 2450 "MagickCore/blob.c"
+                                                 ;
+  
+# 2451 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2451 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 2451 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2451 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 2451 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2451 "MagickCore/blob.c"
+ "exception != (ExceptionInfo *) NULL"
+# 2451 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2451, __extension__ __PRETTY_FUNCTION__); }))
+# 2451 "MagickCore/blob.c"
+                                            ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 2453,"%s",
       image_info->filename);
   *length=0;
-  blob=(unsigned char *) NULL;
+  blob=(unsigned char *) 
+# 2456 "MagickCore/blob.c" 3 4
+                        ((void *)0)
+# 2456 "MagickCore/blob.c"
+                            ;
   blob_info=CloneImageInfo(image_info);
   (void) SetImageInfo(blob_info,(unsigned int) GetImageListLength(images),
     exception);
   if (*blob_info->magick != '\0')
-    (void) CopyMagickString(images->magick,blob_info->magick,MagickPathExtent);
+    (void) CopyMagickString(images->magick,blob_info->magick,4096);
   magick_info=GetMagickInfo(images->magick,exception);
-  if (magick_info == (const MagickInfo *) NULL)
+  if (magick_info == (const MagickInfo *) 
+# 2463 "MagickCore/blob.c" 3 4
+                                         ((void *)0)
+# 2463 "MagickCore/blob.c"
+                                             )
     {
-      (void) ThrowMagickException(exception,GetMagickModule(),
+      (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2465,
         MissingDelegateError,"NoEncodeDelegateForThisImageFormat","`%s'",
         images->magick);
       blob_info=DestroyImageInfo(blob_info);
@@ -2473,17 +22111,21 @@ MagickExport void *ImagesToBlob(const ImageInfo *image_info,Image *images,
       blob_info=DestroyImageInfo(blob_info);
       return(ImageToBlob(image_info,images,length,exception));
     }
-  (void) CopyMagickString(blob_info->magick,images->magick,MagickPathExtent);
+  (void) CopyMagickString(blob_info->magick,images->magick,4096);
   if (GetMagickBlobSupport(magick_info) != MagickFalse)
     {
-      /*
-        Native blob support for this images format.
-      */
+
+
+
       blob_info->length=0;
-      blob_info->blob=AcquireQuantumMemory(MagickMaxBlobExtent,
+      blob_info->blob=AcquireQuantumMemory((8*8192),
         sizeof(unsigned char));
-      if (blob_info->blob == (void *) NULL)
-        (void) ThrowMagickException(exception,GetMagickModule(),
+      if (blob_info->blob == (void *) 
+# 2485 "MagickCore/blob.c" 3 4
+                                     ((void *)0)
+# 2485 "MagickCore/blob.c"
+                                         )
+        (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2486,
           ResourceLimitError,"MemoryAllocationFailed","`%s'",images->filename);
       else
         {
@@ -2493,7 +22135,11 @@ MagickExport void *ImagesToBlob(const ImageInfo *image_info,Image *images,
           status=WriteImages(blob_info,images,images->filename,exception);
           *length=images->blob->length;
           blob=DetachBlob(images->blob);
-          if (blob != (void *) NULL)
+          if (blob != (void *) 
+# 2496 "MagickCore/blob.c" 3 4
+                              ((void *)0)
+# 2496 "MagickCore/blob.c"
+                                  )
             {
               if (status == MagickFalse)
                 blob=RelinquishMagickMemory(blob);
@@ -2507,32 +22153,44 @@ MagickExport void *ImagesToBlob(const ImageInfo *image_info,Image *images,
   else
     {
       char
-        filename[MagickPathExtent],
-        unique[MagickPathExtent];
+        filename[4096],
+        unique[4096];
 
       int
         file;
 
-      /*
-        Write file to disk in blob images format.
-      */
+
+
+
       file=AcquireUniqueFileResource(unique);
       if (file == -1)
         {
-          ThrowFileException(exception,FileOpenError,"UnableToWriteBlob",
-            image_info->filename);
+          { char *file_message; file_message=GetExceptionMessage(
+# 2522 "MagickCore/blob.c" 3 4
+         (*__errno_location ())
+# 2522 "MagickCore/blob.c"
+         ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2522,FileOpenError,"UnableToWriteBlob", "'%s': %s",image_info->filename,file_message); file_message=DestroyString(file_message); }
+                                 ;
         }
       else
         {
           blob_info->file=fdopen(file,"wb");
-          if (blob_info->file != (FILE *) NULL)
+          if (blob_info->file != (FILE *) 
+# 2528 "MagickCore/blob.c" 3 4
+                                         ((void *)0)
+# 2528 "MagickCore/blob.c"
+                                             )
             {
-              (void) FormatLocaleString(filename,MagickPathExtent,"%s:%s",
+              (void) FormatLocaleString(filename,4096,"%s:%s",
                 images->magick,unique);
               status=WriteImages(blob_info,images,filename,exception);
               (void) fclose(blob_info->file);
               if (status != MagickFalse)
-                blob=FileToBlob(unique,SIZE_MAX,length,exception);
+                blob=FileToBlob(unique,
+# 2535 "MagickCore/blob.c" 3 4
+                                      (18446744073709551615UL)
+# 2535 "MagickCore/blob.c"
+                                              ,length,exception);
             }
           (void) RelinquishUniqueFileResource(unique);
         }
@@ -2540,36 +22198,8 @@ MagickExport void *ImagesToBlob(const ImageInfo *image_info,Image *images,
   blob_info=DestroyImageInfo(blob_info);
   return(blob);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  I m a g e s T o C u s t o m B l o b                                        %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ImagesToCustomStream() is the equivalent of WriteImages(), but writes the
-%  formatted "file" to the custom stream rather than to an actual file.
-%
-%  The format of the ImageToCustomStream method is:
-%
-%      void ImagesToCustomStream(const ImageInfo *image_info,Image *images,
-%        ExceptionInfo *exception)
-%
-%  A description of each parameter follows:
-%
-%    o image_info: the image info.
-%
-%    o images: the image list.
-%
-%    o exception: return any errors or warnings in this structure.
-%
-*/
-MagickExport void ImagesToCustomStream(const ImageInfo *image_info,
+# 2572 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void ImagesToCustomStream(const ImageInfo *image_info,
   Image *images,ExceptionInfo *exception)
 {
   const MagickInfo
@@ -2582,45 +22212,185 @@ MagickExport void ImagesToCustomStream(const ImageInfo *image_info,
     blob_support,
     status;
 
-  assert(image_info != (const ImageInfo *) NULL);
-  assert(image_info->signature == MagickCoreSignature);
-  assert(images != (Image *) NULL);
-  assert(images->signature == MagickCoreSignature);
-  assert(image_info->custom_stream != (CustomStreamInfo *) NULL);
-  assert(image_info->custom_stream->signature == MagickCoreSignature);
-  assert(image_info->custom_stream->writer != (CustomStreamHandler) NULL);
-  assert(exception != (ExceptionInfo *) NULL);
+  
+# 2585 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2585 "MagickCore/blob.c"
+ image_info != (const ImageInfo *) 
+# 2585 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2585 "MagickCore/blob.c"
+ image_info != (const ImageInfo *) 
+# 2585 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2585 "MagickCore/blob.c"
+ "image_info != (const ImageInfo *) NULL"
+# 2585 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2585, __extension__ __PRETTY_FUNCTION__); }))
+# 2585 "MagickCore/blob.c"
+                                               ;
+  
+# 2586 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2586 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 2586 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2586 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 2586 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2586 "MagickCore/blob.c"
+ "image_info->signature == MagickCoreSignature"
+# 2586 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2586, __extension__ __PRETTY_FUNCTION__); }))
+# 2586 "MagickCore/blob.c"
+                                                     ;
+  
+# 2587 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2587 "MagickCore/blob.c"
+ images != (Image *) 
+# 2587 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2587 "MagickCore/blob.c"
+ images != (Image *) 
+# 2587 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2587 "MagickCore/blob.c"
+ "images != (Image *) NULL"
+# 2587 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2587, __extension__ __PRETTY_FUNCTION__); }))
+# 2587 "MagickCore/blob.c"
+                                 ;
+  
+# 2588 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2588 "MagickCore/blob.c"
+ images->signature == 0xabacadabUL
+# 2588 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2588 "MagickCore/blob.c"
+ images->signature == 0xabacadabUL
+# 2588 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2588 "MagickCore/blob.c"
+ "images->signature == MagickCoreSignature"
+# 2588 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2588, __extension__ __PRETTY_FUNCTION__); }))
+# 2588 "MagickCore/blob.c"
+                                                 ;
+  
+# 2589 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2589 "MagickCore/blob.c"
+ image_info->custom_stream != (CustomStreamInfo *) 
+# 2589 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2589 "MagickCore/blob.c"
+ image_info->custom_stream != (CustomStreamInfo *) 
+# 2589 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2589 "MagickCore/blob.c"
+ "image_info->custom_stream != (CustomStreamInfo *) NULL"
+# 2589 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2589, __extension__ __PRETTY_FUNCTION__); }))
+# 2589 "MagickCore/blob.c"
+                                                               ;
+  
+# 2590 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2590 "MagickCore/blob.c"
+ image_info->custom_stream->signature == 0xabacadabUL
+# 2590 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2590 "MagickCore/blob.c"
+ image_info->custom_stream->signature == 0xabacadabUL
+# 2590 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2590 "MagickCore/blob.c"
+ "image_info->custom_stream->signature == MagickCoreSignature"
+# 2590 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2590, __extension__ __PRETTY_FUNCTION__); }))
+# 2590 "MagickCore/blob.c"
+                                                                    ;
+  
+# 2591 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2591 "MagickCore/blob.c"
+ image_info->custom_stream->writer != (CustomStreamHandler) 
+# 2591 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2591 "MagickCore/blob.c"
+ image_info->custom_stream->writer != (CustomStreamHandler) 
+# 2591 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2591 "MagickCore/blob.c"
+ "image_info->custom_stream->writer != (CustomStreamHandler) NULL"
+# 2591 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2591, __extension__ __PRETTY_FUNCTION__); }))
+# 2591 "MagickCore/blob.c"
+                                                                        ;
+  
+# 2592 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2592 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 2592 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2592 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 2592 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2592 "MagickCore/blob.c"
+ "exception != (ExceptionInfo *) NULL"
+# 2592 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2592, __extension__ __PRETTY_FUNCTION__); }))
+# 2592 "MagickCore/blob.c"
+                                            ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 2594,"%s",
       image_info->filename);
   clone_info=CloneImageInfo(image_info);
   (void) SetImageInfo(clone_info,(unsigned int) GetImageListLength(images),
     exception);
   if (*clone_info->magick != '\0')
-    (void) CopyMagickString(images->magick,clone_info->magick,MagickPathExtent);
+    (void) CopyMagickString(images->magick,clone_info->magick,4096);
   magick_info=GetMagickInfo(images->magick,exception);
-  if (magick_info == (const MagickInfo *) NULL)
+  if (magick_info == (const MagickInfo *) 
+# 2602 "MagickCore/blob.c" 3 4
+                                         ((void *)0)
+# 2602 "MagickCore/blob.c"
+                                             )
     {
-      (void) ThrowMagickException(exception,GetMagickModule(),
+      (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2604,
         MissingDelegateError,"NoEncodeDelegateForThisImageFormat","`%s'",
         images->magick);
       clone_info=DestroyImageInfo(clone_info);
       return;
     }
-  (void) CopyMagickString(clone_info->magick,images->magick,MagickPathExtent);
+  (void) CopyMagickString(clone_info->magick,images->magick,4096);
   blob_support=GetMagickBlobSupport(magick_info);
   if ((blob_support != MagickFalse) &&
       (GetMagickEncoderSeekableStream(magick_info) != MagickFalse))
     {
-      if ((clone_info->custom_stream->seeker == (CustomStreamSeeker) NULL) ||
-          (clone_info->custom_stream->teller == (CustomStreamTeller) NULL))
+      if ((clone_info->custom_stream->seeker == (CustomStreamSeeker) 
+# 2615 "MagickCore/blob.c" 3 4
+                                                                    ((void *)0)
+# 2615 "MagickCore/blob.c"
+                                                                        ) ||
+          (clone_info->custom_stream->teller == (CustomStreamTeller) 
+# 2616 "MagickCore/blob.c" 3 4
+                                                                    ((void *)0)
+# 2616 "MagickCore/blob.c"
+                                                                        ))
         blob_support=MagickFalse;
     }
   if (blob_support != MagickFalse)
     {
-      /*
-        Native blob support for this image format.
-      */
+
+
+
       (void) CloseBlob(images);
       *images->filename='\0';
       (void) WriteImages(clone_info,images,images->filename,exception);
@@ -2628,8 +22398,8 @@ MagickExport void ImagesToCustomStream(const ImageInfo *image_info,
   else
     {
       char
-        filename[MagickPathExtent],
-        unique[MagickPathExtent];
+        filename[4096],
+        unique[4096];
 
       int
         file;
@@ -2637,44 +22407,68 @@ MagickExport void ImagesToCustomStream(const ImageInfo *image_info,
       unsigned char
         *blob;
 
-      /*
-        Write file to disk in blob image format.
-      */
-      clone_info->custom_stream=(CustomStreamInfo *) NULL;
-      blob=(unsigned char *) AcquireQuantumMemory(MagickMaxBufferExtent,
+
+
+
+      clone_info->custom_stream=(CustomStreamInfo *) 
+# 2643 "MagickCore/blob.c" 3 4
+                                                    ((void *)0)
+# 2643 "MagickCore/blob.c"
+                                                        ;
+      blob=(unsigned char *) AcquireQuantumMemory(81920,
         sizeof(*blob));
-      if (blob == (unsigned char *) NULL)
+      if (blob == (unsigned char *) 
+# 2646 "MagickCore/blob.c" 3 4
+                                   ((void *)0)
+# 2646 "MagickCore/blob.c"
+                                       )
         {
-          ThrowFileException(exception,BlobError,"UnableToWriteBlob",
-            image_info->filename);
+          { char *file_message; file_message=GetExceptionMessage(
+# 2648 "MagickCore/blob.c" 3 4
+         (*__errno_location ())
+# 2648 "MagickCore/blob.c"
+         ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2648,BlobError,"UnableToWriteBlob", "'%s': %s",image_info->filename,file_message); file_message=DestroyString(file_message); }
+                                 ;
           clone_info=DestroyImageInfo(clone_info);
           return;
         }
       file=AcquireUniqueFileResource(unique);
       if (file == -1)
         {
-          ThrowFileException(exception,BlobError,"UnableToWriteBlob",
-            image_info->filename);
+          { char *file_message; file_message=GetExceptionMessage(
+# 2656 "MagickCore/blob.c" 3 4
+         (*__errno_location ())
+# 2656 "MagickCore/blob.c"
+         ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2656,BlobError,"UnableToWriteBlob", "'%s': %s",image_info->filename,file_message); file_message=DestroyString(file_message); }
+                                 ;
           blob=(unsigned char *) RelinquishMagickMemory(blob);
           clone_info=DestroyImageInfo(clone_info);
           return;
         }
       clone_info->file=fdopen(file,"wb+");
-      if (clone_info->file != (FILE *) NULL)
+      if (clone_info->file != (FILE *) 
+# 2663 "MagickCore/blob.c" 3 4
+                                      ((void *)0)
+# 2663 "MagickCore/blob.c"
+                                          )
         {
           ssize_t
             count;
 
-          (void) FormatLocaleString(filename,MagickPathExtent,"%s:%s",
+          (void) FormatLocaleString(filename,4096,"%s:%s",
             images->magick,unique);
           status=WriteImages(clone_info,images,filename,exception);
           if (status != MagickFalse)
             {
-              (void) fseek(clone_info->file,0,SEEK_SET);
-              count=(ssize_t) MagickMaxBufferExtent;
-              while (count == (ssize_t) MagickMaxBufferExtent)
+              (void) fseeko(clone_info->file,0,
+# 2673 "MagickCore/blob.c" 3 4
+                                             0
+# 2673 "MagickCore/blob.c"
+                                                     );
+              count=(ssize_t) 81920;
+              while (count == (ssize_t) 81920)
               {
-                count=(ssize_t) fread(blob,sizeof(*blob),MagickMaxBufferExtent,
+                count=(ssize_t) fread(blob,sizeof(*blob),81920,
                   clone_info->file);
                 (void) image_info->custom_stream->writer(blob,(size_t) count,
                   image_info->custom_stream->data);
@@ -2687,45 +22481,12 @@ MagickExport void ImagesToCustomStream(const ImageInfo *image_info,
     }
   clone_info=DestroyImageInfo(clone_info);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%   I n j e c t I m a g e B l o b                                             %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  InjectImageBlob() injects the image with a copy of itself in the specified
-%  format (e.g. inject JPEG into a PDF image).
-%
-%  The format of the InjectImageBlob method is:
-%
-%      MagickBooleanType InjectImageBlob(const ImageInfo *image_info,
-%        Image *image,Image *inject_image,const char *format,
-%        ExceptionInfo *exception)
-%
-%  A description of each parameter follows:
-%
-%    o image_info: the image info..
-%
-%    o image: the image.
-%
-%    o inject_image: inject into the image stream.
-%
-%    o format: the image format.
-%
-%    o exception: return any errors or warnings in this structure.
-%
-*/
-MagickExport MagickBooleanType InjectImageBlob(const ImageInfo *image_info,
+# 2724 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) MagickBooleanType InjectImageBlob(const ImageInfo *image_info,
   Image *image,Image *inject_image,const char *format,ExceptionInfo *exception)
 {
   char
-    filename[MagickPathExtent];
+    filename[4096];
 
   FILE
     *unique_file;
@@ -2751,40 +22512,172 @@ MagickExport MagickBooleanType InjectImageBlob(const ImageInfo *image_info,
   unsigned char
     *buffer;
 
-  /*
-    Write inject image to a temporary file.
-  */
-  assert(image_info != (ImageInfo *) NULL);
-  assert(image_info->signature == MagickCoreSignature);
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(inject_image != (Image *) NULL);
-  assert(inject_image->signature == MagickCoreSignature);
-  assert(exception != (ExceptionInfo *) NULL);
+
+
+
+  
+# 2757 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2757 "MagickCore/blob.c"
+ image_info != (ImageInfo *) 
+# 2757 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2757 "MagickCore/blob.c"
+ image_info != (ImageInfo *) 
+# 2757 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2757 "MagickCore/blob.c"
+ "image_info != (ImageInfo *) NULL"
+# 2757 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2757, __extension__ __PRETTY_FUNCTION__); }))
+# 2757 "MagickCore/blob.c"
+                                         ;
+  
+# 2758 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2758 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 2758 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2758 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 2758 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2758 "MagickCore/blob.c"
+ "image_info->signature == MagickCoreSignature"
+# 2758 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2758, __extension__ __PRETTY_FUNCTION__); }))
+# 2758 "MagickCore/blob.c"
+                                                     ;
+  
+# 2759 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2759 "MagickCore/blob.c"
+ image != (Image *) 
+# 2759 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2759 "MagickCore/blob.c"
+ image != (Image *) 
+# 2759 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2759 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 2759 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2759, __extension__ __PRETTY_FUNCTION__); }))
+# 2759 "MagickCore/blob.c"
+                                ;
+  
+# 2760 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2760 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 2760 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2760 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 2760 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2760 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 2760 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2760, __extension__ __PRETTY_FUNCTION__); }))
+# 2760 "MagickCore/blob.c"
+                                                ;
+  
+# 2761 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2761 "MagickCore/blob.c"
+ inject_image != (Image *) 
+# 2761 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2761 "MagickCore/blob.c"
+ inject_image != (Image *) 
+# 2761 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2761 "MagickCore/blob.c"
+ "inject_image != (Image *) NULL"
+# 2761 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2761, __extension__ __PRETTY_FUNCTION__); }))
+# 2761 "MagickCore/blob.c"
+                                       ;
+  
+# 2762 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2762 "MagickCore/blob.c"
+ inject_image->signature == 0xabacadabUL
+# 2762 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2762 "MagickCore/blob.c"
+ inject_image->signature == 0xabacadabUL
+# 2762 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2762 "MagickCore/blob.c"
+ "inject_image->signature == MagickCoreSignature"
+# 2762 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2762, __extension__ __PRETTY_FUNCTION__); }))
+# 2762 "MagickCore/blob.c"
+                                                       ;
+  
+# 2763 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2763 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 2763 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2763 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 2763 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2763 "MagickCore/blob.c"
+ "exception != (ExceptionInfo *) NULL"
+# 2763 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2763, __extension__ __PRETTY_FUNCTION__); }))
+# 2763 "MagickCore/blob.c"
+                                            ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
-  unique_file=(FILE *) NULL;
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 2765,"%s",image->filename);
+  unique_file=(FILE *) 
+# 2766 "MagickCore/blob.c" 3 4
+                      ((void *)0)
+# 2766 "MagickCore/blob.c"
+                          ;
   file=AcquireUniqueFileResource(filename);
   if (file != -1)
     unique_file=fdopen(file,"wb");
-  if ((file == -1) || (unique_file == (FILE *) NULL))
+  if ((file == -1) || (unique_file == (FILE *) 
+# 2770 "MagickCore/blob.c" 3 4
+                                              ((void *)0)
+# 2770 "MagickCore/blob.c"
+                                                  ))
     {
-      (void) CopyMagickString(image->filename,filename,MagickPathExtent);
-      ThrowFileException(exception,FileOpenError,"UnableToCreateTemporaryFile",
-        image->filename);
+      (void) CopyMagickString(image->filename,filename,4096);
+      { char *file_message; file_message=GetExceptionMessage(
+# 2773 "MagickCore/blob.c" 3 4
+     (*__errno_location ())
+# 2773 "MagickCore/blob.c"
+     ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2773,FileOpenError,"UnableToCreateTemporaryFile", "'%s': %s",image->filename,file_message); file_message=DestroyString(file_message); }
+                        ;
       return(MagickFalse);
     }
   byte_image=CloneImage(inject_image,0,0,MagickFalse,exception);
-  if (byte_image == (Image *) NULL)
+  if (byte_image == (Image *) 
+# 2778 "MagickCore/blob.c" 3 4
+                             ((void *)0)
+# 2778 "MagickCore/blob.c"
+                                 )
     {
       (void) fclose(unique_file);
       (void) RelinquishUniqueFileResource(filename);
       return(MagickFalse);
     }
-  (void) FormatLocaleString(byte_image->filename,MagickPathExtent,"%s:%s",
+  (void) FormatLocaleString(byte_image->filename,4096,"%s:%s",
     format,filename);
   DestroyBlob(byte_image);
-  byte_image->blob=CloneBlobInfo((BlobInfo *) NULL);
+  byte_image->blob=CloneBlobInfo((BlobInfo *) 
+# 2787 "MagickCore/blob.c" 3 4
+                                             ((void *)0)
+# 2787 "MagickCore/blob.c"
+                                                 );
   write_info=CloneImageInfo(image_info);
   SetImageInfoFile(write_info,unique_file);
   status=WriteImage(write_info,byte_image,exception);
@@ -2796,27 +22689,39 @@ MagickExport MagickBooleanType InjectImageBlob(const ImageInfo *image_info,
       (void) RelinquishUniqueFileResource(filename);
       return(MagickFalse);
     }
-  /*
-    Inject into image stream.
-  */
-  file=open_utf8(filename,O_RDONLY | O_BINARY,0);
+
+
+
+  file=open_utf8(filename,
+# 2802 "MagickCore/blob.c" 3 4
+                         00 
+# 2802 "MagickCore/blob.c"
+                                  | 0x00,0);
   if (file == -1)
     {
       (void) RelinquishUniqueFileResource(filename);
-      ThrowFileException(exception,FileOpenError,"UnableToOpenFile",
-        image_info->filename);
+      { char *file_message; file_message=GetExceptionMessage(
+# 2806 "MagickCore/blob.c" 3 4
+     (*__errno_location ())
+# 2806 "MagickCore/blob.c"
+     ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2806,FileOpenError,"UnableToOpenFile", "'%s': %s",image_info->filename,file_message); file_message=DestroyString(file_message); }
+                             ;
       return(MagickFalse);
     }
-  quantum=(size_t) MagickMaxBufferExtent;
+  quantum=(size_t) 81920;
   if ((fstat(file,&file_stats) == 0) && (file_stats.st_size > 0))
-    quantum=(size_t) MagickMin(file_stats.st_size,MagickMaxBufferExtent);
+    quantum=(size_t) (((file_stats.st_size) < (81920)) ? (file_stats.st_size) : (81920));
   buffer=(unsigned char *) AcquireQuantumMemory(quantum,sizeof(*buffer));
-  if (buffer == (unsigned char *) NULL)
+  if (buffer == (unsigned char *) 
+# 2814 "MagickCore/blob.c" 3 4
+                                 ((void *)0)
+# 2814 "MagickCore/blob.c"
+                                     )
     {
       (void) RelinquishUniqueFileResource(filename);
       file=close(file);
-      ThrowBinaryException(ResourceLimitError,"MemoryAllocationFailed",
-        image->filename);
+      { (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2818,ResourceLimitError,"MemoryAllocationFailed", "`%s'",image->filename); return(MagickFalse); }
+                        ;
     }
   for ( ; ; )
   {
@@ -2824,7 +22729,15 @@ MagickExport MagickBooleanType InjectImageBlob(const ImageInfo *image_info,
     if (count <= 0)
       {
         count=0;
-        if (errno != EINTR)
+        if (
+# 2827 "MagickCore/blob.c" 3 4
+           (*__errno_location ()) 
+# 2827 "MagickCore/blob.c"
+                 != 
+# 2827 "MagickCore/blob.c" 3 4
+                    4
+# 2827 "MagickCore/blob.c"
+                         )
           break;
       }
     status=WriteBlobStream(image,(size_t) count,buffer) == count ? MagickTrue :
@@ -2832,74 +22745,98 @@ MagickExport MagickBooleanType InjectImageBlob(const ImageInfo *image_info,
   }
   file=close(file);
   if (file == -1)
-    ThrowFileException(exception,FileOpenError,"UnableToWriteBlob",filename);
+    { char *file_message; file_message=GetExceptionMessage(
+# 2835 "MagickCore/blob.c" 3 4
+   (*__errno_location ())
+# 2835 "MagickCore/blob.c"
+   ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 2835,FileOpenError,"UnableToWriteBlob", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); };
   (void) RelinquishUniqueFileResource(filename);
   buffer=(unsigned char *) RelinquishMagickMemory(buffer);
   return(status);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%   I s B l o b E x e m p t                                                   %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  IsBlobExempt() returns true if the blob is exempt.
-%
-%  The format of the IsBlobExempt method is:
-%
-%       MagickBooleanType IsBlobExempt(const Image *image)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-*/
-MagickExport MagickBooleanType IsBlobExempt(const Image *image)
+# 2863 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) MagickBooleanType IsBlobExempt(const Image *image)
 {
-  assert(image != (const Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 2865 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2865 "MagickCore/blob.c"
+ image != (const Image *) 
+# 2865 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2865 "MagickCore/blob.c"
+ image != (const Image *) 
+# 2865 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2865 "MagickCore/blob.c"
+ "image != (const Image *) NULL"
+# 2865 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2865, __extension__ __PRETTY_FUNCTION__); }))
+# 2865 "MagickCore/blob.c"
+                                      ;
+  
+# 2866 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2866 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 2866 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2866 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 2866 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2866 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 2866 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2866, __extension__ __PRETTY_FUNCTION__); }))
+# 2866 "MagickCore/blob.c"
+                                                ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 2868,"%s",image->filename);
   return(image->blob->exempt);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%   I s B l o b S e e k a b l e                                               %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  IsBlobSeekable() returns true if the blob is seekable.
-%
-%  The format of the IsBlobSeekable method is:
-%
-%       MagickBooleanType IsBlobSeekable(const Image *image)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-*/
-MagickExport MagickBooleanType IsBlobSeekable(const Image *image)
+# 2894 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) MagickBooleanType IsBlobSeekable(const Image *image)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
-  assert(image != (const Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 2899 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2899 "MagickCore/blob.c"
+ image != (const Image *) 
+# 2899 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2899 "MagickCore/blob.c"
+ image != (const Image *) 
+# 2899 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2899 "MagickCore/blob.c"
+ "image != (const Image *) NULL"
+# 2899 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2899, __extension__ __PRETTY_FUNCTION__); }))
+# 2899 "MagickCore/blob.c"
+                                      ;
+  
+# 2900 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2900 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 2900 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2900 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 2900 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2900 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 2900 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2900, __extension__ __PRETTY_FUNCTION__); }))
+# 2900 "MagickCore/blob.c"
+                                                ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 2902,"%s",image->filename);
   blob_info=image->blob;
   switch (blob_info->type)
   {
@@ -2910,24 +22847,40 @@ MagickExport MagickBooleanType IsBlobSeekable(const Image *image)
       int
         status;
 
-      if (blob_info->file_info.file == (FILE *) NULL)
+      if (blob_info->file_info.file == (FILE *) 
+# 2913 "MagickCore/blob.c" 3 4
+                                               ((void *)0)
+# 2913 "MagickCore/blob.c"
+                                                   )
         return(MagickFalse);
-      status=fseek(blob_info->file_info.file,0,SEEK_CUR);
+      status=fseeko(blob_info->file_info.file,0,
+# 2915 "MagickCore/blob.c" 3 4
+                                              1
+# 2915 "MagickCore/blob.c"
+                                                      );
       return(status == -1 ? MagickFalse : MagickTrue);
     }
     case ZipStream:
     {
-#if defined(MAGICKCORE_ZLIB_DELEGATE)
+
       MagickOffsetType
         offset;
 
-      if (blob_info->file_info.gzfile == (gzFile) NULL)
+      if (blob_info->file_info.gzfile == (gzFile) 
+# 2924 "MagickCore/blob.c" 3 4
+                                                 ((void *)0)
+# 2924 "MagickCore/blob.c"
+                                                     )
         return(MagickFalse);
-      offset=gzseek(blob_info->file_info.gzfile,0,SEEK_CUR);
+      offset=gzseek(blob_info->file_info.gzfile,0,
+# 2926 "MagickCore/blob.c" 3 4
+                                                 1
+# 2926 "MagickCore/blob.c"
+                                                         );
       return(offset < 0 ? MagickFalse : MagickTrue);
-#else
-      break;
-#endif
+
+
+
     }
     case UndefinedStream:
     case BZipStream:
@@ -2937,8 +22890,16 @@ MagickExport MagickBooleanType IsBlobSeekable(const Image *image)
       break;
     case CustomStream:
     {
-      if ((blob_info->custom_stream->seeker != (CustomStreamSeeker) NULL) &&
-          (blob_info->custom_stream->teller != (CustomStreamTeller) NULL))
+      if ((blob_info->custom_stream->seeker != (CustomStreamSeeker) 
+# 2940 "MagickCore/blob.c" 3 4
+                                                                   ((void *)0)
+# 2940 "MagickCore/blob.c"
+                                                                       ) &&
+          (blob_info->custom_stream->teller != (CustomStreamTeller) 
+# 2941 "MagickCore/blob.c" 3 4
+                                                                   ((void *)0)
+# 2941 "MagickCore/blob.c"
+                                                                       ))
         return(MagickTrue);
       break;
     }
@@ -2947,71 +22908,52 @@ MagickExport MagickBooleanType IsBlobSeekable(const Image *image)
   }
   return(MagickFalse);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%   I s B l o b T e m p o r a r y                                             %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  IsBlobTemporary() returns true if the blob is temporary.
-%
-%  The format of the IsBlobTemporary method is:
-%
-%       MagickBooleanType IsBlobTemporary(const Image *image)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-*/
-MagickExport MagickBooleanType IsBlobTemporary(const Image *image)
+# 2973 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) MagickBooleanType IsBlobTemporary(const Image *image)
 {
-  assert(image != (const Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 2975 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2975 "MagickCore/blob.c"
+ image != (const Image *) 
+# 2975 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 2975 "MagickCore/blob.c"
+ image != (const Image *) 
+# 2975 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 2975 "MagickCore/blob.c"
+ "image != (const Image *) NULL"
+# 2975 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2975, __extension__ __PRETTY_FUNCTION__); }))
+# 2975 "MagickCore/blob.c"
+                                      ;
+  
+# 2976 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 2976 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 2976 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 2976 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 2976 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 2976 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 2976 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 2976, __extension__ __PRETTY_FUNCTION__); }))
+# 2976 "MagickCore/blob.c"
+                                                ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 2978,"%s",image->filename);
   return(image->blob->temporary);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  M a p B l o b                                                              %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  MapBlob() creates a mapping from a file to a binary large object.
-%
-%  The format of the MapBlob method is:
-%
-%      void *MapBlob(int file,const MapMode mode,const MagickOffsetType offset,
-%        const size_t length)
-%
-%  A description of each parameter follows:
-%
-%    o file: map this file descriptor.
-%
-%    o mode: ReadMode, WriteMode, or IOMode.
-%
-%    o offset: starting at this offset within the file.
-%
-%    o length: the length of the mapping is returned in this pointer.
-%
-*/
-MagickExport void *MapBlob(int file,const MapMode mode,
+# 3011 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void *MapBlob(int file,const MapMode mode,
   const MagickOffsetType offset,const size_t length)
 {
-#if defined(MAGICKCORE_HAVE_MMAP)
+
   int
     flags,
     protection;
@@ -3019,83 +22961,102 @@ MagickExport void *MapBlob(int file,const MapMode mode,
   void
     *map;
 
-  /*
-    Map file.
-  */
+
+
+
   flags=0;
   if (file == -1)
-#if defined(MAP_ANONYMOUS)
-    flags|=MAP_ANONYMOUS;
-#else
-    return(NULL);
-#endif
+
+    flags|=
+# 3028 "MagickCore/blob.c" 3 4
+          0x20
+# 3028 "MagickCore/blob.c"
+                       ;
+
+
+
   switch (mode)
   {
     case ReadMode:
     default:
     {
-      protection=PROT_READ;
-      flags|=MAP_PRIVATE;
+      protection=
+# 3037 "MagickCore/blob.c" 3 4
+                0x1
+# 3037 "MagickCore/blob.c"
+                         ;
+      flags|=
+# 3038 "MagickCore/blob.c" 3 4
+            0x02
+# 3038 "MagickCore/blob.c"
+                       ;
       break;
     }
     case WriteMode:
     {
-      protection=PROT_WRITE;
-      flags|=MAP_SHARED;
+      protection=
+# 3043 "MagickCore/blob.c" 3 4
+                0x2
+# 3043 "MagickCore/blob.c"
+                          ;
+      flags|=
+# 3044 "MagickCore/blob.c" 3 4
+            0x01
+# 3044 "MagickCore/blob.c"
+                      ;
       break;
     }
     case IOMode:
     {
-      protection=PROT_READ | PROT_WRITE;
-      flags|=MAP_SHARED;
+      protection=
+# 3049 "MagickCore/blob.c" 3 4
+                0x1 
+# 3049 "MagickCore/blob.c"
+                          | 
+# 3049 "MagickCore/blob.c" 3 4
+                            0x2
+# 3049 "MagickCore/blob.c"
+                                      ;
+      flags|=
+# 3050 "MagickCore/blob.c" 3 4
+            0x01
+# 3050 "MagickCore/blob.c"
+                      ;
       break;
     }
   }
-#if !defined(MAGICKCORE_HAVE_HUGEPAGES) || !defined(MAP_HUGETLB)
-  map=mmap((char *) NULL,length,protection,flags,file,offset);
-#else
-  map=mmap((char *) NULL,length,protection,flags | MAP_HUGETLB,file,offset);
-  if (map == MAP_FAILED)
-    map=mmap((char *) NULL,length,protection,flags,file,offset);
-#endif
-  if (map == MAP_FAILED)
-    return(NULL);
+
+  map=mmap((char *) 
+# 3055 "MagickCore/blob.c" 3 4
+                   ((void *)0)
+# 3055 "MagickCore/blob.c"
+                       ,length,protection,flags,file,offset);
+
+
+
+
+
+  if (map == 
+# 3061 "MagickCore/blob.c" 3 4
+            ((void *) -1)
+# 3061 "MagickCore/blob.c"
+                      )
+    return(
+# 3062 "MagickCore/blob.c" 3 4
+          ((void *)0)
+# 3062 "MagickCore/blob.c"
+              );
   return(map);
-#else
-  (void) file;
-  (void) mode;
-  (void) offset;
-  (void) length;
-  return(NULL);
-#endif
+
+
+
+
+
+
+
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  M S B O r d e r L o n g                                                    %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  MSBOrderLong() converts a least-significant byte first buffer of integers to
-%  most-significant byte first.
-%
-%  The format of the MSBOrderLong method is:
-%
-%      void MSBOrderLong(unsigned char *buffer,const size_t length)
-%
-%  A description of each parameter follows.
-%
-%   o  buffer:  Specifies a pointer to a buffer of integers.
-%
-%   o  length:  Specifies the length of the buffer.
-%
-*/
-MagickExport void MSBOrderLong(unsigned char *buffer,const size_t length)
+# 3098 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void MSBOrderLong(unsigned char *buffer,const size_t length)
 {
   int
     c;
@@ -3104,7 +23065,23 @@ MagickExport void MSBOrderLong(unsigned char *buffer,const size_t length)
     *p,
     *q;
 
-  assert(buffer != (unsigned char *) NULL);
+  
+# 3107 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 3107 "MagickCore/blob.c"
+ buffer != (unsigned char *) 
+# 3107 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 3107 "MagickCore/blob.c"
+ buffer != (unsigned char *) 
+# 3107 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 3107 "MagickCore/blob.c"
+ "buffer != (unsigned char *) NULL"
+# 3107 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 3107, __extension__ __PRETTY_FUNCTION__); }))
+# 3107 "MagickCore/blob.c"
+                                         ;
   q=buffer+length;
   while (buffer < q)
   {
@@ -3119,33 +23096,8 @@ MagickExport void MSBOrderLong(unsigned char *buffer,const size_t length)
     buffer+=2;
   }
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  M S B O r d e r S h o r t                                                  %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  MSBOrderShort() converts a least-significant byte first buffer of integers
-%  to most-significant byte first.
-%
-%  The format of the MSBOrderShort method is:
-%
-%      void MSBOrderShort(unsigned char *p,const size_t length)
-%
-%  A description of each parameter follows.
-%
-%   o  p:  Specifies a pointer to a buffer of integers.
-%
-%   o  length:  Specifies the length of the buffer.
-%
-*/
-MagickExport void MSBOrderShort(unsigned char *p,const size_t length)
+# 3148 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void MSBOrderShort(unsigned char *p,const size_t length)
 {
   int
     c;
@@ -3153,7 +23105,23 @@ MagickExport void MSBOrderShort(unsigned char *p,const size_t length)
   unsigned char
     *q;
 
-  assert(p != (unsigned char *) NULL);
+  
+# 3156 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 3156 "MagickCore/blob.c"
+ p != (unsigned char *) 
+# 3156 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 3156 "MagickCore/blob.c"
+ p != (unsigned char *) 
+# 3156 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 3156 "MagickCore/blob.c"
+ "p != (unsigned char *) NULL"
+# 3156 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 3156, __extension__ __PRETTY_FUNCTION__); }))
+# 3156 "MagickCore/blob.c"
+                                    ;
   q=p+length;
   while (p < q)
   {
@@ -3163,39 +23131,7 @@ MagickExport void MSBOrderShort(unsigned char *p,const size_t length)
     *p++=(unsigned char) c;
   }
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   O p e n B l o b                                                           %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  OpenBlob() opens a file associated with the image.  A file name of '-' sets
-%  the file to stdin for type 'r' and stdout for type 'w'.  If the filename
-%  suffix is '.gz', the image is decompressed for type 'r' and compressed for
-%  type 'w'.  If the filename prefix is '|', it is piped to or from a system
-%  command.
-%
-%  The format of the OpenBlob method is:
-%
-%       MagickBooleanType OpenBlob(const ImageInfo *image_info,Image *image,
-%        const BlobMode mode,ExceptionInfo *exception)
-%
-%  A description of each parameter follows:
-%
-%    o image_info: the image info.
-%
-%    o image: the image.
-%
-%    o mode: the mode for opening the file.
-%
-*/
-
+# 3199 "MagickCore/blob.c"
 static inline MagickBooleanType SetStreamBuffering(const ImageInfo *image_info,
   const BlobInfo *blob_info)
 {
@@ -3208,46 +23144,49 @@ static inline MagickBooleanType SetStreamBuffering(const ImageInfo *image_info,
   size_t
     size;
 
-  size=MagickMinBufferExtent;
+  size=16384;
   option=GetImageOption(image_info,"stream:buffer-size");
-  if (option != (const char *) NULL)
+  if (option != (const char *) 
+# 3213 "MagickCore/blob.c" 3 4
+                              ((void *)0)
+# 3213 "MagickCore/blob.c"
+                                  )
     size=StringToUnsignedLong(option);
-  status=setvbuf(blob_info->file_info.file,(char *) NULL,size == 0 ?
-    _IONBF : _IOFBF,size);
+  status=setvbuf(blob_info->file_info.file,(char *) 
+# 3215 "MagickCore/blob.c" 3 4
+                                                   ((void *)0)
+# 3215 "MagickCore/blob.c"
+                                                       ,size == 0 ?
+    
+# 3216 "MagickCore/blob.c" 3 4
+   2 
+# 3216 "MagickCore/blob.c"
+          : 
+# 3216 "MagickCore/blob.c" 3 4
+            0
+# 3216 "MagickCore/blob.c"
+                  ,size);
   return(status == 0 ? MagickTrue : MagickFalse);
 }
 
-#if defined(MAGICKCORE_ZLIB_DELEGATE)
+
 static inline gzFile gzopen_utf8(const char *path,const char *mode)
 {
-#if !defined(MAGICKCORE_WINDOWS_SUPPORT) || defined(__CYGWIN__)
+
   return(gzopen(path,mode));
-#else
-   gzFile
-     file;
-
-   wchar_t
-     *path_wide;
-
-   path_wide=create_wchar_path(path);
-   if (path_wide == (wchar_t *) NULL)
-     return((gzFile) NULL);
-   file=gzopen_w(path_wide,mode);
-   path_wide=(wchar_t *) RelinquishMagickMemory(path_wide);
-   return(file);
-#endif
+# 3239 "MagickCore/blob.c"
 }
-#endif
 
-MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
+
+__attribute__ ((visibility ("default"))) MagickBooleanType OpenBlob(const ImageInfo *image_info,
   Image *image,const BlobMode mode,ExceptionInfo *exception)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
   char
-    extension[MagickPathExtent],
-    filename[MagickPathExtent];
+    extension[4096],
+    filename[4096];
 
   const char
     *type;
@@ -3258,22 +23197,98 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
   PolicyRights
     rights;
 
-  assert(image_info != (ImageInfo *) NULL);
-  assert(image_info->signature == MagickCoreSignature);
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 3261 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 3261 "MagickCore/blob.c"
+ image_info != (ImageInfo *) 
+# 3261 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 3261 "MagickCore/blob.c"
+ image_info != (ImageInfo *) 
+# 3261 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 3261 "MagickCore/blob.c"
+ "image_info != (ImageInfo *) NULL"
+# 3261 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 3261, __extension__ __PRETTY_FUNCTION__); }))
+# 3261 "MagickCore/blob.c"
+                                         ;
+  
+# 3262 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 3262 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 3262 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 3262 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 3262 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 3262 "MagickCore/blob.c"
+ "image_info->signature == MagickCoreSignature"
+# 3262 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 3262, __extension__ __PRETTY_FUNCTION__); }))
+# 3262 "MagickCore/blob.c"
+                                                     ;
+  
+# 3263 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 3263 "MagickCore/blob.c"
+ image != (Image *) 
+# 3263 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 3263 "MagickCore/blob.c"
+ image != (Image *) 
+# 3263 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 3263 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 3263 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 3263, __extension__ __PRETTY_FUNCTION__); }))
+# 3263 "MagickCore/blob.c"
+                                ;
+  
+# 3264 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 3264 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 3264 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 3264 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 3264 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 3264 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 3264 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 3264, __extension__ __PRETTY_FUNCTION__); }))
+# 3264 "MagickCore/blob.c"
+                                                ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 3266,"%s",
       image_info->filename);
   blob_info=image->blob;
-  if (image_info->blob != (void *) NULL)
+  if (image_info->blob != (void *) 
+# 3269 "MagickCore/blob.c" 3 4
+                                  ((void *)0)
+# 3269 "MagickCore/blob.c"
+                                      )
     {
-      if (image_info->stream != (StreamHandler) NULL)
+      if (image_info->stream != (StreamHandler) 
+# 3271 "MagickCore/blob.c" 3 4
+                                               ((void *)0)
+# 3271 "MagickCore/blob.c"
+                                                   )
         blob_info->stream=(StreamHandler) image_info->stream;
       AttachBlob(blob_info,image_info->blob,image_info->length);
       return(MagickTrue);
     }
-  if ((image_info->custom_stream != (CustomStreamInfo *) NULL) &&
+  if ((image_info->custom_stream != (CustomStreamInfo *) 
+# 3276 "MagickCore/blob.c" 3 4
+                                                        ((void *)0)
+# 3276 "MagickCore/blob.c"
+                                                            ) &&
       (*image->filename == '\0'))
     {
       blob_info->type=CustomStream;
@@ -3294,7 +23309,11 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
   }
   if (*type != 'r')
     blob_info->synchronize=image_info->synchronize;
-  if (image_info->stream != (StreamHandler) NULL)
+  if (image_info->stream != (StreamHandler) 
+# 3297 "MagickCore/blob.c" 3 4
+                                           ((void *)0)
+# 3297 "MagickCore/blob.c"
+                                               )
     {
       blob_info->stream=image_info->stream;
       if (*type == 'w')
@@ -3303,29 +23322,49 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
           return(MagickTrue);
         }
     }
-  /*
-    Open image file.
-  */
+
+
+
   *filename='\0';
-  (void) CopyMagickString(filename,image->filename,MagickPathExtent);
+  (void) CopyMagickString(filename,image->filename,4096);
   rights=ReadPolicyRights;
   if (*type == 'w')
     rights=WritePolicyRights;
   if (IsRightsAuthorized(PathPolicyDomain,rights,filename) == MagickFalse)
     {
-      errno=EPERM;
-      (void) ThrowMagickException(exception,GetMagickModule(),PolicyError,
+      
+# 3316 "MagickCore/blob.c" 3 4
+     (*__errno_location ())
+# 3316 "MagickCore/blob.c"
+          =
+# 3316 "MagickCore/blob.c" 3 4
+           1
+# 3316 "MagickCore/blob.c"
+                ;
+      (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 3317,PolicyError,
         "NotAuthorized","`%s'",filename);
       return(MagickFalse);
     }
   if ((LocaleCompare(filename,"-") == 0) ||
-      ((*filename == '\0') && (image_info->file == (FILE *) NULL)))
+      ((*filename == '\0') && (image_info->file == (FILE *) 
+# 3322 "MagickCore/blob.c" 3 4
+                                                           ((void *)0)
+# 3322 "MagickCore/blob.c"
+                                                               )))
     {
-      blob_info->file_info.file=(*type == 'r') ? stdin : stdout;
-#if defined(MAGICKCORE_WINDOWS_SUPPORT) || defined(__OS2__)
-      if (strchr(type,'b') != (char *) NULL)
-        (void) setmode(fileno(blob_info->file_info.file),_O_BINARY);
-#endif
+      blob_info->file_info.file=(*type == 'r') ? 
+# 3324 "MagickCore/blob.c" 3 4
+                                                stdin 
+# 3324 "MagickCore/blob.c"
+                                                      : 
+# 3324 "MagickCore/blob.c" 3 4
+                                                        stdout
+# 3324 "MagickCore/blob.c"
+                                                              ;
+
+
+
+
       blob_info->type=StandardStream;
       blob_info->exempt=MagickTrue;
       return(SetStreamBuffering(image_info,blob_info));
@@ -3339,94 +23378,106 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
       *fileMode=(*type);
       fileMode[1]='\0';
       blob_info->file_info.file=fdopen(StringToLong(filename+3),fileMode);
-      if (blob_info->file_info.file == (FILE *) NULL)
+      if (blob_info->file_info.file == (FILE *) 
+# 3342 "MagickCore/blob.c" 3 4
+                                               ((void *)0)
+# 3342 "MagickCore/blob.c"
+                                                   )
         {
-          ThrowFileException(exception,BlobError,"UnableToOpenBlob",filename);
+          { char *file_message; file_message=GetExceptionMessage(
+# 3344 "MagickCore/blob.c" 3 4
+         (*__errno_location ())
+# 3344 "MagickCore/blob.c"
+         ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 3344,BlobError,"UnableToOpenBlob", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); };
           return(MagickFalse);
         }
-#if defined(MAGICKCORE_WINDOWS_SUPPORT) || defined(__OS2__)
-      if (strchr(type,'b') != (char *) NULL)
-        (void) setmode(fileno(blob_info->file_info.file),_O_BINARY);
-#endif
+
+
+
+
       blob_info->type=FileStream;
       blob_info->exempt=MagickTrue;
       return(SetStreamBuffering(image_info,blob_info));
     }
-#if defined(MAGICKCORE_HAVE_POPEN) && defined(MAGICKCORE_PIPES_SUPPORT)
-  if (*filename == '|')
-    {
-      char
-        fileMode[MagickPathExtent],
-        *sanitize_command;
-
-      /*
-        Pipe image to or from a system command.
-      */
-#if defined(SIGPIPE)
-      if (*type == 'w')
-        (void) signal(SIGPIPE,SIG_IGN);
-#endif
-      *fileMode=(*type);
-      fileMode[1]='\0';
-      sanitize_command=SanitizeString(filename+1);
-      blob_info->file_info.file=(FILE *) popen_utf8(sanitize_command,fileMode);
-      sanitize_command=DestroyString(sanitize_command);
-      if (blob_info->file_info.file == (FILE *) NULL)
-        {
-          ThrowFileException(exception,BlobError,"UnableToOpenBlob",filename);
-          return(MagickFalse);
-        }
-      blob_info->type=PipeStream;
-      blob_info->exempt=MagickTrue;
-      return(SetStreamBuffering(image_info,blob_info));
-    }
-#endif
+# 3384 "MagickCore/blob.c"
   status=GetPathAttributes(filename,&blob_info->properties);
-#if defined(S_ISFIFO)
-  if ((status != MagickFalse) && S_ISFIFO(blob_info->properties.st_mode))
+
+  if ((status != MagickFalse) && 
+# 3386 "MagickCore/blob.c" 3 4
+                                ((((
+# 3386 "MagickCore/blob.c"
+                                blob_info->properties.st_mode
+# 3386 "MagickCore/blob.c" 3 4
+                                )) & 0170000) == (0010000))
+# 3386 "MagickCore/blob.c"
+                                                                       )
     {
       blob_info->file_info.file=(FILE *) fopen_utf8(filename,type);
-      if (blob_info->file_info.file == (FILE *) NULL)
+      if (blob_info->file_info.file == (FILE *) 
+# 3389 "MagickCore/blob.c" 3 4
+                                               ((void *)0)
+# 3389 "MagickCore/blob.c"
+                                                   )
         {
-          ThrowFileException(exception,BlobError,"UnableToOpenBlob",filename);
+          { char *file_message; file_message=GetExceptionMessage(
+# 3391 "MagickCore/blob.c" 3 4
+         (*__errno_location ())
+# 3391 "MagickCore/blob.c"
+         ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 3391,BlobError,"UnableToOpenBlob", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); };
           return(MagickFalse);
         }
       blob_info->type=FileStream;
       blob_info->exempt=MagickTrue;
       return(SetStreamBuffering(image_info,blob_info));
     }
-#endif
+
   GetPathComponent(image->filename,ExtensionPath,extension);
   if (*type == 'w')
     {
-      (void) CopyMagickString(filename,image->filename,MagickPathExtent);
+      (void) CopyMagickString(filename,image->filename,4096);
       if ((image_info->adjoin == MagickFalse) ||
-          (strchr(filename,'%') != (char *) NULL))
+          (strchr(filename,'%') != (char *) 
+# 3404 "MagickCore/blob.c" 3 4
+                                           ((void *)0)
+# 3404 "MagickCore/blob.c"
+                                               ))
         {
-          /*
-            Form filename for multi-part images.
-          */
+
+
+
           (void) InterpretImageFilename(image_info,image,image->filename,(int)
             image->scene,filename,exception);
           if ((LocaleCompare(filename,image->filename) == 0) &&
-              ((GetPreviousImageInList(image) != (Image *) NULL) ||
-               (GetNextImageInList(image) != (Image *) NULL)))
+              ((GetPreviousImageInList(image) != (Image *) 
+# 3412 "MagickCore/blob.c" 3 4
+                                                          ((void *)0)
+# 3412 "MagickCore/blob.c"
+                                                              ) ||
+               (GetNextImageInList(image) != (Image *) 
+# 3413 "MagickCore/blob.c" 3 4
+                                                      ((void *)0)
+# 3413 "MagickCore/blob.c"
+                                                          )))
             {
               char
-                path[MagickPathExtent];
+                path[4096];
 
               GetPathComponent(image->filename,RootPath,path);
               if (*extension == '\0')
-                (void) FormatLocaleString(filename,MagickPathExtent,"%s-%.20g",
+                (void) FormatLocaleString(filename,4096,"%s-%.20g",
                   path,(double) image->scene);
               else
-                (void) FormatLocaleString(filename,MagickPathExtent,
+                (void) FormatLocaleString(filename,4096,
                   "%s-%.20g.%s",path,(double) image->scene,extension);
             }
-          (void) CopyMagickString(image->filename,filename,MagickPathExtent);
+          (void) CopyMagickString(image->filename,filename,4096);
         }
     }
-  if (image_info->file != (FILE *) NULL)
+  if (image_info->file != (FILE *) 
+# 3429 "MagickCore/blob.c" 3 4
+                                  ((void *)0)
+# 3429 "MagickCore/blob.c"
+                                      )
     {
       blob_info->file_info.file=image_info->file;
       blob_info->type=FileStream;
@@ -3436,7 +23487,11 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
     if (*type == 'r')
       {
         blob_info->file_info.file=(FILE *) fopen_utf8(filename,type);
-        if (blob_info->file_info.file != (FILE *) NULL)
+        if (blob_info->file_info.file != (FILE *) 
+# 3439 "MagickCore/blob.c" 3 4
+                                                 ((void *)0)
+# 3439 "MagickCore/blob.c"
+                                                     )
           {
             size_t
               count;
@@ -3448,45 +23503,73 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
             (void) SetStreamBuffering(image_info,blob_info);
             (void) memset(magick,0,sizeof(magick));
             count=fread(magick,1,sizeof(magick),blob_info->file_info.file);
-            (void) fseek(blob_info->file_info.file,-((off_t) count),SEEK_CUR);
-#if defined(MAGICKCORE_POSIX_SUPPORT)
+            (void) fseeko(blob_info->file_info.file,-((off_t) count),
+# 3451 "MagickCore/blob.c" 3 4
+                                                                   1
+# 3451 "MagickCore/blob.c"
+                                                                           );
+
             (void) fflush(blob_info->file_info.file);
-#endif
-            (void) LogMagickEvent(BlobEvent,GetMagickModule(),
+
+            (void) LogMagickEvent(BlobEvent,"MagickCore/blob.c",__func__,(unsigned long) 3455,
                "  read %.20g magic header bytes",(double) count);
-#if defined(MAGICKCORE_ZLIB_DELEGATE)
+
             if (((int) magick[0] == 0x1F) && ((int) magick[1] == 0x8B) &&
                 ((int) magick[2] == 0x08))
               {
                 gzFile
                   gzfile = gzopen_utf8(filename,"rb");
 
-                if (gzfile != (gzFile) NULL)
+                if (gzfile != (gzFile) 
+# 3464 "MagickCore/blob.c" 3 4
+                                      ((void *)0)
+# 3464 "MagickCore/blob.c"
+                                          )
                   {
-                    if (blob_info->file_info.file != (FILE *) NULL)
+                    if (blob_info->file_info.file != (FILE *) 
+# 3466 "MagickCore/blob.c" 3 4
+                                                             ((void *)0)
+# 3466 "MagickCore/blob.c"
+                                                                 )
                       (void) fclose(blob_info->file_info.file);
-                    blob_info->file_info.file=(FILE *) NULL;
+                    blob_info->file_info.file=(FILE *) 
+# 3468 "MagickCore/blob.c" 3 4
+                                                      ((void *)0)
+# 3468 "MagickCore/blob.c"
+                                                          ;
                     blob_info->file_info.gzfile=gzfile;
                     blob_info->type=ZipStream;
                   }
               }
-#endif
-#if defined(MAGICKCORE_BZLIB_DELEGATE)
+
+
             if (strncmp((char *) magick,"BZh",3) == 0)
               {
                 BZFILE
                   *bzfile = BZ2_bzopen(filename,"r");
 
-                if (bzfile != (BZFILE *) NULL)
+                if (bzfile != (BZFILE *) 
+# 3480 "MagickCore/blob.c" 3 4
+                                        ((void *)0)
+# 3480 "MagickCore/blob.c"
+                                            )
                   {
-                    if (blob_info->file_info.file != (FILE *) NULL)
+                    if (blob_info->file_info.file != (FILE *) 
+# 3482 "MagickCore/blob.c" 3 4
+                                                             ((void *)0)
+# 3482 "MagickCore/blob.c"
+                                                                 )
                       (void) fclose(blob_info->file_info.file);
-                    blob_info->file_info.file=(FILE *) NULL;
+                    blob_info->file_info.file=(FILE *) 
+# 3484 "MagickCore/blob.c" 3 4
+                                                      ((void *)0)
+# 3484 "MagickCore/blob.c"
+                                                          ;
                     blob_info->file_info.bzfile=bzfile;
                     blob_info->type=BZipStream;
                   }
               }
-#endif
+
             if (blob_info->type == FileStream)
               {
                 const MagickInfo
@@ -3502,9 +23585,13 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
                 magick_info=GetMagickInfo(image_info->magick,sans_exception);
                 sans_exception=DestroyExceptionInfo(sans_exception);
                 length=(size_t) blob_info->properties.st_size;
-                if ((magick_info != (const MagickInfo *) NULL) &&
+                if ((magick_info != (const MagickInfo *) 
+# 3505 "MagickCore/blob.c" 3 4
+                                                        ((void *)0)
+# 3505 "MagickCore/blob.c"
+                                                            ) &&
                     (GetMagickBlobSupport(magick_info) != MagickFalse) &&
-                    (length > MagickMaxBufferExtent) &&
+                    (length > 81920) &&
                     (AcquireMagickResource(MapResource,length) != MagickFalse))
                   {
                     void
@@ -3512,19 +23599,31 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
 
                     blob=MapBlob(fileno(blob_info->file_info.file),ReadMode,0,
                       length);
-                    if (blob == (void *) NULL)
+                    if (blob == (void *) 
+# 3515 "MagickCore/blob.c" 3 4
+                                        ((void *)0)
+# 3515 "MagickCore/blob.c"
+                                            )
                       RelinquishMagickResource(MapResource,length);
                     else
                       {
-                        /*
-                          Format supports blobs-- use memory-mapped I/O.
-                        */
-                        if (image_info->file != (FILE *) NULL)
+
+
+
+                        if (image_info->file != (FILE *) 
+# 3522 "MagickCore/blob.c" 3 4
+                                                        ((void *)0)
+# 3522 "MagickCore/blob.c"
+                                                            )
                           blob_info->exempt=MagickFalse;
                         else
                           {
                             (void) fclose(blob_info->file_info.file);
-                            blob_info->file_info.file=(FILE *) NULL;
+                            blob_info->file_info.file=(FILE *) 
+# 3527 "MagickCore/blob.c" 3 4
+                                                              ((void *)0)
+# 3527 "MagickCore/blob.c"
+                                                                  ;
                           }
                         AttachBlob(blob_info,blob,length);
                         blob_info->mapped=MagickTrue;
@@ -3534,29 +23633,41 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
           }
       }
     else
-#if defined(MAGICKCORE_ZLIB_DELEGATE)
+
       if ((LocaleCompare(extension,"gz") == 0) ||
           (LocaleCompare(extension,"wmz") == 0) ||
           (LocaleCompare(extension,"svgz") == 0))
         {
           blob_info->file_info.gzfile=gzopen_utf8(filename,"wb");
-          if (blob_info->file_info.gzfile != (gzFile) NULL)
+          if (blob_info->file_info.gzfile != (gzFile) 
+# 3543 "MagickCore/blob.c" 3 4
+                                                     ((void *)0)
+# 3543 "MagickCore/blob.c"
+                                                         )
             blob_info->type=ZipStream;
         }
       else
-#endif
-#if defined(MAGICKCORE_BZLIB_DELEGATE)
+
+
         if (LocaleCompare(extension,"bz2") == 0)
           {
             blob_info->file_info.bzfile=BZ2_bzopen(filename,"w");
-            if (blob_info->file_info.bzfile != (BZFILE *) NULL)
+            if (blob_info->file_info.bzfile != (BZFILE *) 
+# 3552 "MagickCore/blob.c" 3 4
+                                                         ((void *)0)
+# 3552 "MagickCore/blob.c"
+                                                             )
               blob_info->type=BZipStream;
           }
         else
-#endif
+
           {
             blob_info->file_info.file=(FILE *) fopen_utf8(filename,type);
-            if (blob_info->file_info.file != (FILE *) NULL)
+            if (blob_info->file_info.file != (FILE *) 
+# 3559 "MagickCore/blob.c" 3 4
+                                                     ((void *)0)
+# 3559 "MagickCore/blob.c"
+                                                         )
               {
                 blob_info->type=FileStream;
                 (void) SetStreamBuffering(image_info,blob_info);
@@ -3568,63 +23679,29 @@ MagickExport MagickBooleanType OpenBlob(const ImageInfo *image_info,
     blob_info->size=GetBlobSize(image);
   else
     {
-      ThrowFileException(exception,BlobError,"UnableToOpenBlob",filename);
+      { char *file_message; file_message=GetExceptionMessage(
+# 3571 "MagickCore/blob.c" 3 4
+     (*__errno_location ())
+# 3571 "MagickCore/blob.c"
+     ); (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 3571,BlobError,"UnableToOpenBlob", "'%s': %s",filename,file_message); file_message=DestroyString(file_message); };
       return(MagickFalse);
     }
   return(MagickTrue);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   P i n g B l o b                                                           %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  PingBlob() returns all the attributes of an image or image sequence except
-%  for the pixels.  It is much faster and consumes far less memory than
-%  BlobToImage().  On failure, a NULL image is returned and exception
-%  describes the reason for the failure.
-%
-%  The format of the PingBlob method is:
-%
-%      Image *PingBlob(const ImageInfo *image_info,const void *blob,
-%        const size_t length,ExceptionInfo *exception)
-%
-%  A description of each parameter follows:
-%
-%    o image_info: the image info.
-%
-%    o blob: the address of a character stream in one of the image formats
-%      understood by ImageMagick.
-%
-%    o length: This size_t integer reflects the length in bytes of the blob.
-%
-%    o exception: return any errors or warnings in this structure.
-%
-*/
-
-#if defined(__cplusplus) || defined(c_plusplus)
-extern "C" {
-#endif
-
-static size_t PingStream(const Image *magick_unused(image),
-  const void *magick_unused(pixels),const size_t columns)
+# 3615 "MagickCore/blob.c"
+static size_t PingStream(const Image *magick_unused_image __attribute__((unused)),
+  const void *magick_unused_pixels __attribute__((unused)),const size_t columns)
 {
-  magick_unreferenced(image);
-  magick_unreferenced(pixels);
+  ;
+  ;
   return(columns);
 }
 
-#if defined(__cplusplus) || defined(c_plusplus)
-}
-#endif
 
-MagickExport Image *PingBlob(const ImageInfo *image_info,const void *blob,
+
+
+
+__attribute__ ((visibility ("default"))) Image *PingBlob(const ImageInfo *image_info,const void *blob,
   const size_t length,ExceptionInfo *exception)
 {
   const MagickInfo
@@ -3640,17 +23717,73 @@ MagickExport Image *PingBlob(const ImageInfo *image_info,const void *blob,
   MagickBooleanType
     status;
 
-  assert(image_info != (ImageInfo *) NULL);
-  assert(image_info->signature == MagickCoreSignature);
-  assert(exception != (ExceptionInfo *) NULL);
+  
+# 3643 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 3643 "MagickCore/blob.c"
+ image_info != (ImageInfo *) 
+# 3643 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 3643 "MagickCore/blob.c"
+ image_info != (ImageInfo *) 
+# 3643 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 3643 "MagickCore/blob.c"
+ "image_info != (ImageInfo *) NULL"
+# 3643 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 3643, __extension__ __PRETTY_FUNCTION__); }))
+# 3643 "MagickCore/blob.c"
+                                         ;
+  
+# 3644 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 3644 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 3644 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 3644 "MagickCore/blob.c"
+ image_info->signature == 0xabacadabUL
+# 3644 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 3644 "MagickCore/blob.c"
+ "image_info->signature == MagickCoreSignature"
+# 3644 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 3644, __extension__ __PRETTY_FUNCTION__); }))
+# 3644 "MagickCore/blob.c"
+                                                     ;
+  
+# 3645 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 3645 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 3645 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 3645 "MagickCore/blob.c"
+ exception != (ExceptionInfo *) 
+# 3645 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 3645 "MagickCore/blob.c"
+ "exception != (ExceptionInfo *) NULL"
+# 3645 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 3645, __extension__ __PRETTY_FUNCTION__); }))
+# 3645 "MagickCore/blob.c"
+                                            ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 3647,"%s",
       image_info->filename);
-  if ((blob == (const void *) NULL) || (length == 0))
+  if ((blob == (const void *) 
+# 3649 "MagickCore/blob.c" 3 4
+                             ((void *)0)
+# 3649 "MagickCore/blob.c"
+                                 ) || (length == 0))
     {
-      (void) ThrowMagickException(exception,GetMagickModule(),BlobError,
+      (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 3651,BlobError,
         "ZeroLengthBlobNotPermitted","`%s'",image_info->filename);
-      return((Image *) NULL);
+      return((Image *) 
+# 3653 "MagickCore/blob.c" 3 4
+                      ((void *)0)
+# 3653 "MagickCore/blob.c"
+                          );
     }
   ping_info=CloneImageInfo(image_info);
   ping_info->blob=(void *) blob;
@@ -3659,35 +23792,51 @@ MagickExport Image *PingBlob(const ImageInfo *image_info,const void *blob,
   if (*ping_info->magick == '\0')
     (void) SetImageInfo(ping_info,0,exception);
   magick_info=GetMagickInfo(ping_info->magick,exception);
-  if (magick_info == (const MagickInfo *) NULL)
+  if (magick_info == (const MagickInfo *) 
+# 3662 "MagickCore/blob.c" 3 4
+                                         ((void *)0)
+# 3662 "MagickCore/blob.c"
+                                             )
     {
-      (void) ThrowMagickException(exception,GetMagickModule(),
+      (void) ThrowMagickException(exception,"MagickCore/blob.c",__func__,(unsigned long) 3664,
         MissingDelegateError,"NoDecodeDelegateForThisImageFormat","`%s'",
         ping_info->magick);
       ping_info=DestroyImageInfo(ping_info);
-      return((Image *) NULL);
+      return((Image *) 
+# 3668 "MagickCore/blob.c" 3 4
+                      ((void *)0)
+# 3668 "MagickCore/blob.c"
+                          );
     }
   if (GetMagickBlobSupport(magick_info) != MagickFalse)
     {
       char
-        filename[MagickPathExtent];
+        filename[4096];
 
-      /*
-        Native blob support for this image format.
-      */
-      (void) CopyMagickString(filename,ping_info->filename,MagickPathExtent);
-      (void) FormatLocaleString(ping_info->filename,MagickPathExtent,"%s:%s",
+
+
+
+      (void) CopyMagickString(filename,ping_info->filename,4096);
+      (void) FormatLocaleString(ping_info->filename,4096,"%s:%s",
         ping_info->magick,filename);
       image=ReadStream(ping_info,&PingStream,exception);
-      if (image != (Image *) NULL)
+      if (image != (Image *) 
+# 3682 "MagickCore/blob.c" 3 4
+                            ((void *)0)
+# 3682 "MagickCore/blob.c"
+                                )
         (void) DetachBlob(image->blob);
       ping_info=DestroyImageInfo(ping_info);
       return(image);
     }
-  /*
-    Write blob to a temporary file on disk.
-  */
-  ping_info->blob=(void *) NULL;
+
+
+
+  ping_info->blob=(void *) 
+# 3690 "MagickCore/blob.c" 3 4
+                          ((void *)0)
+# 3690 "MagickCore/blob.c"
+                              ;
   ping_info->length=0;
   *ping_info->filename='\0';
   status=BlobToFile(ping_info->filename,blob,length,exception);
@@ -3695,28 +23844,40 @@ MagickExport Image *PingBlob(const ImageInfo *image_info,const void *blob,
     {
       (void) RelinquishUniqueFileResource(ping_info->filename);
       ping_info=DestroyImageInfo(ping_info);
-      return((Image *) NULL);
+      return((Image *) 
+# 3698 "MagickCore/blob.c" 3 4
+                      ((void *)0)
+# 3698 "MagickCore/blob.c"
+                          );
     }
   clone_info=CloneImageInfo(ping_info);
-  (void) FormatLocaleString(clone_info->filename,MagickPathExtent,"%s:%s",
+  (void) FormatLocaleString(clone_info->filename,4096,"%s:%s",
     ping_info->magick,ping_info->filename);
   image=ReadStream(clone_info,&PingStream,exception);
-  if (image != (Image *) NULL)
+  if (image != (Image *) 
+# 3704 "MagickCore/blob.c" 3 4
+                        ((void *)0)
+# 3704 "MagickCore/blob.c"
+                            )
     {
       Image
         *images;
 
-      /*
-        Restore original filenames and image format.
-      */
-      for (images=GetFirstImageInList(image); images != (Image *) NULL; )
+
+
+
+      for (images=GetFirstImageInList(image); images != (Image *) 
+# 3712 "MagickCore/blob.c" 3 4
+                                                                 ((void *)0)
+# 3712 "MagickCore/blob.c"
+                                                                     ; )
       {
         (void) CopyMagickString(images->filename,image_info->filename,
-          MagickPathExtent);
+          4096);
         (void) CopyMagickString(images->magick_filename,image_info->filename,
-          MagickPathExtent);
+          4096);
         (void) CopyMagickString(images->magick,magick_info->name,
-          MagickPathExtent);
+          4096);
         images=GetNextImageInList(images);
       }
     }
@@ -3725,42 +23886,11 @@ MagickExport Image *PingBlob(const ImageInfo *image_info,const void *blob,
   ping_info=DestroyImageInfo(ping_info);
   return(image);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b                                                            %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlob() reads data from the blob or image file and returns it.  It
-%  returns the number of bytes read. If length is zero, ReadBlob() returns
-%  zero and has no other results. If length is greater than MAGICK_SSIZE_MAX,
-%  the result is unspecified.
-%
-%  The format of the ReadBlob method is:
-%
-%      ssize_t ReadBlob(Image *image,const size_t length,void *data)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-%    o length:  Specifies an integer representing the number of bytes to read
-%      from the file.
-%
-%    o data:  Specifies an area to place the information requested from the
-%      file.
-%
-*/
-MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
+# 3760 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) ssize_t ReadBlob(Image *image,const size_t length,void *data)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
   int
     c;
@@ -3771,13 +23901,93 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
   unsigned char
     *q;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image->blob != (BlobInfo *) NULL);
-  assert(image->blob->type != UndefinedStream);
+  
+# 3774 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 3774 "MagickCore/blob.c"
+ image != (Image *) 
+# 3774 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 3774 "MagickCore/blob.c"
+ image != (Image *) 
+# 3774 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 3774 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 3774 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 3774, __extension__ __PRETTY_FUNCTION__); }))
+# 3774 "MagickCore/blob.c"
+                                ;
+  
+# 3775 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 3775 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 3775 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 3775 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 3775 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 3775 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 3775 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 3775, __extension__ __PRETTY_FUNCTION__); }))
+# 3775 "MagickCore/blob.c"
+                                                ;
+  
+# 3776 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 3776 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 3776 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 3776 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 3776 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 3776 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 3776 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 3776, __extension__ __PRETTY_FUNCTION__); }))
+# 3776 "MagickCore/blob.c"
+                                         ;
+  
+# 3777 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 3777 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 3777 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 3777 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 3777 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 3777 "MagickCore/blob.c"
+ "image->blob->type != UndefinedStream"
+# 3777 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 3777, __extension__ __PRETTY_FUNCTION__); }))
+# 3777 "MagickCore/blob.c"
+                                             ;
   if (length == 0)
     return(0);
-  assert(data != (void *) NULL);
+  
+# 3780 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 3780 "MagickCore/blob.c"
+ data != (void *) 
+# 3780 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 3780 "MagickCore/blob.c"
+ data != (void *) 
+# 3780 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 3780 "MagickCore/blob.c"
+ "data != (void *) NULL"
+# 3780 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 3780, __extension__ __PRETTY_FUNCTION__); }))
+# 3780 "MagickCore/blob.c"
+                              ;
   blob_info=image->blob;
   count=0;
   q=(unsigned char *) data;
@@ -3799,38 +24009,54 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
         case 4:
         {
           c=getc(blob_info->file_info.file);
-          if (c == EOF)
+          if (c == 
+# 3802 "MagickCore/blob.c" 3 4
+                  (-1)
+# 3802 "MagickCore/blob.c"
+                     )
             break;
           *q++=(unsigned char) c;
           count++;
-          magick_fallthrough;
+          __attribute__((fallthrough));
         }
         case 3:
         {
           c=getc(blob_info->file_info.file);
-          if (c == EOF)
+          if (c == 
+# 3811 "MagickCore/blob.c" 3 4
+                  (-1)
+# 3811 "MagickCore/blob.c"
+                     )
             break;
           *q++=(unsigned char) c;
           count++;
-          magick_fallthrough;
+          __attribute__((fallthrough));
         }
         case 2:
         {
           c=getc(blob_info->file_info.file);
-          if (c == EOF)
+          if (c == 
+# 3820 "MagickCore/blob.c" 3 4
+                  (-1)
+# 3820 "MagickCore/blob.c"
+                     )
             break;
           *q++=(unsigned char) c;
           count++;
-          magick_fallthrough;
+          __attribute__((fallthrough));
         }
         case 1:
         {
           c=getc(blob_info->file_info.file);
-          if (c == EOF)
+          if (c == 
+# 3829 "MagickCore/blob.c" 3 4
+                  (-1)
+# 3829 "MagickCore/blob.c"
+                     )
             break;
           *q++=(unsigned char) c;
           count++;
-          magick_fallthrough;
+          __attribute__((fallthrough));
         }
         case 0:
           break;
@@ -3842,7 +24068,7 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
     }
     case ZipStream:
     {
-#if defined(MAGICKCORE_ZLIB_DELEGATE)
+
       int
         status;
 
@@ -3856,11 +24082,19 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
           for (i=0; i < length; i+=(size_t) count)
           {
             count=(ssize_t) gzread(blob_info->file_info.gzfile,q+i,
-              (unsigned int) MagickMin(length-i,MagickMaxBufferExtent));
+              (unsigned int) (((length-i) < (81920)) ? (length-i) : (81920)));
             if (count <= 0)
               {
                 count=0;
-                if (errno != EINTR)
+                if (
+# 3863 "MagickCore/blob.c" 3 4
+                   (*__errno_location ()) 
+# 3863 "MagickCore/blob.c"
+                         != 
+# 3863 "MagickCore/blob.c" 3 4
+                            4
+# 3863 "MagickCore/blob.c"
+                                 )
                   break;
               }
           }
@@ -3869,35 +24103,147 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
         }
         case 4:
         {
-          c=gzgetc(blob_info->file_info.gzfile);
-          if (c == EOF)
+          c=
+# 3872 "MagickCore/blob.c" 3 4
+           ((
+# 3872 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3872 "MagickCore/blob.c" 3 4
+           )->have ? ((
+# 3872 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3872 "MagickCore/blob.c" 3 4
+           )->have--, (
+# 3872 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3872 "MagickCore/blob.c" 3 4
+           )->pos++, *((
+# 3872 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3872 "MagickCore/blob.c" 3 4
+           )->next)++) : (gzgetc)(
+# 3872 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3872 "MagickCore/blob.c" 3 4
+           ))
+# 3872 "MagickCore/blob.c"
+                                              ;
+          if (c == 
+# 3873 "MagickCore/blob.c" 3 4
+                  (-1)
+# 3873 "MagickCore/blob.c"
+                     )
             break;
           *q++=(unsigned char) c;
           count++;
-          magick_fallthrough;
+          __attribute__((fallthrough));
         }
         case 3:
         {
-          c=gzgetc(blob_info->file_info.gzfile);
-          if (c == EOF)
+          c=
+# 3881 "MagickCore/blob.c" 3 4
+           ((
+# 3881 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3881 "MagickCore/blob.c" 3 4
+           )->have ? ((
+# 3881 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3881 "MagickCore/blob.c" 3 4
+           )->have--, (
+# 3881 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3881 "MagickCore/blob.c" 3 4
+           )->pos++, *((
+# 3881 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3881 "MagickCore/blob.c" 3 4
+           )->next)++) : (gzgetc)(
+# 3881 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3881 "MagickCore/blob.c" 3 4
+           ))
+# 3881 "MagickCore/blob.c"
+                                              ;
+          if (c == 
+# 3882 "MagickCore/blob.c" 3 4
+                  (-1)
+# 3882 "MagickCore/blob.c"
+                     )
             break;
           *q++=(unsigned char) c;
           count++;
-          magick_fallthrough;
+          __attribute__((fallthrough));
         }
         case 2:
         {
-          c=gzgetc(blob_info->file_info.gzfile);
-          if (c == EOF)
+          c=
+# 3890 "MagickCore/blob.c" 3 4
+           ((
+# 3890 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3890 "MagickCore/blob.c" 3 4
+           )->have ? ((
+# 3890 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3890 "MagickCore/blob.c" 3 4
+           )->have--, (
+# 3890 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3890 "MagickCore/blob.c" 3 4
+           )->pos++, *((
+# 3890 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3890 "MagickCore/blob.c" 3 4
+           )->next)++) : (gzgetc)(
+# 3890 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3890 "MagickCore/blob.c" 3 4
+           ))
+# 3890 "MagickCore/blob.c"
+                                              ;
+          if (c == 
+# 3891 "MagickCore/blob.c" 3 4
+                  (-1)
+# 3891 "MagickCore/blob.c"
+                     )
             break;
           *q++=(unsigned char) c;
           count++;
-          magick_fallthrough;
+          __attribute__((fallthrough));
         }
         case 1:
         {
-          c=gzgetc(blob_info->file_info.gzfile);
-          if (c == EOF)
+          c=
+# 3899 "MagickCore/blob.c" 3 4
+           ((
+# 3899 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3899 "MagickCore/blob.c" 3 4
+           )->have ? ((
+# 3899 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3899 "MagickCore/blob.c" 3 4
+           )->have--, (
+# 3899 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3899 "MagickCore/blob.c" 3 4
+           )->pos++, *((
+# 3899 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3899 "MagickCore/blob.c" 3 4
+           )->next)++) : (gzgetc)(
+# 3899 "MagickCore/blob.c"
+           blob_info->file_info.gzfile
+# 3899 "MagickCore/blob.c" 3 4
+           ))
+# 3899 "MagickCore/blob.c"
+                                              ;
+          if (c == 
+# 3900 "MagickCore/blob.c" 3 4
+                  (-1)
+# 3900 "MagickCore/blob.c"
+                     )
             break;
           *q++=(unsigned char) c;
           count++;
@@ -3905,19 +24251,27 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
         case 0:
           break;
       }
-      status=Z_OK;
+      status=
+# 3908 "MagickCore/blob.c" 3 4
+            0
+# 3908 "MagickCore/blob.c"
+                ;
       (void) gzerror(blob_info->file_info.gzfile,&status);
-      if ((count != (ssize_t) length) && (status != Z_OK))
+      if ((count != (ssize_t) length) && (status != 
+# 3910 "MagickCore/blob.c" 3 4
+                                                   0
+# 3910 "MagickCore/blob.c"
+                                                       ))
         ThrowBlobException(blob_info);
       if (blob_info->eof == MagickFalse)
         blob_info->eof=gzeof(blob_info->file_info.gzfile) != 0 ? MagickTrue :
           MagickFalse;
-#endif
+
       break;
     }
     case BZipStream:
     {
-#if defined(MAGICKCORE_BZLIB_DELEGATE)
+
       int
         status;
 
@@ -3927,20 +24281,36 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
       for (i=0; i < length; i+=(size_t) count)
       {
         count=(ssize_t) BZ2_bzread(blob_info->file_info.bzfile,q+i,(int)
-          MagickMin(length-i,MagickMaxBufferExtent));
+          (((length-i) < (81920)) ? (length-i) : (81920)));
         if (count <= 0)
           {
             count=0;
-            if (errno != EINTR)
+            if (
+# 3934 "MagickCore/blob.c" 3 4
+               (*__errno_location ()) 
+# 3934 "MagickCore/blob.c"
+                     != 
+# 3934 "MagickCore/blob.c" 3 4
+                        4
+# 3934 "MagickCore/blob.c"
+                             )
               break;
           }
       }
       count=(ssize_t) i;
-      status=BZ_OK;
+      status=
+# 3939 "MagickCore/blob.c" 3 4
+            0
+# 3939 "MagickCore/blob.c"
+                 ;
       (void) BZ2_bzerror(blob_info->file_info.bzfile,&status);
-      if ((count != (ssize_t) length) && (status != BZ_OK))
+      if ((count != (ssize_t) length) && (status != 
+# 3941 "MagickCore/blob.c" 3 4
+                                                   0
+# 3941 "MagickCore/blob.c"
+                                                        ))
         ThrowBlobException(blob_info);
-#endif
+
       break;
     }
     case FifoStream:
@@ -3956,8 +24326,8 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
           break;
         }
       p=blob_info->data+blob_info->offset;
-      count=(ssize_t) MagickMin((MagickOffsetType) length,(MagickOffsetType)
-        blob_info->length-blob_info->offset);
+      count=(ssize_t) ((((MagickOffsetType) length) < ((MagickOffsetType) blob_info->length-blob_info->offset)) ? ((MagickOffsetType) length) : ((MagickOffsetType) blob_info->length-blob_info->offset))
+                                            ;
       blob_info->offset+=count;
       if (count != (ssize_t) length)
         blob_info->eof=MagickTrue;
@@ -3966,7 +24336,11 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
     }
     case CustomStream:
     {
-      if (blob_info->custom_stream->reader != (CustomStreamHandler) NULL)
+      if (blob_info->custom_stream->reader != (CustomStreamHandler) 
+# 3969 "MagickCore/blob.c" 3 4
+                                                                   ((void *)0)
+# 3969 "MagickCore/blob.c"
+                                                                       )
         count=blob_info->custom_stream->reader(q,length,
           blob_info->custom_stream->data);
       break;
@@ -3974,41 +24348,83 @@ MagickExport ssize_t ReadBlob(Image *image,const size_t length,void *data)
   }
   return(count);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b B y t e                                                    %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobByte() reads a single byte from the image file and returns it.
-%
-%  The format of the ReadBlobByte method is:
-%
-%      int ReadBlobByte(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport int ReadBlobByte(Image *image)
+# 4000 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) int ReadBlobByte(Image *image)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
   int
     c;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image->blob != (BlobInfo *) NULL);
-  assert(image->blob->type != UndefinedStream);
+  
+# 4008 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4008 "MagickCore/blob.c"
+ image != (Image *) 
+# 4008 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4008 "MagickCore/blob.c"
+ image != (Image *) 
+# 4008 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 4008 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 4008 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4008, __extension__ __PRETTY_FUNCTION__); }))
+# 4008 "MagickCore/blob.c"
+                                ;
+  
+# 4009 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4009 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4009 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 4009 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4009 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 4009 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 4009 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4009, __extension__ __PRETTY_FUNCTION__); }))
+# 4009 "MagickCore/blob.c"
+                                                ;
+  
+# 4010 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4010 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 4010 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4010 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 4010 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 4010 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 4010 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4010, __extension__ __PRETTY_FUNCTION__); }))
+# 4010 "MagickCore/blob.c"
+                                         ;
+  
+# 4011 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4011 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 4011 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 4011 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 4011 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 4011 "MagickCore/blob.c"
+ "image->blob->type != UndefinedStream"
+# 4011 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4011, __extension__ __PRETTY_FUNCTION__); }))
+# 4011 "MagickCore/blob.c"
+                                             ;
   blob_info=image->blob;
   switch (blob_info->type)
   {
@@ -4017,11 +24433,19 @@ MagickExport int ReadBlobByte(Image *image)
     case PipeStream:
     {
       c=getc(blob_info->file_info.file);
-      if (c == EOF)
+      if (c == 
+# 4020 "MagickCore/blob.c" 3 4
+              (-1)
+# 4020 "MagickCore/blob.c"
+                 )
         {
           if (ferror(blob_info->file_info.file) != 0)
             ThrowBlobException(blob_info);
-          return(EOF);
+          return(
+# 4024 "MagickCore/blob.c" 3 4
+                (-1)
+# 4024 "MagickCore/blob.c"
+                   );
         }
       break;
     }
@@ -4030,7 +24454,11 @@ MagickExport int ReadBlobByte(Image *image)
       if (blob_info->offset >= (MagickOffsetType) blob_info->length)
         {
           blob_info->eof=MagickTrue;
-          return(EOF);
+          return(
+# 4033 "MagickCore/blob.c" 3 4
+                (-1)
+# 4033 "MagickCore/blob.c"
+                   );
         }
       c=(int) (*((unsigned char *) blob_info->data+blob_info->offset));
       blob_info->offset++;
@@ -4046,38 +24474,19 @@ MagickExport int ReadBlobByte(Image *image)
 
       count=ReadBlob(image,1,buffer);
       if (count != 1)
-        return(EOF);
+        return(
+# 4049 "MagickCore/blob.c" 3 4
+              (-1)
+# 4049 "MagickCore/blob.c"
+                 );
       c=(int) *buffer;
       break;
     }
   }
   return(c);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b D o u b l e                                                %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobDouble() reads a double value as a 64-bit quantity in the byte-order
-%  specified by the endian member of the image structure.
-%
-%  The format of the ReadBlobDouble method is:
-%
-%      double ReadBlobDouble(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport double ReadBlobDouble(Image *image)
+# 4080 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) double ReadBlobDouble(Image *image)
 {
   union
   {
@@ -4092,31 +24501,8 @@ MagickExport double ReadBlobDouble(Image *image)
   quantum.unsigned_value=ReadBlobLongLong(image);
   return(quantum.double_value);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b F l o a t                                                  %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobFloat() reads a float value as a 32-bit quantity in the byte-order
-%  specified by the endian member of the image structure.
-%
-%  The format of the ReadBlobFloat method is:
-%
-%      float ReadBlobFloat(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport float ReadBlobFloat(Image *image)
+# 4119 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) float ReadBlobFloat(Image *image)
 {
   union
   {
@@ -4131,31 +24517,8 @@ MagickExport float ReadBlobFloat(Image *image)
   quantum.unsigned_value=ReadBlobLong(image);
   return(quantum.float_value);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b L o n g                                                    %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobLong() reads a unsigned int value as a 32-bit quantity in the
-%  byte-order specified by the endian member of the image structure.
-%
-%  The format of the ReadBlobLong method is:
-%
-%      unsigned int ReadBlobLong(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport unsigned int ReadBlobLong(Image *image)
+# 4158 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) unsigned int ReadBlobLong(Image *image)
 {
   const unsigned char
     *p;
@@ -4169,8 +24532,40 @@ MagickExport unsigned int ReadBlobLong(Image *image)
   unsigned int
     value;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 4172 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4172 "MagickCore/blob.c"
+ image != (Image *) 
+# 4172 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4172 "MagickCore/blob.c"
+ image != (Image *) 
+# 4172 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 4172 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 4172 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4172, __extension__ __PRETTY_FUNCTION__); }))
+# 4172 "MagickCore/blob.c"
+                                ;
+  
+# 4173 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4173 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4173 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 4173 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4173 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 4173 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 4173 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4173, __extension__ __PRETTY_FUNCTION__); }))
+# 4173 "MagickCore/blob.c"
+                                                ;
   *buffer='\0';
   p=(const unsigned char *) ReadBlobStream(image,4,buffer,&count);
   if (count != 4)
@@ -4189,31 +24584,8 @@ MagickExport unsigned int ReadBlobLong(Image *image)
   value|=(unsigned int) (*p++);
   return(value);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b L o n g L o n g                                            %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobLongLong() reads a long long value as a 64-bit quantity in the
-%  byte-order specified by the endian member of the image structure.
-%
-%  The format of the ReadBlobLongLong method is:
-%
-%      MagickSizeType ReadBlobLongLong(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport MagickSizeType ReadBlobLongLong(Image *image)
+# 4216 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) MagickSizeType ReadBlobLongLong(Image *image)
 {
   MagickSizeType
     value;
@@ -4227,12 +24599,44 @@ MagickExport MagickSizeType ReadBlobLongLong(Image *image)
   unsigned char
     buffer[8];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 4230 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4230 "MagickCore/blob.c"
+ image != (Image *) 
+# 4230 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4230 "MagickCore/blob.c"
+ image != (Image *) 
+# 4230 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 4230 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 4230 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4230, __extension__ __PRETTY_FUNCTION__); }))
+# 4230 "MagickCore/blob.c"
+                                ;
+  
+# 4231 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4231 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4231 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 4231 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4231 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 4231 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 4231 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4231, __extension__ __PRETTY_FUNCTION__); }))
+# 4231 "MagickCore/blob.c"
+                                                ;
   *buffer='\0';
   p=(const unsigned char *) ReadBlobStream(image,8,buffer,&count);
   if (count != 8)
-    return(MagickULLConstant(0));
+    return(((MagickSizeType) (0ULL)));
   if (image->endian == LSBEndian)
     {
       value=(MagickSizeType) (*p++);
@@ -4255,31 +24659,8 @@ MagickExport MagickSizeType ReadBlobLongLong(Image *image)
   value|=(MagickSizeType) (*p++);
   return(value);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b S h o r t                                                  %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobShort() reads a short value as a 16-bit quantity in the byte-order
-%  specified by the endian member of the image structure.
-%
-%  The format of the ReadBlobShort method is:
-%
-%      unsigned short ReadBlobShort(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport unsigned short ReadBlobShort(Image *image)
+# 4282 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) unsigned short ReadBlobShort(Image *image)
 {
   const unsigned char
     *p;
@@ -4293,8 +24674,40 @@ MagickExport unsigned short ReadBlobShort(Image *image)
   unsigned char
     buffer[2];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 4296 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4296 "MagickCore/blob.c"
+ image != (Image *) 
+# 4296 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4296 "MagickCore/blob.c"
+ image != (Image *) 
+# 4296 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 4296 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 4296 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4296, __extension__ __PRETTY_FUNCTION__); }))
+# 4296 "MagickCore/blob.c"
+                                ;
+  
+# 4297 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4297 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4297 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 4297 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4297 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 4297 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 4297 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4297, __extension__ __PRETTY_FUNCTION__); }))
+# 4297 "MagickCore/blob.c"
+                                                ;
   *buffer='\0';
   p=(const unsigned char *) ReadBlobStream(image,2,buffer,&count);
   if (count != 2)
@@ -4309,31 +24722,8 @@ MagickExport unsigned short ReadBlobShort(Image *image)
   value|=(unsigned short) (*p++);
   return(value);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b L S B L o n g                                              %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobLSBLong() reads a unsigned int value as a 32-bit quantity in
-%  least-significant byte first order.
-%
-%  The format of the ReadBlobLSBLong method is:
-%
-%      unsigned int ReadBlobLSBLong(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport unsigned int ReadBlobLSBLong(Image *image)
+# 4336 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) unsigned int ReadBlobLSBLong(Image *image)
 {
   const unsigned char
     *p;
@@ -4347,8 +24737,40 @@ MagickExport unsigned int ReadBlobLSBLong(Image *image)
   unsigned char
     buffer[4];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 4350 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4350 "MagickCore/blob.c"
+ image != (Image *) 
+# 4350 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4350 "MagickCore/blob.c"
+ image != (Image *) 
+# 4350 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 4350 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 4350 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4350, __extension__ __PRETTY_FUNCTION__); }))
+# 4350 "MagickCore/blob.c"
+                                ;
+  
+# 4351 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4351 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4351 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 4351 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4351 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 4351 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 4351 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4351, __extension__ __PRETTY_FUNCTION__); }))
+# 4351 "MagickCore/blob.c"
+                                                ;
   *buffer='\0';
   p=(const unsigned char *) ReadBlobStream(image,4,buffer,&count);
   if (count != 4)
@@ -4359,31 +24781,8 @@ MagickExport unsigned int ReadBlobLSBLong(Image *image)
   value|=(unsigned int) (*p++) << 24;
   return(value);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b L S B S i g n e d L o n g                                  %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobLSBSignedLong() reads a signed int value as a 32-bit quantity in
-%  least-significant byte first order.
-%
-%  The format of the ReadBlobLSBSignedLong method is:
-%
-%      signed int ReadBlobLSBSignedLong(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport signed int ReadBlobLSBSignedLong(Image *image)
+# 4386 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) signed int ReadBlobLSBSignedLong(Image *image)
 {
   union
   {
@@ -4397,31 +24796,8 @@ MagickExport signed int ReadBlobLSBSignedLong(Image *image)
   quantum.unsigned_value=ReadBlobLSBLong(image);
   return(quantum.signed_value);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b L S B S h o r t                                            %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobLSBShort() reads a short value as a 16-bit quantity in
-%  least-significant byte first order.
-%
-%  The format of the ReadBlobLSBShort method is:
-%
-%      unsigned short ReadBlobLSBShort(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport unsigned short ReadBlobLSBShort(Image *image)
+# 4424 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) unsigned short ReadBlobLSBShort(Image *image)
 {
   const unsigned char
     *p;
@@ -4435,8 +24811,40 @@ MagickExport unsigned short ReadBlobLSBShort(Image *image)
   unsigned char
     buffer[2];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 4438 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4438 "MagickCore/blob.c"
+ image != (Image *) 
+# 4438 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4438 "MagickCore/blob.c"
+ image != (Image *) 
+# 4438 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 4438 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 4438 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4438, __extension__ __PRETTY_FUNCTION__); }))
+# 4438 "MagickCore/blob.c"
+                                ;
+  
+# 4439 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4439 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4439 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 4439 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4439 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 4439 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 4439 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4439, __extension__ __PRETTY_FUNCTION__); }))
+# 4439 "MagickCore/blob.c"
+                                                ;
   *buffer='\0';
   p=(const unsigned char *) ReadBlobStream(image,2,buffer,&count);
   if (count != 2)
@@ -4445,31 +24853,8 @@ MagickExport unsigned short ReadBlobLSBShort(Image *image)
   value|=(unsigned short) (*p++) << 8;
   return(value);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b L S B S i g n e d S h o r t                                %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobLSBSignedShort() reads a signed short value as a 16-bit quantity in
-%  least-significant byte-order.
-%
-%  The format of the ReadBlobLSBSignedShort method is:
-%
-%      signed short ReadBlobLSBSignedShort(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport signed short ReadBlobLSBSignedShort(Image *image)
+# 4472 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) signed short ReadBlobLSBSignedShort(Image *image)
 {
   union
   {
@@ -4483,31 +24868,8 @@ MagickExport signed short ReadBlobLSBSignedShort(Image *image)
   quantum.unsigned_value=ReadBlobLSBShort(image);
   return(quantum.signed_value);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b M S B L o n g                                              %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobMSBLong() reads a unsigned int value as a 32-bit quantity in
-%  most-significant byte first order.
-%
-%  The format of the ReadBlobMSBLong method is:
-%
-%      unsigned int ReadBlobMSBLong(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport unsigned int ReadBlobMSBLong(Image *image)
+# 4510 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) unsigned int ReadBlobMSBLong(Image *image)
 {
   const unsigned char
     *p;
@@ -4521,8 +24883,40 @@ MagickExport unsigned int ReadBlobMSBLong(Image *image)
   unsigned char
     buffer[4];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 4524 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4524 "MagickCore/blob.c"
+ image != (Image *) 
+# 4524 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4524 "MagickCore/blob.c"
+ image != (Image *) 
+# 4524 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 4524 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 4524 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4524, __extension__ __PRETTY_FUNCTION__); }))
+# 4524 "MagickCore/blob.c"
+                                ;
+  
+# 4525 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4525 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4525 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 4525 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4525 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 4525 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 4525 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4525, __extension__ __PRETTY_FUNCTION__); }))
+# 4525 "MagickCore/blob.c"
+                                                ;
   *buffer='\0';
   p=(const unsigned char *) ReadBlobStream(image,4,buffer,&count);
   if (count != 4)
@@ -4533,31 +24927,8 @@ MagickExport unsigned int ReadBlobMSBLong(Image *image)
   value|=(unsigned int) (*p++);
   return(value);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b M S B L o n g L o n g                                      %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobMSBLongLong() reads a unsigned long long value as a 64-bit quantity
-%  in most-significant byte first order.
-%
-%  The format of the ReadBlobMSBLongLong method is:
-%
-%      unsigned int ReadBlobMSBLongLong(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport MagickSizeType ReadBlobMSBLongLong(Image *image)
+# 4560 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) MagickSizeType ReadBlobMSBLongLong(Image *image)
 {
   const unsigned char
     *p;
@@ -4571,12 +24942,44 @@ MagickExport MagickSizeType ReadBlobMSBLongLong(Image *image)
   unsigned char
     buffer[8];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 4574 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4574 "MagickCore/blob.c"
+ image != (Image *) 
+# 4574 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4574 "MagickCore/blob.c"
+ image != (Image *) 
+# 4574 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 4574 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 4574 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4574, __extension__ __PRETTY_FUNCTION__); }))
+# 4574 "MagickCore/blob.c"
+                                ;
+  
+# 4575 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4575 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4575 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 4575 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4575 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 4575 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 4575 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4575, __extension__ __PRETTY_FUNCTION__); }))
+# 4575 "MagickCore/blob.c"
+                                                ;
   *buffer='\0';
   p=(const unsigned char *) ReadBlobStream(image,8,buffer,&count);
   if (count != 8)
-    return(MagickULLConstant(0));
+    return(((MagickSizeType) (0ULL)));
   value=(MagickSizeType) (*p++) << 56;
   value|=(MagickSizeType) (*p++) << 48;
   value|=(MagickSizeType) (*p++) << 40;
@@ -4587,31 +24990,8 @@ MagickExport MagickSizeType ReadBlobMSBLongLong(Image *image)
   value|=(MagickSizeType) (*p++);
   return(value);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b M S B S h o r t                                            %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobMSBShort() reads a short value as a 16-bit quantity in
-%  most-significant byte first order.
-%
-%  The format of the ReadBlobMSBShort method is:
-%
-%      unsigned short ReadBlobMSBShort(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport unsigned short ReadBlobMSBShort(Image *image)
+# 4614 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) unsigned short ReadBlobMSBShort(Image *image)
 {
   const unsigned char
     *p;
@@ -4625,8 +25005,40 @@ MagickExport unsigned short ReadBlobMSBShort(Image *image)
   unsigned char
     buffer[2];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 4628 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4628 "MagickCore/blob.c"
+ image != (Image *) 
+# 4628 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4628 "MagickCore/blob.c"
+ image != (Image *) 
+# 4628 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 4628 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 4628 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4628, __extension__ __PRETTY_FUNCTION__); }))
+# 4628 "MagickCore/blob.c"
+                                ;
+  
+# 4629 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4629 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4629 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 4629 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4629 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 4629 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 4629 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4629, __extension__ __PRETTY_FUNCTION__); }))
+# 4629 "MagickCore/blob.c"
+                                                ;
   *buffer='\0';
   p=(const unsigned char *) ReadBlobStream(image,2,buffer,&count);
   if (count != 2)
@@ -4635,31 +25047,8 @@ MagickExport unsigned short ReadBlobMSBShort(Image *image)
   value|=(unsigned short) (*p++);
   return((unsigned short) (value & 0xffff));
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b M S B S i g n e d L o n g                                  %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobMSBSignedLong() reads a signed int value as a 32-bit quantity in
-%  most-significant byte-order.
-%
-%  The format of the ReadBlobMSBSignedLong method is:
-%
-%      signed int ReadBlobMSBSignedLong(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport signed int ReadBlobMSBSignedLong(Image *image)
+# 4662 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) signed int ReadBlobMSBSignedLong(Image *image)
 {
   union
   {
@@ -4673,31 +25062,8 @@ MagickExport signed int ReadBlobMSBSignedLong(Image *image)
   quantum.unsigned_value=ReadBlobMSBLong(image);
   return(quantum.signed_value);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b M S B S i g n e d S h o r t                                %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobMSBSignedShort() reads a signed short value as a 16-bit quantity in
-%  most-significant byte-order.
-%
-%  The format of the ReadBlobMSBSignedShort method is:
-%
-%      signed short ReadBlobMSBSignedShort(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport signed short ReadBlobMSBSignedShort(Image *image)
+# 4700 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) signed short ReadBlobMSBSignedShort(Image *image)
 {
   union
   {
@@ -4711,31 +25077,8 @@ MagickExport signed short ReadBlobMSBSignedShort(Image *image)
   quantum.unsigned_value=ReadBlobMSBShort(image);
   return(quantum.signed_value);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b S i g n e d L o n g                                        %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobSignedLong() reads a signed int value as a 32-bit quantity in the
-%  byte-order specified by the endian member of the image structure.
-%
-%  The format of the ReadBlobSignedLong method is:
-%
-%      signed int ReadBlobSignedLong(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport signed int ReadBlobSignedLong(Image *image)
+# 4738 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) signed int ReadBlobSignedLong(Image *image)
 {
   union
   {
@@ -4749,31 +25092,8 @@ MagickExport signed int ReadBlobSignedLong(Image *image)
   quantum.unsigned_value=ReadBlobLong(image);
   return(quantum.signed_value);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b S i g n e d S h o r t                                      %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobSignedShort() reads a signed short value as a 16-bit quantity in the
-%  byte-order specified by the endian member of the image structure.
-%
-%  The format of the ReadBlobSignedShort method is:
-%
-%      signed short ReadBlobSignedShort(Image *image)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-*/
-MagickExport signed short ReadBlobSignedShort(Image *image)
+# 4776 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) signed short ReadBlobSignedShort(Image *image)
 {
   union
   {
@@ -4787,57 +25107,118 @@ MagickExport signed short ReadBlobSignedShort(Image *image)
   quantum.unsigned_value=ReadBlobShort(image);
   return(quantum.signed_value);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  R e a d B l o b S t r e a m                                                %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobStream() reads data from the blob or image file and returns it.  It
-%  returns a pointer to the data buffer you supply or to the image memory
-%  buffer if its supported (zero-copy). If length is zero, ReadBlobStream()
-%  returns a count of zero and has no other results. If length is greater than
-%  MAGICK_SSIZE_MAX, the result is unspecified.
-%
-%  The format of the ReadBlobStream method is:
-%
-%      const void *ReadBlobStream(Image *image,const size_t length,
-%        void *magick_restrict data,ssize_t *count)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-%    o length:  Specifies an integer representing the number of bytes to read
-%      from the file.
-%
-%    o count: returns the number of bytes read.
-%
-%    o data:  Specifies an area to place the information requested from the
-%      file.
-%
-*/
-MagickExport magick_hot_spot const void *ReadBlobStream(Image *image,
-  const size_t length,void *magick_restrict data,ssize_t *count)
+# 4826 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) __attribute__((__hot__)) const void *ReadBlobStream(Image *image,
+  const size_t length,void *__restrict__ data,ssize_t *count)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image->blob != (BlobInfo *) NULL);
-  assert(image->blob->type != UndefinedStream);
-  assert(count != (ssize_t *) NULL);
+  
+# 4832 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4832 "MagickCore/blob.c"
+ image != (Image *) 
+# 4832 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4832 "MagickCore/blob.c"
+ image != (Image *) 
+# 4832 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 4832 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 4832 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4832, __extension__ __PRETTY_FUNCTION__); }))
+# 4832 "MagickCore/blob.c"
+                                ;
+  
+# 4833 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4833 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4833 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 4833 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4833 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 4833 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 4833 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4833, __extension__ __PRETTY_FUNCTION__); }))
+# 4833 "MagickCore/blob.c"
+                                                ;
+  
+# 4834 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4834 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 4834 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4834 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 4834 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 4834 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 4834 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4834, __extension__ __PRETTY_FUNCTION__); }))
+# 4834 "MagickCore/blob.c"
+                                         ;
+  
+# 4835 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4835 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 4835 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 4835 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 4835 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 4835 "MagickCore/blob.c"
+ "image->blob->type != UndefinedStream"
+# 4835 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4835, __extension__ __PRETTY_FUNCTION__); }))
+# 4835 "MagickCore/blob.c"
+                                             ;
+  
+# 4836 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4836 "MagickCore/blob.c"
+ count != (ssize_t *) 
+# 4836 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4836 "MagickCore/blob.c"
+ count != (ssize_t *) 
+# 4836 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 4836 "MagickCore/blob.c"
+ "count != (ssize_t *) NULL"
+# 4836 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4836, __extension__ __PRETTY_FUNCTION__); }))
+# 4836 "MagickCore/blob.c"
+                                  ;
   blob_info=image->blob;
   if (blob_info->type != BlobStream)
     {
-      assert(data != NULL);
+      
+# 4840 "MagickCore/blob.c" 3 4
+     ((void) sizeof ((
+# 4840 "MagickCore/blob.c"
+     data != 
+# 4840 "MagickCore/blob.c" 3 4
+     ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4840 "MagickCore/blob.c"
+     data != 
+# 4840 "MagickCore/blob.c" 3 4
+     ((void *)0)) ; else __assert_fail (
+# 4840 "MagickCore/blob.c"
+     "data != NULL"
+# 4840 "MagickCore/blob.c" 3 4
+     , "MagickCore/blob.c", 4840, __extension__ __PRETTY_FUNCTION__); }))
+# 4840 "MagickCore/blob.c"
+                         ;
       *count=ReadBlob(image,length,(unsigned char *) data);
       return(data);
     }
@@ -4848,43 +25229,18 @@ MagickExport magick_hot_spot const void *ReadBlobStream(Image *image,
       return(data);
     }
   data=blob_info->data+blob_info->offset;
-  *count=(ssize_t) MagickMin((MagickOffsetType) length,(MagickOffsetType)
-    blob_info->length-blob_info->offset);
+  *count=(ssize_t) ((((MagickOffsetType) length) < ((MagickOffsetType) blob_info->length-blob_info->offset)) ? ((MagickOffsetType) length) : ((MagickOffsetType) blob_info->length-blob_info->offset))
+                                        ;
   blob_info->offset+=(*count);
   if (*count != (ssize_t) length)
     blob_info->eof=MagickTrue;
   return(data);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   R e a d B l o b S t r i n g                                               %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReadBlobString() reads characters from a blob or file until a newline
-%  character is read or an end-of-file condition is encountered.
-%
-%  The format of the ReadBlobString method is:
-%
-%      char *ReadBlobString(Image *image,char *string)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-%    o string: the address of a character buffer.
-%
-*/
-MagickExport char *ReadBlobString(Image *image,char *string)
+# 4884 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) char *ReadBlobString(Image *image,char *string)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
   int
     c = -1;
@@ -4892,12 +25248,76 @@ MagickExport char *ReadBlobString(Image *image,char *string)
   size_t
     i = 0;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image->blob != (BlobInfo *) NULL);
-  assert(image->blob->type != UndefinedStream);
+  
+# 4895 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4895 "MagickCore/blob.c"
+ image != (Image *) 
+# 4895 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4895 "MagickCore/blob.c"
+ image != (Image *) 
+# 4895 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 4895 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 4895 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4895, __extension__ __PRETTY_FUNCTION__); }))
+# 4895 "MagickCore/blob.c"
+                                ;
+  
+# 4896 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4896 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4896 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 4896 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 4896 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 4896 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 4896 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4896, __extension__ __PRETTY_FUNCTION__); }))
+# 4896 "MagickCore/blob.c"
+                                                ;
+  
+# 4897 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4897 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 4897 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4897 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 4897 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 4897 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 4897 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4897, __extension__ __PRETTY_FUNCTION__); }))
+# 4897 "MagickCore/blob.c"
+                                         ;
+  
+# 4898 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4898 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 4898 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 4898 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 4898 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 4898 "MagickCore/blob.c"
+ "image->blob->type != UndefinedStream"
+# 4898 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4898, __extension__ __PRETTY_FUNCTION__); }))
+# 4898 "MagickCore/blob.c"
+                                             ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 4900,"%s",image->filename);
   *string='\0';
   blob_info=image->blob;
   switch (blob_info->type)
@@ -4907,38 +25327,66 @@ MagickExport char *ReadBlobString(Image *image,char *string)
     case StandardStream:
     case FileStream:
     {
-      char *p = fgets(string,MagickPathExtent,blob_info->file_info.file);
-      if (p == (char *) NULL)
+      char *p = fgets(string,4096,blob_info->file_info.file);
+      if (p == (char *) 
+# 4911 "MagickCore/blob.c" 3 4
+                       ((void *)0)
+# 4911 "MagickCore/blob.c"
+                           )
         {
           if (ferror(blob_info->file_info.file) != 0)
             ThrowBlobException(blob_info);
-          return((char *) NULL);
+          return((char *) 
+# 4915 "MagickCore/blob.c" 3 4
+                         ((void *)0)
+# 4915 "MagickCore/blob.c"
+                             );
         }
       i=strlen(string);
       break;
     }
     case ZipStream:
     {
-#if defined(MAGICKCORE_ZLIB_DELEGATE)
-      char *p = gzgets(blob_info->file_info.gzfile,string,MagickPathExtent);
-      if (p == (char *) NULL)
+
+      char *p = gzgets(blob_info->file_info.gzfile,string,4096);
+      if (p == (char *) 
+# 4924 "MagickCore/blob.c" 3 4
+                       ((void *)0)
+# 4924 "MagickCore/blob.c"
+                           )
         {
-          int status = Z_OK;
+          int status = 
+# 4926 "MagickCore/blob.c" 3 4
+                      0
+# 4926 "MagickCore/blob.c"
+                          ;
           (void) gzerror(blob_info->file_info.gzfile,&status);
-          if (status != Z_OK)
+          if (status != 
+# 4928 "MagickCore/blob.c" 3 4
+                       0
+# 4928 "MagickCore/blob.c"
+                           )
             ThrowBlobException(blob_info);
-          return((char *) NULL);
+          return((char *) 
+# 4930 "MagickCore/blob.c" 3 4
+                         ((void *)0)
+# 4930 "MagickCore/blob.c"
+                             );
         }
       i=strlen(string);
       break;
-#endif
+
     }
     default:
     {
       do
       {
         c=ReadBlobByte(image);
-        if (c == EOF)
+        if (c == 
+# 4941 "MagickCore/blob.c" 3 4
+                (-1)
+# 4941 "MagickCore/blob.c"
+                   )
           {
             blob_info->eof=MagickTrue;
             break;
@@ -4946,104 +25394,148 @@ MagickExport char *ReadBlobString(Image *image,char *string)
         string[i++]=c;
         if (c == '\n')
           break;
-      } while (i < (MaxTextExtent-2));
+      } while (i < (4096 -2));
       string[i]='\0';
       break;
     }
   }
-  /*
-    Strip trailing newline.
-  */
+
+
+
   if ((string[i] == '\r') || (string[i] == '\n'))
     string[i]='\0';
   if (i >= 1)
     if ((string[i-1] == '\r') || (string[i-1] == '\n'))
       string[i-1]='\0';
   if ((*string == '\0') && (blob_info->eof != MagickFalse))
-    return((char *) NULL);
+    return((char *) 
+# 4963 "MagickCore/blob.c" 3 4
+                   ((void *)0)
+# 4963 "MagickCore/blob.c"
+                       );
   return(string);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   R e f e r e n c e B l o b                                                 %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  ReferenceBlob() increments the reference count associated with the pixel
-%  blob returning a pointer to the blob.
-%
-%  The format of the ReferenceBlob method is:
-%
-%      BlobInfo ReferenceBlob(BlobInfo *blob_info)
-%
-%  A description of each parameter follows:
-%
-%    o blob_info: the blob_info.
-%
-*/
-MagickExport BlobInfo *ReferenceBlob(BlobInfo *blob)
+# 4990 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) BlobInfo *ReferenceBlob(BlobInfo *blob)
 {
-  assert(blob != (BlobInfo *) NULL);
-  assert(blob->signature == MagickCoreSignature);
+  
+# 4992 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4992 "MagickCore/blob.c"
+ blob != (BlobInfo *) 
+# 4992 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 4992 "MagickCore/blob.c"
+ blob != (BlobInfo *) 
+# 4992 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 4992 "MagickCore/blob.c"
+ "blob != (BlobInfo *) NULL"
+# 4992 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4992, __extension__ __PRETTY_FUNCTION__); }))
+# 4992 "MagickCore/blob.c"
+                                  ;
+  
+# 4993 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 4993 "MagickCore/blob.c"
+ blob->signature == 0xabacadabUL
+# 4993 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 4993 "MagickCore/blob.c"
+ blob->signature == 0xabacadabUL
+# 4993 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 4993 "MagickCore/blob.c"
+ "blob->signature == MagickCoreSignature"
+# 4993 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 4993, __extension__ __PRETTY_FUNCTION__); }))
+# 4993 "MagickCore/blob.c"
+                                               ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"...");
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 4995,"...");
   LockSemaphoreInfo(blob->semaphore);
   blob->reference_count++;
   UnlockSemaphoreInfo(blob->semaphore);
   return(blob);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  S e e k B l o b                                                            %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  SeekBlob() sets the offset in bytes from the beginning of a blob or file
-%  and returns the resulting offset.
-%
-%  The format of the SeekBlob method is:
-%
-%      MagickOffsetType SeekBlob(Image *image,const MagickOffsetType offset,
-%        const int whence)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-%    o offset:  Specifies an integer representing the offset in bytes.
-%
-%    o whence:  Specifies an integer representing how the offset is
-%      treated relative to the beginning of the blob as follows:
-%
-%        SEEK_SET  Set position equal to offset bytes.
-%        SEEK_CUR  Set position to current location plus offset.
-%        SEEK_END  Set position to EOF plus offset.
-%
-*/
-MagickExport MagickOffsetType SeekBlob(Image *image,
+# 5035 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) MagickOffsetType SeekBlob(Image *image,
   const MagickOffsetType offset,const int whence)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image->blob != (BlobInfo *) NULL);
-  assert(image->blob->type != UndefinedStream);
+  
+# 5041 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5041 "MagickCore/blob.c"
+ image != (Image *) 
+# 5041 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5041 "MagickCore/blob.c"
+ image != (Image *) 
+# 5041 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5041 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 5041 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5041, __extension__ __PRETTY_FUNCTION__); }))
+# 5041 "MagickCore/blob.c"
+                                ;
+  
+# 5042 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5042 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 5042 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5042 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 5042 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5042 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 5042 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5042, __extension__ __PRETTY_FUNCTION__); }))
+# 5042 "MagickCore/blob.c"
+                                                ;
+  
+# 5043 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5043 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 5043 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5043 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 5043 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5043 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 5043 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5043, __extension__ __PRETTY_FUNCTION__); }))
+# 5043 "MagickCore/blob.c"
+                                         ;
+  
+# 5044 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5044 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 5044 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5044 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 5044 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5044 "MagickCore/blob.c"
+ "image->blob->type != UndefinedStream"
+# 5044 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5044, __extension__ __PRETTY_FUNCTION__); }))
+# 5044 "MagickCore/blob.c"
+                                             ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 5046,"%s",image->filename);
   blob_info=image->blob;
   switch (blob_info->type)
   {
@@ -5054,19 +25546,23 @@ MagickExport MagickOffsetType SeekBlob(Image *image,
       return(-1);
     case FileStream:
     {
-      if ((offset < 0) && (whence == SEEK_SET))
+      if ((offset < 0) && (whence == 
+# 5057 "MagickCore/blob.c" 3 4
+                                    0
+# 5057 "MagickCore/blob.c"
+                                            ))
         return(-1);
-      if (fseek(blob_info->file_info.file,offset,whence) < 0)
+      if (fseeko(blob_info->file_info.file,offset,whence) < 0)
         return(-1);
       blob_info->offset=TellBlob(image);
       break;
     }
     case ZipStream:
     {
-#if defined(MAGICKCORE_ZLIB_DELEGATE)
+
       if (gzseek(blob_info->file_info.gzfile,offset,whence) < 0)
         return(-1);
-#endif
+
       blob_info->offset=TellBlob(image);
       break;
     }
@@ -5078,7 +25574,11 @@ MagickExport MagickOffsetType SeekBlob(Image *image,
     {
       switch (whence)
       {
-        case SEEK_SET:
+        case 
+# 5081 "MagickCore/blob.c" 3 4
+            0
+# 5081 "MagickCore/blob.c"
+                    :
         default:
         {
           if (offset < 0)
@@ -5086,12 +25586,28 @@ MagickExport MagickOffsetType SeekBlob(Image *image,
           blob_info->offset=offset;
           break;
         }
-        case SEEK_CUR:
+        case 
+# 5089 "MagickCore/blob.c" 3 4
+            1
+# 5089 "MagickCore/blob.c"
+                    :
         {
-          if (((offset > 0) && (blob_info->offset > (MAGICK_SSIZE_MAX-offset))) ||
-              ((offset < 0) && (blob_info->offset < (MAGICK_SSIZE_MIN-offset))))
+          if (((offset > 0) && (blob_info->offset > ((0x7fffffffffffffffL
+# 5091 "MagickCore/blob.c"
+                                                    )-offset))) ||
+              ((offset < 0) && (blob_info->offset < ((-0x7fffffffffffffffL 
+# 5092 "MagickCore/blob.c"
+                                                    -1)-offset))))
             {
-              errno=EOVERFLOW;
+              
+# 5094 "MagickCore/blob.c" 3 4
+             (*__errno_location ())
+# 5094 "MagickCore/blob.c"
+                  =
+# 5094 "MagickCore/blob.c" 3 4
+                   75
+# 5094 "MagickCore/blob.c"
+                            ;
               return(-1);
             }
           if ((blob_info->offset+offset) < 0)
@@ -5099,7 +25615,11 @@ MagickExport MagickOffsetType SeekBlob(Image *image,
           blob_info->offset+=offset;
           break;
         }
-        case SEEK_END:
+        case 
+# 5102 "MagickCore/blob.c" 3 4
+            2
+# 5102 "MagickCore/blob.c"
+                    :
         {
           if (((MagickOffsetType) blob_info->length+offset) < 0)
             return(-1);
@@ -5118,7 +25638,11 @@ MagickExport MagickOffsetType SeekBlob(Image *image,
     }
     case CustomStream:
     {
-      if (blob_info->custom_stream->seeker == (CustomStreamSeeker) NULL)
+      if (blob_info->custom_stream->seeker == (CustomStreamSeeker) 
+# 5121 "MagickCore/blob.c" 3 4
+                                                                  ((void *)0)
+# 5121 "MagickCore/blob.c"
+                                                                      )
         return(-1);
       blob_info->offset=blob_info->custom_stream->seeker(offset,whence,
         blob_info->custom_stream->data);
@@ -5127,79 +25651,124 @@ MagickExport MagickOffsetType SeekBlob(Image *image,
   }
   return(blob_info->offset);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   S e t B l o b E x e m p t                                                 %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  SetBlobExempt() sets the blob exempt status.
-%
-%  The format of the SetBlobExempt method is:
-%
-%      MagickBooleanType SetBlobExempt(const Image *image,
-%        const MagickBooleanType exempt)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-%    o exempt: Set to true if this blob is exempt from being closed.
-%
-*/
-MagickExport void SetBlobExempt(Image *image,const MagickBooleanType exempt)
+# 5156 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void SetBlobExempt(Image *image,const MagickBooleanType exempt)
 {
-  assert(image != (const Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 5158 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5158 "MagickCore/blob.c"
+ image != (const Image *) 
+# 5158 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5158 "MagickCore/blob.c"
+ image != (const Image *) 
+# 5158 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5158 "MagickCore/blob.c"
+ "image != (const Image *) NULL"
+# 5158 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5158, __extension__ __PRETTY_FUNCTION__); }))
+# 5158 "MagickCore/blob.c"
+                                      ;
+  
+# 5159 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5159 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 5159 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5159 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 5159 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5159 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 5159 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5159, __extension__ __PRETTY_FUNCTION__); }))
+# 5159 "MagickCore/blob.c"
+                                                ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 5161,"%s",image->filename);
   image->blob->exempt=exempt;
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  S e t B l o b E x t e n t                                                  %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  SetBlobExtent() ensures enough space is allocated for the blob.  If the
-%  method is successful, subsequent writes to bytes in the specified range are
-%  guaranteed not to fail.
-%
-%  The format of the SetBlobExtent method is:
-%
-%      MagickBooleanType SetBlobExtent(Image *image,const MagickSizeType extent)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-%    o extent:  the blob maximum extent.
-%
-*/
-MagickExport MagickBooleanType SetBlobExtent(Image *image,
+# 5191 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) MagickBooleanType SetBlobExtent(Image *image,
   const MagickSizeType extent)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image->blob != (BlobInfo *) NULL);
-  assert(image->blob->type != UndefinedStream);
+  
+# 5197 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5197 "MagickCore/blob.c"
+ image != (Image *) 
+# 5197 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5197 "MagickCore/blob.c"
+ image != (Image *) 
+# 5197 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5197 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 5197 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5197, __extension__ __PRETTY_FUNCTION__); }))
+# 5197 "MagickCore/blob.c"
+                                ;
+  
+# 5198 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5198 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 5198 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5198 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 5198 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5198 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 5198 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5198, __extension__ __PRETTY_FUNCTION__); }))
+# 5198 "MagickCore/blob.c"
+                                                ;
+  
+# 5199 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5199 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 5199 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5199 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 5199 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5199 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 5199 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5199, __extension__ __PRETTY_FUNCTION__); }))
+# 5199 "MagickCore/blob.c"
+                                         ;
+  
+# 5200 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5200 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 5200 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5200 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 5200 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5200 "MagickCore/blob.c"
+ "image->blob->type != UndefinedStream"
+# 5200 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5200, __extension__ __PRETTY_FUNCTION__); }))
+# 5200 "MagickCore/blob.c"
+                                             ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 5202,"%s",image->filename);
   blob_info=image->blob;
   switch (blob_info->type)
   {
@@ -5217,17 +25786,25 @@ MagickExport MagickBooleanType SetBlobExtent(Image *image,
 
       if (extent != (MagickSizeType) ((off_t) extent))
         return(MagickFalse);
-      offset=SeekBlob(image,0,SEEK_END);
+      offset=SeekBlob(image,0,
+# 5220 "MagickCore/blob.c" 3 4
+                             2
+# 5220 "MagickCore/blob.c"
+                                     );
       if (offset < 0)
         return(MagickFalse);
       if ((MagickSizeType) offset >= extent)
         break;
-      offset=SeekBlob(image,(MagickOffsetType) extent-1,SEEK_SET);
+      offset=SeekBlob(image,(MagickOffsetType) extent-1,
+# 5225 "MagickCore/blob.c" 3 4
+                                                       0
+# 5225 "MagickCore/blob.c"
+                                                               );
       if (offset < 0)
         break;
       count=(ssize_t) fwrite((const unsigned char *) "",1,1,
         blob_info->file_info.file);
-#if defined(MAGICKCORE_HAVE_POSIX_FALLOCATE)
+
       if (blob_info->synchronize != MagickFalse)
         {
           int
@@ -5238,8 +25815,12 @@ MagickExport MagickBooleanType SetBlobExtent(Image *image,
             return(MagickFalse);
           (void) posix_fallocate(file,offset,(MagickOffsetType) extent-offset);
         }
-#endif
-      offset=SeekBlob(image,offset,SEEK_SET);
+
+      offset=SeekBlob(image,offset,
+# 5242 "MagickCore/blob.c" 3 4
+                                  0
+# 5242 "MagickCore/blob.c"
+                                          );
       if (count != 1)
         return(MagickFalse);
       break;
@@ -5267,15 +25848,23 @@ MagickExport MagickBooleanType SetBlobExtent(Image *image,
           RelinquishMagickResource(MapResource,blob_info->length);
           if (extent != (MagickSizeType) ((off_t) extent))
             return(MagickFalse);
-          offset=SeekBlob(image,0,SEEK_END);
+          offset=SeekBlob(image,0,
+# 5270 "MagickCore/blob.c" 3 4
+                                 2
+# 5270 "MagickCore/blob.c"
+                                         );
           if (offset < 0)
             return(MagickFalse);
           if ((MagickSizeType) offset >= extent)
             break;
-          offset=SeekBlob(image,(MagickOffsetType) extent-1,SEEK_SET);
+          offset=SeekBlob(image,(MagickOffsetType) extent-1,
+# 5275 "MagickCore/blob.c" 3 4
+                                                           0
+# 5275 "MagickCore/blob.c"
+                                                                   );
           count=(ssize_t) fwrite((const unsigned char *) "",1,1,
             blob_info->file_info.file);
-#if defined(MAGICKCORE_HAVE_POSIX_FALLOCATE)
+
           if (blob_info->synchronize != MagickFalse)
             {
               int
@@ -5287,8 +25876,12 @@ MagickExport MagickBooleanType SetBlobExtent(Image *image,
               (void) posix_fallocate(file,offset,(MagickOffsetType) extent-
                 offset);
             }
-#endif
-          offset=SeekBlob(image,offset,SEEK_SET);
+
+          offset=SeekBlob(image,offset,
+# 5291 "MagickCore/blob.c" 3 4
+                                      0
+# 5291 "MagickCore/blob.c"
+                                              );
           if (count != 1)
             return(MagickFalse);
           (void) AcquireMagickResource(MapResource,extent);
@@ -5303,7 +25896,11 @@ MagickExport MagickBooleanType SetBlobExtent(Image *image,
       blob_info->data=(unsigned char *) ResizeQuantumMemory(blob_info->data,
         blob_info->extent+1,sizeof(*blob_info->data));
       (void) SyncBlob(image);
-      if (blob_info->data == (unsigned char *) NULL)
+      if (blob_info->data == (unsigned char *) 
+# 5306 "MagickCore/blob.c" 3 4
+                                              ((void *)0)
+# 5306 "MagickCore/blob.c"
+                                                  )
         {
           (void) DetachBlob(blob_info);
           return(MagickFalse);
@@ -5315,208 +25912,268 @@ MagickExport MagickBooleanType SetBlobExtent(Image *image,
   }
   return(MagickTrue);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  S e t C u s t o m S t r e a m D a t a                                      %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  SetCustomStreamData() sets the stream info data member.
-%
-%  The format of the SetCustomStreamData method is:
-%
-%      void SetCustomStreamData(CustomStreamInfo *custom_stream,void *)
-%
-%  A description of each parameter follows:
-%
-%    o custom_stream: the custom stream info.
-%
-%    o data: an object containing information about the custom stream.
-%
-*/
-MagickExport void SetCustomStreamData(CustomStreamInfo *custom_stream,
+# 5343 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void SetCustomStreamData(CustomStreamInfo *custom_stream,
   void *data)
 {
-  assert(custom_stream != (CustomStreamInfo *) NULL);
-  assert(custom_stream->signature == MagickCoreSignature);
+  
+# 5346 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5346 "MagickCore/blob.c"
+ custom_stream != (CustomStreamInfo *) 
+# 5346 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5346 "MagickCore/blob.c"
+ custom_stream != (CustomStreamInfo *) 
+# 5346 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5346 "MagickCore/blob.c"
+ "custom_stream != (CustomStreamInfo *) NULL"
+# 5346 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5346, __extension__ __PRETTY_FUNCTION__); }))
+# 5346 "MagickCore/blob.c"
+                                                   ;
+  
+# 5347 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5347 "MagickCore/blob.c"
+ custom_stream->signature == 0xabacadabUL
+# 5347 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5347 "MagickCore/blob.c"
+ custom_stream->signature == 0xabacadabUL
+# 5347 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5347 "MagickCore/blob.c"
+ "custom_stream->signature == MagickCoreSignature"
+# 5347 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5347, __extension__ __PRETTY_FUNCTION__); }))
+# 5347 "MagickCore/blob.c"
+                                                        ;
   custom_stream->data=data;
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  S e t C u s t o m S t r e a m R e a d e r                                  %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  SetCustomStreamReader() sets the stream info reader member.
-%
-%  The format of the SetCustomStreamReader method is:
-%
-%      void SetCustomStreamReader(CustomStreamInfo *custom_stream,
-%        CustomStreamHandler reader)
-%
-%  A description of each parameter follows:
-%
-%    o custom_stream: the custom stream info.
-%
-%    o reader: a function to read from the stream.
-%
-*/
-MagickExport void SetCustomStreamReader(CustomStreamInfo *custom_stream,
+# 5376 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void SetCustomStreamReader(CustomStreamInfo *custom_stream,
   CustomStreamHandler reader)
 {
-  assert(custom_stream != (CustomStreamInfo *) NULL);
-  assert(custom_stream->signature == MagickCoreSignature);
+  
+# 5379 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5379 "MagickCore/blob.c"
+ custom_stream != (CustomStreamInfo *) 
+# 5379 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5379 "MagickCore/blob.c"
+ custom_stream != (CustomStreamInfo *) 
+# 5379 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5379 "MagickCore/blob.c"
+ "custom_stream != (CustomStreamInfo *) NULL"
+# 5379 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5379, __extension__ __PRETTY_FUNCTION__); }))
+# 5379 "MagickCore/blob.c"
+                                                   ;
+  
+# 5380 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5380 "MagickCore/blob.c"
+ custom_stream->signature == 0xabacadabUL
+# 5380 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5380 "MagickCore/blob.c"
+ custom_stream->signature == 0xabacadabUL
+# 5380 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5380 "MagickCore/blob.c"
+ "custom_stream->signature == MagickCoreSignature"
+# 5380 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5380, __extension__ __PRETTY_FUNCTION__); }))
+# 5380 "MagickCore/blob.c"
+                                                        ;
   custom_stream->reader=reader;
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  S e t C u s t o m S t r e a m S e e k e r                                  %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  SetCustomStreamSeeker() sets the stream info seeker member.
-%
-%  The format of the SetCustomStreamReader method is:
-%
-%      void SetCustomStreamSeeker(CustomStreamInfo *custom_stream,
-%        CustomStreamSeeker seeker)
-%
-%  A description of each parameter follows:
-%
-%    o custom_stream: the custom stream info.
-%
-%    o seeker: a function to seek in the custom stream.
-%
-*/
-MagickExport void SetCustomStreamSeeker(CustomStreamInfo *custom_stream,
+# 5409 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void SetCustomStreamSeeker(CustomStreamInfo *custom_stream,
   CustomStreamSeeker seeker)
 {
-  assert(custom_stream != (CustomStreamInfo *) NULL);
-  assert(custom_stream->signature == MagickCoreSignature);
+  
+# 5412 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5412 "MagickCore/blob.c"
+ custom_stream != (CustomStreamInfo *) 
+# 5412 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5412 "MagickCore/blob.c"
+ custom_stream != (CustomStreamInfo *) 
+# 5412 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5412 "MagickCore/blob.c"
+ "custom_stream != (CustomStreamInfo *) NULL"
+# 5412 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5412, __extension__ __PRETTY_FUNCTION__); }))
+# 5412 "MagickCore/blob.c"
+                                                   ;
+  
+# 5413 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5413 "MagickCore/blob.c"
+ custom_stream->signature == 0xabacadabUL
+# 5413 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5413 "MagickCore/blob.c"
+ custom_stream->signature == 0xabacadabUL
+# 5413 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5413 "MagickCore/blob.c"
+ "custom_stream->signature == MagickCoreSignature"
+# 5413 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5413, __extension__ __PRETTY_FUNCTION__); }))
+# 5413 "MagickCore/blob.c"
+                                                        ;
   custom_stream->seeker=seeker;
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  S e t C u s t o m S t r e a m T e l l e r                                  %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  SetCustomStreamTeller() sets the stream info teller member.
-%
-%  The format of the SetCustomStreamTeller method is:
-%
-%      void SetCustomStreamTeller(CustomStreamInfo *custom_stream,
-%        CustomStreamTeller *teller)
-%
-%  A description of each parameter follows:
-%
-%    o custom_stream: the custom stream info.
-%
-%    o teller: a function to set the position in the stream.
-%
-*/
-MagickExport void SetCustomStreamTeller(CustomStreamInfo *custom_stream,
+# 5442 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void SetCustomStreamTeller(CustomStreamInfo *custom_stream,
   CustomStreamTeller teller)
 {
-  assert(custom_stream != (CustomStreamInfo *) NULL);
-  assert(custom_stream->signature == MagickCoreSignature);
+  
+# 5445 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5445 "MagickCore/blob.c"
+ custom_stream != (CustomStreamInfo *) 
+# 5445 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5445 "MagickCore/blob.c"
+ custom_stream != (CustomStreamInfo *) 
+# 5445 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5445 "MagickCore/blob.c"
+ "custom_stream != (CustomStreamInfo *) NULL"
+# 5445 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5445, __extension__ __PRETTY_FUNCTION__); }))
+# 5445 "MagickCore/blob.c"
+                                                   ;
+  
+# 5446 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5446 "MagickCore/blob.c"
+ custom_stream->signature == 0xabacadabUL
+# 5446 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5446 "MagickCore/blob.c"
+ custom_stream->signature == 0xabacadabUL
+# 5446 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5446 "MagickCore/blob.c"
+ "custom_stream->signature == MagickCoreSignature"
+# 5446 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5446, __extension__ __PRETTY_FUNCTION__); }))
+# 5446 "MagickCore/blob.c"
+                                                        ;
   custom_stream->teller=teller;
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  S e t C u s t o m S t r e a m W r i t e r                                  %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  SetCustomStreamWriter() sets the stream info writer member.
-%
-%  The format of the SetCustomStreamWriter method is:
-%
-%      void SetCustomStreamWriter(CustomStreamInfo *custom_stream,
-%        CustomStreamHandler *writer)
-%
-%  A description of each parameter follows:
-%
-%    o custom_stream: the custom stream info.
-%
-%    o writer: a function to write to the custom stream.
-%
-*/
-MagickExport void SetCustomStreamWriter(CustomStreamInfo *custom_stream,
+# 5475 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) void SetCustomStreamWriter(CustomStreamInfo *custom_stream,
   CustomStreamHandler writer)
 {
-  assert(custom_stream != (CustomStreamInfo *) NULL);
-  assert(custom_stream->signature == MagickCoreSignature);
+  
+# 5478 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5478 "MagickCore/blob.c"
+ custom_stream != (CustomStreamInfo *) 
+# 5478 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5478 "MagickCore/blob.c"
+ custom_stream != (CustomStreamInfo *) 
+# 5478 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5478 "MagickCore/blob.c"
+ "custom_stream != (CustomStreamInfo *) NULL"
+# 5478 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5478, __extension__ __PRETTY_FUNCTION__); }))
+# 5478 "MagickCore/blob.c"
+                                                   ;
+  
+# 5479 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5479 "MagickCore/blob.c"
+ custom_stream->signature == 0xabacadabUL
+# 5479 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5479 "MagickCore/blob.c"
+ custom_stream->signature == 0xabacadabUL
+# 5479 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5479 "MagickCore/blob.c"
+ "custom_stream->signature == MagickCoreSignature"
+# 5479 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5479, __extension__ __PRETTY_FUNCTION__); }))
+# 5479 "MagickCore/blob.c"
+                                                        ;
   custom_stream->writer=writer;
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  S y n c B l o b                                                            %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  SyncBlob() flushes the datastream if it is a file or synchronizes the data
-%  attributes if it is an blob.  It returns 0 on success; otherwise, it returns
-%  -1 and set errno to indicate the error.
-%
-%  The format of the SyncBlob method is:
-%
-%      int SyncBlob(const Image *image)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-*/
+# 5507 "MagickCore/blob.c"
 static int SyncBlob(const Image *image)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
   int
     status;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image->blob != (BlobInfo *) NULL);
+  
+# 5515 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5515 "MagickCore/blob.c"
+ image != (Image *) 
+# 5515 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5515 "MagickCore/blob.c"
+ image != (Image *) 
+# 5515 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5515 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 5515 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5515, __extension__ __PRETTY_FUNCTION__); }))
+# 5515 "MagickCore/blob.c"
+                                ;
+  
+# 5516 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5516 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 5516 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5516 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 5516 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5516 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 5516 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5516, __extension__ __PRETTY_FUNCTION__); }))
+# 5516 "MagickCore/blob.c"
+                                                ;
+  
+# 5517 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5517 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 5517 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5517 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 5517 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5517 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 5517 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5517, __extension__ __PRETTY_FUNCTION__); }))
+# 5517 "MagickCore/blob.c"
+                                         ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 5519,"%s",image->filename);
   if (EOFBlob(image) != 0)
     return(0);
   blob_info=image->blob;
@@ -5534,16 +26191,20 @@ static int SyncBlob(const Image *image)
     }
     case ZipStream:
     {
-#if defined(MAGICKCORE_ZLIB_DELEGATE)
-      (void) gzflush(blob_info->file_info.gzfile,Z_SYNC_FLUSH);
-#endif
+
+      (void) gzflush(blob_info->file_info.gzfile,
+# 5538 "MagickCore/blob.c" 3 4
+                                                2
+# 5538 "MagickCore/blob.c"
+                                                            );
+
       break;
     }
     case BZipStream:
     {
-#if defined(MAGICKCORE_BZLIB_DELEGATE)
+
       status=BZ2_bzflush(blob_info->file_info.bzfile);
-#endif
+
       break;
     }
     case FifoStream:
@@ -5555,43 +26216,85 @@ static int SyncBlob(const Image *image)
   }
   return(status);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  T e l l B l o b                                                            %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  TellBlob() obtains the current value of the blob or file position.
-%
-%  The format of the TellBlob method is:
-%
-%      MagickOffsetType TellBlob(const Image *image)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-*/
-MagickExport MagickOffsetType TellBlob(const Image *image)
+# 5581 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) MagickOffsetType TellBlob(const Image *image)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
   MagickOffsetType
     offset;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image->blob != (BlobInfo *) NULL);
-  assert(image->blob->type != UndefinedStream);
+  
+# 5589 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5589 "MagickCore/blob.c"
+ image != (Image *) 
+# 5589 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5589 "MagickCore/blob.c"
+ image != (Image *) 
+# 5589 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5589 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 5589 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5589, __extension__ __PRETTY_FUNCTION__); }))
+# 5589 "MagickCore/blob.c"
+                                ;
+  
+# 5590 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5590 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 5590 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5590 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 5590 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5590 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 5590 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5590, __extension__ __PRETTY_FUNCTION__); }))
+# 5590 "MagickCore/blob.c"
+                                                ;
+  
+# 5591 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5591 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 5591 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5591 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 5591 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5591 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 5591 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5591, __extension__ __PRETTY_FUNCTION__); }))
+# 5591 "MagickCore/blob.c"
+                                         ;
+  
+# 5592 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5592 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 5592 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5592 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 5592 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5592 "MagickCore/blob.c"
+ "image->blob->type != UndefinedStream"
+# 5592 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5592, __extension__ __PRETTY_FUNCTION__); }))
+# 5592 "MagickCore/blob.c"
+                                             ;
   if (IsEventLogging() != MagickFalse)
-    (void) LogMagickEvent(TraceEvent,GetMagickModule(),"%s",image->filename);
+    (void) LogMagickEvent(TraceEvent,"MagickCore/blob.c",__func__,(unsigned long) 5594,"%s",image->filename);
   blob_info=image->blob;
   offset=(-1);
   switch (blob_info->type)
@@ -5601,16 +26304,16 @@ MagickExport MagickOffsetType TellBlob(const Image *image)
       break;
     case FileStream:
     {
-      offset=ftell(blob_info->file_info.file);
+      offset=ftello(blob_info->file_info.file);
       break;
     }
     case PipeStream:
       break;
     case ZipStream:
     {
-#if defined(MAGICKCORE_ZLIB_DELEGATE)
+
       offset=(MagickOffsetType) gztell(blob_info->file_info.gzfile);
-#endif
+
       break;
     }
     case BZipStream:
@@ -5624,87 +26327,38 @@ MagickExport MagickOffsetType TellBlob(const Image *image)
     }
     case CustomStream:
     {
-      if (blob_info->custom_stream->teller != (CustomStreamTeller) NULL)
+      if (blob_info->custom_stream->teller != (CustomStreamTeller) 
+# 5627 "MagickCore/blob.c" 3 4
+                                                                  ((void *)0)
+# 5627 "MagickCore/blob.c"
+                                                                      )
         offset=blob_info->custom_stream->teller(blob_info->custom_stream->data);
       break;
     }
   }
   return(offset);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  U n m a p B l o b                                                          %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  UnmapBlob() deallocates the binary large object previously allocated with
-%  the MapBlob method.
-%
-%  The format of the UnmapBlob method is:
-%
-%       MagickBooleanType UnmapBlob(void *map,const size_t length)
-%
-%  A description of each parameter follows:
-%
-%    o map: the address  of the binary large object.
-%
-%    o length: the length of the binary large object.
-%
-*/
-MagickExport MagickBooleanType UnmapBlob(void *map,const size_t length)
+# 5660 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) MagickBooleanType UnmapBlob(void *map,const size_t length)
 {
-#if defined(MAGICKCORE_HAVE_MMAP)
+
   int
     status;
 
   status=munmap(map,length);
   return(status == -1 ? MagickFalse : MagickTrue);
-#else
-  (void) map;
-  (void) length;
-  return(MagickFalse);
-#endif
+
+
+
+
+
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  W r i t e B l o b                                                          %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  WriteBlob() writes data to a blob or image file.  It returns the number of
-%  bytes written.
-%
-%  The format of the WriteBlob method is:
-%
-%      ssize_t WriteBlob(Image *image,const size_t length,const void *data)
-%
-%  A description of each parameter follows:
-%
-%    o image: the image.
-%
-%    o length:  Specifies an integer representing the number of bytes to
-%      write to the file.
-%
-%    o data:  The address of the data to write to the blob or file.
-%
-*/
-MagickExport ssize_t WriteBlob(Image *image,const size_t length,
+# 5703 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) ssize_t WriteBlob(Image *image,const size_t length,
   const void *data)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
   int
     c;
@@ -5718,13 +26372,93 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
   ssize_t
     count;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image->blob != (BlobInfo *) NULL);
-  assert(image->blob->type != UndefinedStream);
+  
+# 5721 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5721 "MagickCore/blob.c"
+ image != (Image *) 
+# 5721 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5721 "MagickCore/blob.c"
+ image != (Image *) 
+# 5721 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5721 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 5721 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5721, __extension__ __PRETTY_FUNCTION__); }))
+# 5721 "MagickCore/blob.c"
+                                ;
+  
+# 5722 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5722 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 5722 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5722 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 5722 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5722 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 5722 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5722, __extension__ __PRETTY_FUNCTION__); }))
+# 5722 "MagickCore/blob.c"
+                                                ;
+  
+# 5723 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5723 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 5723 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5723 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 5723 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5723 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 5723 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5723, __extension__ __PRETTY_FUNCTION__); }))
+# 5723 "MagickCore/blob.c"
+                                         ;
+  
+# 5724 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5724 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 5724 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5724 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 5724 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5724 "MagickCore/blob.c"
+ "image->blob->type != UndefinedStream"
+# 5724 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5724, __extension__ __PRETTY_FUNCTION__); }))
+# 5724 "MagickCore/blob.c"
+                                             ;
   if (length == 0)
     return(0);
-  assert(data != (const void *) NULL);
+  
+# 5727 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5727 "MagickCore/blob.c"
+ data != (const void *) 
+# 5727 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5727 "MagickCore/blob.c"
+ data != (const void *) 
+# 5727 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5727 "MagickCore/blob.c"
+ "data != (const void *) NULL"
+# 5727 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5727, __extension__ __PRETTY_FUNCTION__); }))
+# 5727 "MagickCore/blob.c"
+                                    ;
   blob_info=image->blob;
   count=0;
   p=(const unsigned char *) data;
@@ -5748,34 +26482,50 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
         case 4:
         {
           c=putc((int) *p++,blob_info->file_info.file);
-          if (c == EOF)
+          if (c == 
+# 5751 "MagickCore/blob.c" 3 4
+                  (-1)
+# 5751 "MagickCore/blob.c"
+                     )
             break;
           count++;
-          magick_fallthrough;
+          __attribute__((fallthrough));
         }
         case 3:
         {
           c=putc((int) *p++,blob_info->file_info.file);
-          if (c == EOF)
+          if (c == 
+# 5759 "MagickCore/blob.c" 3 4
+                  (-1)
+# 5759 "MagickCore/blob.c"
+                     )
             break;
           count++;
-          magick_fallthrough;
+          __attribute__((fallthrough));
         }
         case 2:
         {
           c=putc((int) *p++,blob_info->file_info.file);
-          if (c == EOF)
+          if (c == 
+# 5767 "MagickCore/blob.c" 3 4
+                  (-1)
+# 5767 "MagickCore/blob.c"
+                     )
             break;
           count++;
-          magick_fallthrough;
+          __attribute__((fallthrough));
         }
         case 1:
         {
           c=putc((int) *p++,blob_info->file_info.file);
-          if (c == EOF)
+          if (c == 
+# 5775 "MagickCore/blob.c" 3 4
+                  (-1)
+# 5775 "MagickCore/blob.c"
+                     )
             break;
           count++;
-          magick_fallthrough;
+          __attribute__((fallthrough));
         }
         case 0:
           break;
@@ -5787,7 +26537,7 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
     }
     case ZipStream:
     {
-#if defined(MAGICKCORE_ZLIB_DELEGATE)
+
       int
         status;
 
@@ -5801,11 +26551,19 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
           for (i=0; i < length; i+=(size_t) count)
           {
             count=(ssize_t) gzwrite(blob_info->file_info.gzfile,q+i,
-              (unsigned int) MagickMin(length-i,MagickMaxBufferExtent));
+              (unsigned int) (((length-i) < (81920)) ? (length-i) : (81920)));
             if (count <= 0)
               {
                 count=0;
-                if (errno != EINTR)
+                if (
+# 5808 "MagickCore/blob.c" 3 4
+                   (*__errno_location ()) 
+# 5808 "MagickCore/blob.c"
+                         != 
+# 5808 "MagickCore/blob.c" 3 4
+                            4
+# 5808 "MagickCore/blob.c"
+                                 )
                   break;
               }
           }
@@ -5815,48 +26573,72 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
         case 4:
         {
           c=gzputc(blob_info->file_info.gzfile,(int) *p++);
-          if (c == EOF)
+          if (c == 
+# 5818 "MagickCore/blob.c" 3 4
+                  (-1)
+# 5818 "MagickCore/blob.c"
+                     )
             break;
           count++;
-          magick_fallthrough;
+          __attribute__((fallthrough));
         }
         case 3:
         {
           c=gzputc(blob_info->file_info.gzfile,(int) *p++);
-          if (c == EOF)
+          if (c == 
+# 5826 "MagickCore/blob.c" 3 4
+                  (-1)
+# 5826 "MagickCore/blob.c"
+                     )
             break;
           count++;
-          magick_fallthrough;
+          __attribute__((fallthrough));
         }
         case 2:
         {
           c=gzputc(blob_info->file_info.gzfile,(int) *p++);
-          if (c == EOF)
+          if (c == 
+# 5834 "MagickCore/blob.c" 3 4
+                  (-1)
+# 5834 "MagickCore/blob.c"
+                     )
             break;
           count++;
-          magick_fallthrough;
+          __attribute__((fallthrough));
         }
         case 1:
         {
           c=gzputc(blob_info->file_info.gzfile,(int) *p++);
-          if (c == EOF)
+          if (c == 
+# 5842 "MagickCore/blob.c" 3 4
+                  (-1)
+# 5842 "MagickCore/blob.c"
+                     )
             break;
           count++;
-          magick_fallthrough;
+          __attribute__((fallthrough));
         }
         case 0:
           break;
       }
-      status=Z_OK;
+      status=
+# 5850 "MagickCore/blob.c" 3 4
+            0
+# 5850 "MagickCore/blob.c"
+                ;
       (void) gzerror(blob_info->file_info.gzfile,&status);
-      if ((count != (ssize_t) length) && (status != Z_OK))
+      if ((count != (ssize_t) length) && (status != 
+# 5852 "MagickCore/blob.c" 3 4
+                                                   0
+# 5852 "MagickCore/blob.c"
+                                                       ))
         ThrowBlobException(blob_info);
-#endif
+
       break;
     }
     case BZipStream:
     {
-#if defined(MAGICKCORE_BZLIB_DELEGATE)
+
       int
         status;
 
@@ -5866,20 +26648,36 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
       for (i=0; i < length; i+=(size_t) count)
       {
         count=(ssize_t) BZ2_bzwrite(blob_info->file_info.bzfile,q+i,
-          (int) MagickMin(length-i,MagickMaxBufferExtent));
+          (int) (((length-i) < (81920)) ? (length-i) : (81920)));
         if (count <= 0)
           {
             count=0;
-            if (errno != EINTR)
+            if (
+# 5873 "MagickCore/blob.c" 3 4
+               (*__errno_location ()) 
+# 5873 "MagickCore/blob.c"
+                     != 
+# 5873 "MagickCore/blob.c" 3 4
+                        4
+# 5873 "MagickCore/blob.c"
+                             )
               break;
           }
       }
       count=(ssize_t) i;
-      status=BZ_OK;
+      status=
+# 5878 "MagickCore/blob.c" 3 4
+            0
+# 5878 "MagickCore/blob.c"
+                 ;
       (void) BZ2_bzerror(blob_info->file_info.bzfile,&status);
-      if ((count != (ssize_t) length) && (status != BZ_OK))
+      if ((count != (ssize_t) length) && (status != 
+# 5880 "MagickCore/blob.c" 3 4
+                                                   0
+# 5880 "MagickCore/blob.c"
+                                                        ))
         ThrowBlobException(blob_info);
-#endif
+
       break;
     }
     case FifoStream:
@@ -5899,7 +26697,11 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
           blob_info->data=(unsigned char *) ResizeQuantumMemory(
             blob_info->data,blob_info->extent+1,sizeof(*blob_info->data));
           (void) SyncBlob(image);
-          if (blob_info->data == (unsigned char *) NULL)
+          if (blob_info->data == (unsigned char *) 
+# 5902 "MagickCore/blob.c" 3 4
+                                                  ((void *)0)
+# 5902 "MagickCore/blob.c"
+                                                      )
             {
               (void) DetachBlob(blob_info);
               return(0);
@@ -5915,7 +26717,11 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
     }
     case CustomStream:
     {
-      if (blob_info->custom_stream->writer != (CustomStreamHandler) NULL)
+      if (blob_info->custom_stream->writer != (CustomStreamHandler) 
+# 5918 "MagickCore/blob.c" 3 4
+                                                                   ((void *)0)
+# 5918 "MagickCore/blob.c"
+                                                                       )
         count=blob_info->custom_stream->writer((unsigned char *) data,
           length,blob_info->custom_stream->data);
       break;
@@ -5923,44 +26729,83 @@ MagickExport ssize_t WriteBlob(Image *image,const size_t length,
   }
   return(count);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  W r i t e B l o b B y t e                                                  %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  WriteBlobByte() write an integer to a blob.  It returns the number of bytes
-%  written (either 0 or 1);
-%
-%  The format of the WriteBlobByte method is:
-%
-%      ssize_t WriteBlobByte(Image *image,const unsigned char value)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-%    o value: Specifies the value to write.
-%
-*/
-MagickExport ssize_t WriteBlobByte(Image *image,const unsigned char value)
+# 5952 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) ssize_t WriteBlobByte(Image *image,const unsigned char value)
 {
   BlobInfo
-    *magick_restrict blob_info;
+    *__restrict__ blob_info;
 
   ssize_t
     count;
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(image->blob != (BlobInfo *) NULL);
-  assert(image->blob->type != UndefinedStream);
+  
+# 5960 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5960 "MagickCore/blob.c"
+ image != (Image *) 
+# 5960 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5960 "MagickCore/blob.c"
+ image != (Image *) 
+# 5960 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5960 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 5960 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5960, __extension__ __PRETTY_FUNCTION__); }))
+# 5960 "MagickCore/blob.c"
+                                ;
+  
+# 5961 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5961 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 5961 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5961 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 5961 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5961 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 5961 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5961, __extension__ __PRETTY_FUNCTION__); }))
+# 5961 "MagickCore/blob.c"
+                                                ;
+  
+# 5962 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5962 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 5962 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 5962 "MagickCore/blob.c"
+ image->blob != (BlobInfo *) 
+# 5962 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 5962 "MagickCore/blob.c"
+ "image->blob != (BlobInfo *) NULL"
+# 5962 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5962, __extension__ __PRETTY_FUNCTION__); }))
+# 5962 "MagickCore/blob.c"
+                                         ;
+  
+# 5963 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 5963 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 5963 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 5963 "MagickCore/blob.c"
+ image->blob->type != UndefinedStream
+# 5963 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 5963 "MagickCore/blob.c"
+ "image->blob->type != UndefinedStream"
+# 5963 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 5963, __extension__ __PRETTY_FUNCTION__); }))
+# 5963 "MagickCore/blob.c"
+                                             ;
   blob_info=image->blob;
   count=0;
   switch (blob_info->type)
@@ -5973,7 +26818,11 @@ MagickExport ssize_t WriteBlobByte(Image *image,const unsigned char value)
         c;
 
       c=putc((int) value,blob_info->file_info.file);
-      if (c == EOF)
+      if (c == 
+# 5976 "MagickCore/blob.c" 3 4
+              (-1)
+# 5976 "MagickCore/blob.c"
+                 )
         {
           if (ferror(blob_info->file_info.file) != 0)
             ThrowBlobException(blob_info);
@@ -5990,33 +26839,8 @@ MagickExport ssize_t WriteBlobByte(Image *image,const unsigned char value)
   }
   return(count);
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  W r i t e B l o b F l o a t                                                %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  WriteBlobFloat() writes a float value as a 32-bit quantity in the byte-order
-%  specified by the endian member of the image structure.
-%
-%  The format of the WriteBlobFloat method is:
-%
-%      ssize_t WriteBlobFloat(Image *image,const float value)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-%    o value: Specifies the value to write.
-%
-*/
-MagickExport ssize_t WriteBlobFloat(Image *image,const float value)
+# 6019 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) ssize_t WriteBlobFloat(Image *image,const float value)
 {
   union
   {
@@ -6031,39 +26855,46 @@ MagickExport ssize_t WriteBlobFloat(Image *image,const float value)
   quantum.float_value=value;
   return(WriteBlobLong(image,quantum.unsigned_value));
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  W r i t e B l o b L o n g                                                  %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  WriteBlobLong() writes a unsigned int value as a 32-bit quantity in the
-%  byte-order specified by the endian member of the image structure.
-%
-%  The format of the WriteBlobLong method is:
-%
-%      ssize_t WriteBlobLong(Image *image,const unsigned int value)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-%    o value: Specifies the value to write.
-%
-*/
-MagickExport ssize_t WriteBlobLong(Image *image,const unsigned int value)
+# 6060 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) ssize_t WriteBlobLong(Image *image,const unsigned int value)
 {
   unsigned char
     buffer[4];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 6065 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6065 "MagickCore/blob.c"
+ image != (Image *) 
+# 6065 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 6065 "MagickCore/blob.c"
+ image != (Image *) 
+# 6065 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 6065 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 6065 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6065, __extension__ __PRETTY_FUNCTION__); }))
+# 6065 "MagickCore/blob.c"
+                                ;
+  
+# 6066 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6066 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6066 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 6066 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6066 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 6066 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 6066 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6066, __extension__ __PRETTY_FUNCTION__); }))
+# 6066 "MagickCore/blob.c"
+                                                ;
   if (image->endian == LSBEndian)
     {
       buffer[0]=(unsigned char) value;
@@ -6078,39 +26909,46 @@ MagickExport ssize_t WriteBlobLong(Image *image,const unsigned int value)
   buffer[3]=(unsigned char) value;
   return(WriteBlobStream(image,4,buffer));
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  W r i t e B l o b L o n g L o n g                                          %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  WriteBlobMSBLongLong() writes a long long value as a 64-bit quantity in the
-%  byte-order specified by the endian member of the image structure.
-%
-%  The format of the WriteBlobLongLong method is:
-%
-%      ssize_t WriteBlobLongLong(Image *image,const MagickSizeType value)
-%
-%  A description of each parameter follows.
-%
-%    o value:  Specifies the value to write.
-%
-%    o image: the image.
-%
-*/
-MagickExport ssize_t WriteBlobLongLong(Image *image,const MagickSizeType value)
+# 6107 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) ssize_t WriteBlobLongLong(Image *image,const MagickSizeType value)
 {
   unsigned char
     buffer[8];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 6112 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6112 "MagickCore/blob.c"
+ image != (Image *) 
+# 6112 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 6112 "MagickCore/blob.c"
+ image != (Image *) 
+# 6112 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 6112 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 6112 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6112, __extension__ __PRETTY_FUNCTION__); }))
+# 6112 "MagickCore/blob.c"
+                                ;
+  
+# 6113 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6113 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6113 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 6113 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6113 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 6113 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 6113 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6113, __extension__ __PRETTY_FUNCTION__); }))
+# 6113 "MagickCore/blob.c"
+                                                ;
   if (image->endian == LSBEndian)
     {
       buffer[0]=(unsigned char) value;
@@ -6133,39 +26971,46 @@ MagickExport ssize_t WriteBlobLongLong(Image *image,const MagickSizeType value)
   buffer[7]=(unsigned char) value;
   return(WriteBlobStream(image,8,buffer));
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   W r i t e B l o b S h o r t                                               %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  WriteBlobShort() writes a short value as a 16-bit quantity in the
-%  byte-order specified by the endian member of the image structure.
-%
-%  The format of the WriteBlobShort method is:
-%
-%      ssize_t WriteBlobShort(Image *image,const unsigned short value)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-%    o value:  Specifies the value to write.
-%
-*/
-MagickExport ssize_t WriteBlobShort(Image *image,const unsigned short value)
+# 6162 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) ssize_t WriteBlobShort(Image *image,const unsigned short value)
 {
   unsigned char
     buffer[2];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 6167 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6167 "MagickCore/blob.c"
+ image != (Image *) 
+# 6167 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 6167 "MagickCore/blob.c"
+ image != (Image *) 
+# 6167 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 6167 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 6167 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6167, __extension__ __PRETTY_FUNCTION__); }))
+# 6167 "MagickCore/blob.c"
+                                ;
+  
+# 6168 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6168 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6168 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 6168 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6168 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 6168 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 6168 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6168, __extension__ __PRETTY_FUNCTION__); }))
+# 6168 "MagickCore/blob.c"
+                                                ;
   if (image->endian == LSBEndian)
     {
       buffer[0]=(unsigned char) value;
@@ -6176,33 +27021,8 @@ MagickExport ssize_t WriteBlobShort(Image *image,const unsigned short value)
   buffer[1]=(unsigned char) value;
   return(WriteBlobStream(image,2,buffer));
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  W r i t e B l o b S i g n e d L o n g                                      %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  WriteBlobSignedLong() writes a signed value as a 32-bit quantity in the
-%  byte-order specified by the endian member of the image structure.
-%
-%  The format of the WriteBlobSignedLong method is:
-%
-%      ssize_t WriteBlobSignedLong(Image *image,const signed int value)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-%    o value: Specifies the value to write.
-%
-*/
-MagickExport ssize_t WriteBlobSignedLong(Image *image,const signed int value)
+# 6205 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) ssize_t WriteBlobSignedLong(Image *image,const signed int value)
 {
   union
   {
@@ -6216,8 +27036,40 @@ MagickExport ssize_t WriteBlobSignedLong(Image *image,const signed int value)
   unsigned char
     buffer[4];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 6219 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6219 "MagickCore/blob.c"
+ image != (Image *) 
+# 6219 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 6219 "MagickCore/blob.c"
+ image != (Image *) 
+# 6219 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 6219 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 6219 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6219, __extension__ __PRETTY_FUNCTION__); }))
+# 6219 "MagickCore/blob.c"
+                                ;
+  
+# 6220 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6220 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6220 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 6220 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6220 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 6220 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 6220 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6220, __extension__ __PRETTY_FUNCTION__); }))
+# 6220 "MagickCore/blob.c"
+                                                ;
   quantum.signed_value=value;
   if (image->endian == LSBEndian)
     {
@@ -6233,109 +27085,98 @@ MagickExport ssize_t WriteBlobSignedLong(Image *image,const signed int value)
   buffer[3]=(unsigned char) quantum.unsigned_value;
   return(WriteBlobStream(image,4,buffer));
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  W r i t e B l o b L S B L o n g                                            %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  WriteBlobLSBLong() writes a unsigned int value as a 32-bit quantity in
-%  least-significant byte first order.
-%
-%  The format of the WriteBlobLSBLong method is:
-%
-%      ssize_t WriteBlobLSBLong(Image *image,const unsigned int value)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-%    o value: Specifies the value to write.
-%
-*/
-MagickExport ssize_t WriteBlobLSBLong(Image *image,const unsigned int value)
+# 6262 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) ssize_t WriteBlobLSBLong(Image *image,const unsigned int value)
 {
   unsigned char
     buffer[4];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 6267 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6267 "MagickCore/blob.c"
+ image != (Image *) 
+# 6267 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 6267 "MagickCore/blob.c"
+ image != (Image *) 
+# 6267 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 6267 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 6267 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6267, __extension__ __PRETTY_FUNCTION__); }))
+# 6267 "MagickCore/blob.c"
+                                ;
+  
+# 6268 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6268 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6268 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 6268 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6268 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 6268 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 6268 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6268, __extension__ __PRETTY_FUNCTION__); }))
+# 6268 "MagickCore/blob.c"
+                                                ;
   buffer[0]=(unsigned char) value;
   buffer[1]=(unsigned char) (value >> 8);
   buffer[2]=(unsigned char) (value >> 16);
   buffer[3]=(unsigned char) (value >> 24);
   return(WriteBlobStream(image,4,buffer));
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   W r i t e B l o b L S B S h o r t                                         %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  WriteBlobLSBShort() writes a unsigned short value as a 16-bit quantity in
-%  least-significant byte first order.
-%
-%  The format of the WriteBlobLSBShort method is:
-%
-%      ssize_t WriteBlobLSBShort(Image *image,const unsigned short value)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-%    o value:  Specifies the value to write.
-%
-*/
-MagickExport ssize_t WriteBlobLSBShort(Image *image,const unsigned short value)
+# 6301 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) ssize_t WriteBlobLSBShort(Image *image,const unsigned short value)
 {
   unsigned char
     buffer[2];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 6306 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6306 "MagickCore/blob.c"
+ image != (Image *) 
+# 6306 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 6306 "MagickCore/blob.c"
+ image != (Image *) 
+# 6306 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 6306 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 6306 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6306, __extension__ __PRETTY_FUNCTION__); }))
+# 6306 "MagickCore/blob.c"
+                                ;
+  
+# 6307 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6307 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6307 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 6307 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6307 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 6307 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 6307 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6307, __extension__ __PRETTY_FUNCTION__); }))
+# 6307 "MagickCore/blob.c"
+                                                ;
   buffer[0]=(unsigned char) value;
   buffer[1]=(unsigned char) (value >> 8);
   return(WriteBlobStream(image,2,buffer));
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  W r i t e B l o b L S B S i g n e d L o n g                                %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  WriteBlobLSBSignedLong() writes a signed value as a 32-bit quantity in
-%  least-significant byte first order.
-%
-%  The format of the WriteBlobLSBSignedLong method is:
-%
-%      ssize_t WriteBlobLSBSignedLong(Image *image,const signed int value)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-%    o value: Specifies the value to write.
-%
-*/
-MagickExport ssize_t WriteBlobLSBSignedLong(Image *image,const signed int value)
+# 6338 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) ssize_t WriteBlobLSBSignedLong(Image *image,const signed int value)
 {
   union
   {
@@ -6349,8 +27190,40 @@ MagickExport ssize_t WriteBlobLSBSignedLong(Image *image,const signed int value)
   unsigned char
     buffer[4];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 6352 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6352 "MagickCore/blob.c"
+ image != (Image *) 
+# 6352 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 6352 "MagickCore/blob.c"
+ image != (Image *) 
+# 6352 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 6352 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 6352 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6352, __extension__ __PRETTY_FUNCTION__); }))
+# 6352 "MagickCore/blob.c"
+                                ;
+  
+# 6353 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6353 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6353 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 6353 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6353 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 6353 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 6353 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6353, __extension__ __PRETTY_FUNCTION__); }))
+# 6353 "MagickCore/blob.c"
+                                                ;
   quantum.signed_value=value;
   buffer[0]=(unsigned char) quantum.unsigned_value;
   buffer[1]=(unsigned char) (quantum.unsigned_value >> 8);
@@ -6358,33 +27231,8 @@ MagickExport ssize_t WriteBlobLSBSignedLong(Image *image,const signed int value)
   buffer[3]=(unsigned char) (quantum.unsigned_value >> 24);
   return(WriteBlobStream(image,4,buffer));
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   W r i t e B l o b L S B S i g n e d S h o r t                             %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  WriteBlobLSBSignedShort() writes a signed short value as a 16-bit quantity
-%  in least-significant byte first order.
-%
-%  The format of the WriteBlobLSBSignedShort method is:
-%
-%      ssize_t WriteBlobLSBSignedShort(Image *image,const signed short value)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-%    o value:  Specifies the value to write.
-%
-*/
-MagickExport ssize_t WriteBlobLSBSignedShort(Image *image,
+# 6387 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) ssize_t WriteBlobLSBSignedShort(Image *image,
   const signed short value)
 {
   union
@@ -6399,79 +27247,93 @@ MagickExport ssize_t WriteBlobLSBSignedShort(Image *image,
   unsigned char
     buffer[2];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 6402 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6402 "MagickCore/blob.c"
+ image != (Image *) 
+# 6402 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 6402 "MagickCore/blob.c"
+ image != (Image *) 
+# 6402 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 6402 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 6402 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6402, __extension__ __PRETTY_FUNCTION__); }))
+# 6402 "MagickCore/blob.c"
+                                ;
+  
+# 6403 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6403 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6403 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 6403 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6403 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 6403 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 6403 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6403, __extension__ __PRETTY_FUNCTION__); }))
+# 6403 "MagickCore/blob.c"
+                                                ;
   quantum.signed_value=value;
   buffer[0]=(unsigned char) quantum.unsigned_value;
   buffer[1]=(unsigned char) (quantum.unsigned_value >> 8);
   return(WriteBlobStream(image,2,buffer));
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  W r i t e B l o b M S B L o n g                                            %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  WriteBlobMSBLong() writes a unsigned int value as a 32-bit quantity in
-%  most-significant byte first order.
-%
-%  The format of the WriteBlobMSBLong method is:
-%
-%      ssize_t WriteBlobMSBLong(Image *image,const unsigned int value)
-%
-%  A description of each parameter follows.
-%
-%    o value:  Specifies the value to write.
-%
-%    o image: the image.
-%
-*/
-MagickExport ssize_t WriteBlobMSBLong(Image *image,const unsigned int value)
+# 6435 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) ssize_t WriteBlobMSBLong(Image *image,const unsigned int value)
 {
   unsigned char
     buffer[4];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 6440 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6440 "MagickCore/blob.c"
+ image != (Image *) 
+# 6440 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 6440 "MagickCore/blob.c"
+ image != (Image *) 
+# 6440 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 6440 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 6440 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6440, __extension__ __PRETTY_FUNCTION__); }))
+# 6440 "MagickCore/blob.c"
+                                ;
+  
+# 6441 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6441 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6441 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 6441 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6441 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 6441 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 6441 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6441, __extension__ __PRETTY_FUNCTION__); }))
+# 6441 "MagickCore/blob.c"
+                                                ;
   buffer[0]=(unsigned char) (value >> 24);
   buffer[1]=(unsigned char) (value >> 16);
   buffer[2]=(unsigned char) (value >> 8);
   buffer[3]=(unsigned char) value;
   return(WriteBlobStream(image,4,buffer));
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+   W r i t e B l o b M S B S i g n e d S h o r t                             %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  WriteBlobMSBSignedShort() writes a signed short value as a 16-bit quantity
-%  in most-significant byte first order.
-%
-%  The format of the WriteBlobMSBSignedShort method is:
-%
-%      ssize_t WriteBlobMSBSignedShort(Image *image,const signed short value)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-%    o value:  Specifies the value to write.
-%
-*/
-MagickExport ssize_t WriteBlobMSBSignedShort(Image *image,
+# 6474 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) ssize_t WriteBlobMSBSignedShort(Image *image,
   const signed short value)
 {
   union
@@ -6486,80 +27348,142 @@ MagickExport ssize_t WriteBlobMSBSignedShort(Image *image,
   unsigned char
     buffer[2];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 6489 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6489 "MagickCore/blob.c"
+ image != (Image *) 
+# 6489 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 6489 "MagickCore/blob.c"
+ image != (Image *) 
+# 6489 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 6489 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 6489 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6489, __extension__ __PRETTY_FUNCTION__); }))
+# 6489 "MagickCore/blob.c"
+                                ;
+  
+# 6490 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6490 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6490 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 6490 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6490 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 6490 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 6490 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6490, __extension__ __PRETTY_FUNCTION__); }))
+# 6490 "MagickCore/blob.c"
+                                                ;
   quantum.signed_value=value;
   buffer[0]=(unsigned char) (quantum.unsigned_value >> 8);
   buffer[1]=(unsigned char) quantum.unsigned_value;
   return(WriteBlobStream(image,2,buffer));
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  W r i t e B l o b M S B S h o r t                                          %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  WriteBlobMSBShort() writes a unsigned short value as a 16-bit quantity in
-%  most-significant byte first order.
-%
-%  The format of the WriteBlobMSBShort method is:
-%
-%      ssize_t WriteBlobMSBShort(Image *image,const unsigned short value)
-%
-%  A description of each parameter follows.
-%
-%   o  value:  Specifies the value to write.
-%
-%   o  file:  Specifies the file to write the data to.
-%
-*/
-MagickExport ssize_t WriteBlobMSBShort(Image *image,const unsigned short value)
+# 6522 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) ssize_t WriteBlobMSBShort(Image *image,const unsigned short value)
 {
   unsigned char
     buffer[2];
 
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
+  
+# 6527 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6527 "MagickCore/blob.c"
+ image != (Image *) 
+# 6527 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 6527 "MagickCore/blob.c"
+ image != (Image *) 
+# 6527 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 6527 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 6527 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6527, __extension__ __PRETTY_FUNCTION__); }))
+# 6527 "MagickCore/blob.c"
+                                ;
+  
+# 6528 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6528 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6528 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 6528 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6528 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 6528 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 6528 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6528, __extension__ __PRETTY_FUNCTION__); }))
+# 6528 "MagickCore/blob.c"
+                                                ;
   buffer[0]=(unsigned char) (value >> 8);
   buffer[1]=(unsigned char) value;
   return(WriteBlobStream(image,2,buffer));
 }
-
-/*
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                             %
-%                                                                             %
-%                                                                             %
-+  W r i t e B l o b S t r i n g                                              %
-%                                                                             %
-%                                                                             %
-%                                                                             %
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-%  WriteBlobString() write a string to a blob.  It returns the number of
-%  characters written.
-%
-%  The format of the WriteBlobString method is:
-%
-%      ssize_t WriteBlobString(Image *image,const char *string)
-%
-%  A description of each parameter follows.
-%
-%    o image: the image.
-%
-%    o string: Specifies the string to write.
-%
-*/
-MagickExport ssize_t WriteBlobString(Image *image,const char *string)
+# 6559 "MagickCore/blob.c"
+__attribute__ ((visibility ("default"))) ssize_t WriteBlobString(Image *image,const char *string)
 {
-  assert(image != (Image *) NULL);
-  assert(image->signature == MagickCoreSignature);
-  assert(string != (const char *) NULL);
+  
+# 6561 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6561 "MagickCore/blob.c"
+ image != (Image *) 
+# 6561 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 6561 "MagickCore/blob.c"
+ image != (Image *) 
+# 6561 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 6561 "MagickCore/blob.c"
+ "image != (Image *) NULL"
+# 6561 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6561, __extension__ __PRETTY_FUNCTION__); }))
+# 6561 "MagickCore/blob.c"
+                                ;
+  
+# 6562 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6562 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6562 "MagickCore/blob.c" 3 4
+ ) ? 1 : 0), __extension__ ({ if (
+# 6562 "MagickCore/blob.c"
+ image->signature == 0xabacadabUL
+# 6562 "MagickCore/blob.c" 3 4
+ ) ; else __assert_fail (
+# 6562 "MagickCore/blob.c"
+ "image->signature == MagickCoreSignature"
+# 6562 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6562, __extension__ __PRETTY_FUNCTION__); }))
+# 6562 "MagickCore/blob.c"
+                                                ;
+  
+# 6563 "MagickCore/blob.c" 3 4
+ ((void) sizeof ((
+# 6563 "MagickCore/blob.c"
+ string != (const char *) 
+# 6563 "MagickCore/blob.c" 3 4
+ ((void *)0)) ? 1 : 0), __extension__ ({ if (
+# 6563 "MagickCore/blob.c"
+ string != (const char *) 
+# 6563 "MagickCore/blob.c" 3 4
+ ((void *)0)) ; else __assert_fail (
+# 6563 "MagickCore/blob.c"
+ "string != (const char *) NULL"
+# 6563 "MagickCore/blob.c" 3 4
+ , "MagickCore/blob.c", 6563, __extension__ __PRETTY_FUNCTION__); }))
+# 6563 "MagickCore/blob.c"
+                                      ;
   return(WriteBlobStream(image,strlen(string),(const unsigned char *) string));
 }
