@@ -1,5 +1,10 @@
 # ImageMagick
 
+## KelpieEXPE usage
+
+Run ./configure --prefix "my/path", and modify the Makefile to include
+EXTRA_CFLAGS as in the file Makefile.example.
+
 [![Build Status](https://github.com/ImageMagick/ImageMagick/workflows/main/badge.svg)](https://github.com/ImageMagick/ImageMagick/actions)
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/imagemagick.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:imagemagick)
 [![Donate](https://img.shields.io/badge/%24-donate-ff00ff.svg)](https://github.com/sponsors/ImageMagick)
