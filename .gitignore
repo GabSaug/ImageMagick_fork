@@ -1,5 +1,6 @@
 log_make.txt
 
+/build
 /config/ImageMagick.rdf
 /config/*.dox
 /config/config.h
